@@ -3442,7 +3442,20 @@
                             var db2 = carregar();
                             var ix = db2.atendimentos.findIndex(function (a) { return a.id === payload.id; });
                             if (ix >= 0) {
-                                db2.atendimentos[ix].fotos = nuv.atendimento.fotos;
+                                /* Mantém data/url locais — a nuvem só guarda referência (sem apagar a foto da ficha) */
+                                var locais = db2.atendimentos[ix].fotos || payload.fotos || [];
+                                var nuvFotos = nuv.atendimento.fotos || [];
+                                db2.atendimentos[ix].fotos = nuvFotos.map(function (fn, idx) {
+                                    var fl = locais.find(function (x) { return x && fn && x.id === fn.id; }) || locais[idx] || {};
+                                    return {
+                                        id: (fn && fn.id) || fl.id || uid(),
+                                        data: fl.data || null,
+                                        url: fl.url || (fn && fn.url) || null
+                                    };
+                                });
+                                if (!db2.atendimentos[ix].fotos.length && locais.length) {
+                                    db2.atendimentos[ix].fotos = locais;
+                                }
                                 db2.atendimentos[ix].syncNuvemEm = new Date().toISOString();
                                 salvar(db2);
                             }
@@ -3665,7 +3678,16 @@
         }
 
         function atendimentoTemFotos(a) {
-            return !!(a && a.fotos && a.fotos.some(function (f) { return f && (f.data || f.url); }));
+            return !!(a && a.fotos && a.fotos.some(function (f) {
+                return f && (f.data || f.url || f.id || f.arquivo);
+            }));
+        }
+
+        function contarFotosVisiveis(a) {
+            if (!a || !a.fotos) return 0;
+            return a.fotos.filter(function (f) {
+                return f && (f.data || f.url || f.id || f.arquivo);
+            }).length;
         }
 
         var _fotosClienteResolve = null;
@@ -3673,6 +3695,7 @@
             opts = opts || {};
             return new Promise(function (resolve) {
                 var tem = atendimentoTemFotos(a);
+                var n = contarFotosVisiveis(a);
                 var btnCom = document.getElementById('btnFotosSim');
                 var msg = document.getElementById('modalFotosClienteMsg');
                 if (!tem && !opts.forcarPergunta) {
@@ -3680,13 +3703,13 @@
                     return;
                 }
                 _fotosClienteResolve = resolve;
+                /* Sempre mostra as duas opções */
+                btnCom.style.display = '';
+                btnCom.disabled = false;
                 if (tem) {
-                    btnCom.style.display = '';
-                    btnCom.disabled = false;
-                    msg.textContent = 'Há ' + a.fotos.length + ' foto(s) na ficha (uso interno). Como deseja enviar a nota ao cliente?';
+                    msg.textContent = 'Há ' + n + ' foto(s) na ficha (uso interno). Escolha como enviar a nota ao cliente:';
                 } else {
-                    btnCom.style.display = 'none';
-                    msg.textContent = 'Este atendimento não tem fotos. Será enviado apenas o documento.';
+                    msg.textContent = 'Não há fotos neste atendimento ainda. Você pode enviar SEM FOTOS, ou editar a OS e anexar fotos antes.';
                 }
                 document.getElementById('modalFotosCliente').classList.add('aberto');
             });
@@ -3837,8 +3860,16 @@
             var db = carregar();
             var a = id ? db.atendimentos.find(function (x) { return x.id === id; }) : atendimentoNotaAtual;
             if (!a) { toast('Selecione um atendimento.'); return; }
-            var comFotos = await perguntarEnviarComFotos(a);
+            var comFotos = await perguntarEnviarComFotos(a, { forcarPergunta: true });
             if (comFotos === null) return;
+            if (comFotos) {
+                a = await garantirFotosCarregadas(a);
+                var okFoto = (a.fotos || []).some(function (f) { return f && (f.data || f.url); });
+                if (!okFoto) {
+                    toast('Não há fotos disponíveis — imprimindo só o documento.');
+                    comFotos = false;
+                }
+            }
             document.getElementById('printNota').innerHTML = htmlNotaEspelho(db, a, { incluirFotos: !!comFotos });
             setTimeout(function () { window.print(); }, 250);
         }
@@ -3883,12 +3914,38 @@
             return doc;
         }
 
+        async function garantirFotosCarregadas(a) {
+            if (!a || !a.fotos || !a.fotos.length) return a;
+            var precisa = a.fotos.some(function (f) { return f && f.id && !f.data && !f.url; });
+            if (!precisa) return a;
+            var cfgN = carregarConfigNuvem();
+            if (!cfgN || !cfgN.apiKey || !cfgN.projectId) return a;
+            try {
+                await hidratarFotosDaNuvem(a);
+                var db = carregar();
+                var ix = db.atendimentos.findIndex(function (x) { return x.id === a.id; });
+                if (ix >= 0) {
+                    db.atendimentos[ix].fotos = a.fotos;
+                    salvar(db);
+                }
+            } catch (e) { /* segue com o que tiver */ }
+            return a;
+        }
+
         async function abrirLinkAssinatura(id) {
             var db = carregar();
             var a = db.atendimentos.find(function (x) { return x.id === id; });
             if (!a) { toast('Atendimento não encontrado.'); return; }
             var comFotos = await perguntarEnviarComFotos(a, { forcarPergunta: true });
             if (comFotos === null) return;
+            if (comFotos) {
+                a = await garantirFotosCarregadas(a);
+                var okFoto = (a.fotos || []).some(function (f) { return f && (f.data || f.url); });
+                if (!okFoto) {
+                    toast('Não há fotos disponíveis neste atendimento. Enviando só o documento.');
+                    comFotos = false;
+                }
+            }
             if (!a.tokenAssinatura) a.tokenAssinatura = gerarTokenAssinatura();
 
             var mapa = carregarAssinaturas();
