@@ -101,7 +101,7 @@
 <body>
     <div class="wrap">
         <div class="logo">
-            <img id="logoAssinar" src="logo-hm.png" alt="HM Centro Automotivo">
+            <img id="logoAssinar" src="logo-hm.png?v=7" alt="HM Centro Automotivo">
         </div>
         <h1 id="tituloEmpresa">Assinatura do cliente</h1>
         <p class="hint" id="hintTopo">Confira o espelho e assine abaixo com o dedo ou o mouse.</p>
@@ -178,9 +178,9 @@
 
         function renderDoc(doc) {
             var empNome = doc.empresa || 'HM Centro Automotivo';
-            var logo = doc.empresaLogo || 'logo-hm.png';
+            var logo = doc.empresaLogo || 'logo-hm.png?v=7';
             document.getElementById('logoAssinar').src = logo;
-            document.getElementById('logoAssinar').onerror = function () { this.src = 'logo-hm.png'; };
+            document.getElementById('logoAssinar').onerror = function () { this.src = 'logo-hm.png?v=7'; };
             document.getElementById('tituloEmpresa').textContent = empNome + ' — Assinatura';
             var endEl = document.getElementById('endEmpresa');
             var partes = [];

@@ -1,13 +1,13 @@
 /* HM Centro Automotivo — cache do aplicativo (PWA) */
-var CACHE = 'hm-auto-v1';
+var CACHE = 'hm-auto-v7';
 var ASSETS = [
   './',
   './index.html',
-  './manifest.webmanifest',
-  './logo-hm.png',
-  './icon-192.png',
-  './icon-512.png',
-  './apple-touch-icon.png',
+  './manifest.webmanifest?v=7',
+  './logo-hm.png?v=7',
+  './icon-192.png?v=7',
+  './icon-512.png?v=7',
+  './apple-touch-icon.png?v=7',
   './assinar-hm.html'
 ];
 

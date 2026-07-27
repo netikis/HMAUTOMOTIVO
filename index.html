@@ -14,6 +14,8 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <!-- Gerado no build (Vercel/.env). Ignorado pelo git — sem chaves no GitHub. -->
+    <script src="firebase-env.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
@@ -2711,12 +2713,44 @@
             return { ok: true, pasta: root.name + '/' + slugPasta(clienteNome) };
         }
 
+        function configNuvemInjetada() {
+            var c = window.HM_FIREBASE_CONFIG;
+            if (!c || typeof c !== 'object') return null;
+            if (!c.apiKey || !c.projectId) return null;
+            return {
+                apiKey: String(c.apiKey || '').trim(),
+                authDomain: String(c.authDomain || '').trim(),
+                projectId: String(c.projectId || '').trim(),
+                storageBucket: String(c.storageBucket || '').trim(),
+                messagingSenderId: String(c.messagingSenderId || '').trim(),
+                appId: String(c.appId || '').trim(),
+                email: String(c.email || '').trim(),
+                senha: String(c.senha || '')
+            };
+        }
+
         function carregarConfigNuvem() {
+            var local = null;
             try {
-                return JSON.parse(localStorage.getItem(NUVEM_KEY) || 'null') || null;
+                local = JSON.parse(localStorage.getItem(NUVEM_KEY) || 'null');
             } catch (e) {
-                return null;
+                local = null;
             }
+            var inj = configNuvemInjetada();
+            if (!local && !inj) return null;
+            if (!local) return inj;
+            if (!inj) return local;
+            /* Deploy (Vercel) preenche o que estiver vazio no aparelho */
+            return {
+                apiKey: local.apiKey || inj.apiKey,
+                authDomain: local.authDomain || inj.authDomain,
+                projectId: local.projectId || inj.projectId,
+                storageBucket: local.storageBucket || inj.storageBucket,
+                messagingSenderId: local.messagingSenderId || inj.messagingSenderId,
+                appId: local.appId || inj.appId,
+                email: local.email || inj.email,
+                senha: local.senha || inj.senha
+            };
         }
 
         function salvarConfigNuvem(cfg) {
@@ -2741,16 +2775,18 @@
             var el = document.getElementById('nuvemStatusTexto');
             if (!el) return;
             var cfg = carregarConfigNuvem();
+            var inj = configNuvemInjetada();
             if (cfg && cfg.apiKey && cfg.projectId && cfg.email) {
                 el.className = 'config-status';
                 el.innerHTML = '<strong>Nuvem:</strong> configurada (' + esc(cfg.projectId) + ') · login ' + esc(cfg.email) +
+                    (inj ? ' · chaves via deploy (não estão no GitHub)' : '') +
                     '. Firestore protegido por senha — sem custo de Storage.';
             } else if (cfg && cfg.apiKey && cfg.projectId) {
                 el.className = 'config-status aviso';
                 el.innerHTML = '<strong>Nuvem:</strong> falta e-mail/senha do login. Sem isso as regras fechadas bloqueiam a sync.';
             } else {
                 el.className = 'config-status aviso';
-                el.innerHTML = '<strong>Nuvem:</strong> aguardando configuração. Preencha Firebase + e-mail/senha.';
+                el.innerHTML = '<strong>Nuvem:</strong> aguardando configuração. Preencha Firebase + e-mail/senha (ou configure .env / Vercel).';
             }
         }
 
