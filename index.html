@@ -14,6 +14,8 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <!-- Gerado no build (Vercel/.env). Ignorado pelo git — sem chaves no GitHub. -->
+    <script src="firebase-env.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
@@ -977,7 +979,7 @@
                 background: #fff;
                 color: #111;
             }
-            .sidebar, .main, .toast, .modal-overlay, .sidebar-overlay, .install-banner, .btn-menu { display: none !important; }
+            .sidebar, .main, .toast, .modal-overlay, .sidebar-overlay, .install-banner, .btn-menu, .tela-login { display: none !important; }
 
             /* Impressão: logo maior + letras ampliadas (+2 tamanhos) */
             .mirror-print-section .nota-espelho {
@@ -1186,9 +1188,83 @@
             .nav-btn, .submenu-btn { font-size: 10px; }
             .menu-grupo-btn { font-size: 12px; }
         }
+
+        /* Login do aplicativo */
+        .tela-login {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background:
+                radial-gradient(900px 400px at 20% 0%, rgba(61, 160, 232, 0.22), transparent 55%),
+                linear-gradient(165deg, #0b121b, #152233 55%, #0e1520);
+        }
+        .tela-login.oculto { display: none; }
+        .tela-login-card {
+            width: min(400px, 100%);
+            background: var(--bg-panel);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 22px 20px;
+            box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+        }
+        .tela-login-card img {
+            display: block;
+            max-width: 220px;
+            max-height: 72px;
+            margin: 0 auto 14px;
+            object-fit: contain;
+            background: #fff;
+            border-radius: 10px;
+            padding: 8px;
+        }
+        .tela-login-card h2 {
+            text-align: center;
+            font-size: 1.15rem;
+            margin-bottom: 6px;
+        }
+        .tela-login-card .hint {
+            text-align: center;
+            margin-bottom: 14px;
+        }
+        .tela-login-card .erro-login {
+            display: none;
+            color: #ff8a80;
+            font-size: 0.86rem;
+            margin-top: 8px;
+            text-align: center;
+        }
+        body.aguardando-login .sidebar,
+        body.aguardando-login .main,
+        body.aguardando-login .install-banner,
+        body.aguardando-login .btn-menu {
+            visibility: hidden;
+            pointer-events: none;
+        }
     </style>
 </head>
-<body>
+<body class="aguardando-login">
+    <div class="tela-login" id="telaLogin">
+        <div class="tela-login-card">
+            <img src="logo-hm.png" alt="HM Centro Automotivo">
+            <h2 id="loginTitulo">Entrar no sistema</h2>
+            <p class="hint" id="loginHint">Use o e-mail e a senha criados no Firebase Authentication.</p>
+            <div id="loginBoxEntrar">
+                <label>E-mail</label>
+                <input type="email" id="loginEmail" autocomplete="username" placeholder="seu@email.com">
+                <label style="margin-top:10px;display:block">Senha</label>
+                <input type="password" id="loginSenha" autocomplete="current-password" placeholder="Senha do Firebase">
+                <div class="row" style="margin-top:14px">
+                    <button type="button" class="btn btn-primary" id="btnLoginEntrar" style="width:100%">Entrar</button>
+                </div>
+            </div>
+            <p class="erro-login" id="loginErro"></p>
+        </div>
+    </div>
+
     <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
 
     <aside class="sidebar" id="sidebar">
@@ -1856,8 +1932,16 @@
             </div>
 
             <div class="box">
+                <h2>☁ Sincronizar — PC ↔ Celular</h2>
+                <p class="config-status aviso" id="nuvemStatusTexto"><strong>Nuvem:</strong> verificando…</p>
+                <div class="row" style="margin-top:12px">
+                    <button type="button" class="btn btn-primary" id="btnSyncNuvem">☁ Sincronizar agora</button>
+                    <button type="button" class="btn btn-secondary" id="btnAppSair">Sair da conta</button>
+                </div>
+            </div>
+
+            <div class="box">
                 <h2>Logo da empresa</h2>
-                <p class="hint">Padrão do relatório de veículos + balcão: upload de arquivo ou link HTTPS. Se vazio, usa <strong>logo-hm.png</strong>.</p>
                 <div class="row">
                     <div class="col">
                         <label>Enviar arquivo (PNG/JPG/WebP)</label>
@@ -1879,7 +1963,6 @@
                             <button type="button" class="btn btn-primary" id="btnSalvarLogoUrl">Salvar logo (link)</button>
                             <button type="button" class="btn btn-secondary" id="btnLogoPadrao">Usar logo padrão</button>
                         </div>
-                        <p class="muted" style="margin-top:8px">A logo aparece no menu, painel, notas e página de assinatura.</p>
                     </div>
                 </div>
             </div>
@@ -1903,10 +1986,6 @@
                     <input type="file" id="fileImport" accept="application/json,.json" style="display:none">
                     <button type="button" class="btn btn-danger" id="btnZerar">Apagar dados deste index</button>
                 </div>
-                <p class="muted" style="margin-top:14px">
-                    Os arquivos originais <em>SISTEMA BALCAO.html</em> e <em>RELATORIO VEÍCULOS.html</em>
-                    permanecem intactos e com seus próprios bancos.
-                </p>
             </div>
         </section>
     </main>
@@ -2020,6 +2099,8 @@
         var fotosAtuais = [];
         var LOGO_PADRAO = 'logo-hm.png';
         var PASTA_IDB = 'hm_automotivo_pasta_v1';
+        var NUVEM_KEY = 'hm_automotivo_nuvem';
+        var LOGIN_EMAIL_KEY = 'hm_automotivo_login_email';
         var FOTOS_MAX = 12;
 
         function empresaPadrao() {
@@ -2485,6 +2566,7 @@
             if (id === 'painelRelatorioCaixa') renderRelatorioCaixa();
             if (id === 'painelConfig') {
                 preencherFormEmpresa();
+                atualizarStatusNuvemUI();
                 atualizarStatusPastaUI();
             }
             fecharMenuMobile();
@@ -2912,7 +2994,7 @@
             if (!el) return;
             if (!('showDirectoryPicker' in window)) {
                 el.className = 'config-status aviso';
-                el.innerHTML = '<strong>Pasta PC:</strong> disponível só no Chrome/Edge no computador.';
+                el.innerHTML = '<strong>Pasta PC:</strong> disponível só no Chrome/Edge no computador. No celular use a sincronização da nuvem.';
                 return;
             }
             var handle = await carregarHandlePastaRaiz();
@@ -2970,8 +3052,491 @@
             return { ok: true, pasta: root.name + '/' + slugPasta(clienteNome) };
         }
 
+        function configNuvemInjetada() {
+            var c = window.HM_FIREBASE_CONFIG;
+            if (!c || typeof c !== 'object') return null;
+            if (!c.apiKey || !c.projectId) return null;
+            return {
+                apiKey: String(c.apiKey || '').trim(),
+                authDomain: String(c.authDomain || '').trim(),
+                projectId: String(c.projectId || '').trim(),
+                storageBucket: String(c.storageBucket || '').trim(),
+                messagingSenderId: String(c.messagingSenderId || '').trim(),
+                appId: String(c.appId || '').trim(),
+                email: String(c.email || '').trim(),
+                senha: String(c.senha || '')
+            };
+        }
+
+        function carregarConfigNuvem() {
+            var local = null;
+            try {
+                local = JSON.parse(localStorage.getItem(NUVEM_KEY) || 'null');
+            } catch (e) {
+                local = null;
+            }
+            var inj = configNuvemInjetada();
+            if (!local && !inj) return null;
+            if (!local) return inj;
+            if (!inj) return local;
+            return {
+                apiKey: local.apiKey || inj.apiKey,
+                authDomain: local.authDomain || inj.authDomain,
+                projectId: local.projectId || inj.projectId,
+                storageBucket: local.storageBucket || inj.storageBucket,
+                messagingSenderId: local.messagingSenderId || inj.messagingSenderId,
+                appId: local.appId || inj.appId,
+                email: local.email || inj.email,
+                senha: local.senha || inj.senha
+            };
+        }
+
+        function salvarConfigNuvem(cfg) {
+            if (!cfg) localStorage.removeItem(NUVEM_KEY);
+            else localStorage.setItem(NUVEM_KEY, JSON.stringify(cfg));
+        }
+
+        function atualizarStatusNuvemUI() {
+            var el = document.getElementById('nuvemStatusTexto');
+            if (!el) return;
+            var cfg = carregarConfigNuvem();
+            var user = _fbSessao && _fbSessao.auth && _fbSessao.auth.currentUser;
+            if (!cfg || !cfg.apiKey || !cfg.projectId) {
+                el.className = 'config-status aviso';
+                el.innerHTML = '<strong>Nuvem:</strong> faltam chaves no firebase-env.js (rode o build com .env).';
+                return;
+            }
+            if (user) {
+                el.className = 'config-status';
+                el.innerHTML = '<strong>Nuvem:</strong> conectado como ' + esc(user.email || 'usuário') +
+                    '. Use <em>Sincronizar agora</em> no PC e no celular.';
+            } else {
+                el.className = 'config-status aviso';
+                el.innerHTML = '<strong>Nuvem:</strong> entre com o e-mail/senha do Firebase para sincronizar.';
+            }
+        }
+
+        var _fbSessao = null;
+        var _fbMods = null;
+
+        async function initFirebaseApp() {
+            var cfg = carregarConfigNuvem();
+            if (!cfg || !cfg.apiKey || !cfg.projectId) {
+                throw new Error('Nuvem sem chaves no firebase-env.js. Rode o build com .env.');
+            }
+            if (_fbSessao && _fbSessao.projectId === cfg.projectId && _fbSessao.auth) {
+                return _fbSessao;
+            }
+            var firebaseConfig = {
+                apiKey: cfg.apiKey,
+                authDomain: cfg.authDomain || (cfg.projectId + '.firebaseapp.com'),
+                projectId: cfg.projectId,
+                storageBucket: cfg.storageBucket || undefined,
+                messagingSenderId: cfg.messagingSenderId || '',
+                appId: cfg.appId || ''
+            };
+            var appMod = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js');
+            var authMod = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js');
+            var fsMod = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js');
+            _fbMods = { appMod: appMod, authMod: authMod, fsMod: fsMod };
+            var appName = 'hm-auto-' + cfg.projectId;
+            var app;
+            try {
+                app = appMod.getApp(appName);
+            } catch (e) {
+                app = appMod.initializeApp(firebaseConfig, appName);
+            }
+            var auth = authMod.getAuth(app);
+            try {
+                await authMod.setPersistence(auth, authMod.browserLocalPersistence);
+            } catch (e) { /* ok */ }
+            var dbFs = fsMod.getFirestore(app);
+            _fbSessao = { projectId: cfg.projectId, app: app, auth: auth, dbFs: dbFs, fsMod: fsMod, authMod: authMod };
+            return _fbSessao;
+        }
+
+        async function obterSessaoFirebase() {
+            var sessao = await initFirebaseApp();
+            if (!sessao.auth.currentUser) {
+                throw new Error('Faça login com o e-mail e senha do Firebase para usar a nuvem.');
+            }
+            return sessao;
+        }
+
+        async function loginComFirebase(email, senha) {
+            var sessao = await initFirebaseApp();
+            await sessao.authMod.signInWithEmailAndPassword(sessao.auth, email, senha);
+            return sessao.auth.currentUser;
+        }
+
+        async function logoutFirebase() {
+            try {
+                var sessao = await initFirebaseApp();
+                if (sessao.auth.currentUser) {
+                    await sessao.authMod.signOut(sessao.auth);
+                }
+            } catch (e) { /* ok */ }
+        }
+
+        async function enviarAtendimentoNuvem(atendimento) {
+            var sessao = await obterSessaoFirebase();
+            var fsMod = sessao.fsMod;
+            var dbFs = sessao.dbFs;
+            var docOut = JSON.parse(JSON.stringify(atendimento));
+            var fotos = docOut.fotos || [];
+            for (var i = 0; i < fotos.length; i++) {
+                var f = fotos[i];
+                if (!f.data || !String(f.data).startsWith('data:')) continue;
+                var fotoId = f.id || ('f' + i);
+                f.id = fotoId;
+                try {
+                    await fsMod.setDoc(fsMod.doc(dbFs, 'hm_automotivo_midia', atendimento.id + '_' + fotoId), {
+                        atendimentoId: atendimento.id,
+                        fotoId: fotoId,
+                        data: f.data,
+                        atualizadoEm: new Date().toISOString()
+                    });
+                    delete f.data;
+                } catch (midErr) {
+                    return { ok: false, motivo: 'falha ao enviar foto: ' + (midErr.message || midErr.code || '') };
+                }
+            }
+            docOut.atualizadoEm = new Date().toISOString();
+            await fsMod.setDoc(fsMod.doc(dbFs, 'hm_automotivo_atendimentos', atendimento.id), docOut);
+            return { ok: true, atendimento: docOut };
+        }
+
+        async function hidratarFotosDaNuvem(atendimento) {
+            var sessao = await obterSessaoFirebase();
+            var fsMod = sessao.fsMod;
+            var dbFs = sessao.dbFs;
+            var fotos = atendimento.fotos || [];
+            for (var i = 0; i < fotos.length; i++) {
+                var f = fotos[i];
+                if (f.data || f.url) continue;
+                if (!f.id) continue;
+                try {
+                    var snap = await fsMod.getDoc(fsMod.doc(dbFs, 'hm_automotivo_midia', atendimento.id + '_' + f.id));
+                    if (snap.exists()) {
+                        var d = snap.data() || {};
+                        if (d.data) f.data = d.data;
+                        if (d.url) f.url = d.url;
+                    }
+                } catch (e) { /* segue */ }
+            }
+            return atendimento;
+        }
+
+        async function baixarAtendimentosNuvem() {
+            var sessao = await obterSessaoFirebase();
+            var fsMod = sessao.fsMod;
+            var dbFs = sessao.dbFs;
+            var snap = await fsMod.getDocs(fsMod.collection(dbFs, 'hm_automotivo_atendimentos'));
+            var lista = [];
+            snap.forEach(function (docSnap) {
+                var a = docSnap.data() || {};
+                if (!a.id) a.id = docSnap.id;
+                lista.push(a);
+            });
+            for (var i = 0; i < lista.length; i++) {
+                await hidratarFotosDaNuvem(lista[i]);
+            }
+            return lista;
+        }
+
+        function mesclarAtendimentosLocalNuvem(localLista, nuvemLista) {
+            var map = {};
+            (localLista || []).forEach(function (a) {
+                if (a && a.id) map[a.id] = a;
+            });
+            (nuvemLista || []).forEach(function (n) {
+                if (!n || !n.id) return;
+                var L = map[n.id];
+                if (!L) {
+                    map[n.id] = n;
+                    return;
+                }
+                var tL = new Date(L.atualizadoEm || L.criadoEm || 0).getTime();
+                var tN = new Date(n.atualizadoEm || n.criadoEm || 0).getTime();
+                if (tN >= tL) {
+                    var fotosLoc = L.fotos || [];
+                    var fotosNuv = n.fotos || [];
+                    map[n.id] = Object.assign({}, L, n);
+                    if (fotosNuv.length) {
+                        map[n.id].fotos = fotosNuv.map(function (fn, idx) {
+                            if (fn.data || fn.url) return fn;
+                            var fl = fotosLoc.find(function (x) { return x.id === fn.id; }) || fotosLoc[idx];
+                            if (fl && (fl.data || fl.url)) return Object.assign({}, fn, { data: fl.data || null, url: fl.url || null });
+                            return fn;
+                        });
+                    } else if (fotosLoc.length) {
+                        map[n.id].fotos = fotosLoc;
+                    }
+                } else {
+                    (n.fotos || []).forEach(function (fn) {
+                        if (!fn.id) return;
+                        var fl = (L.fotos || []).find(function (x) { return x.id === fn.id; });
+                        if (fl && !fl.data && !fl.url && (fn.data || fn.url)) {
+                            fl.data = fn.data || null;
+                            fl.url = fn.url || null;
+                        }
+                    });
+                }
+            });
+            return Object.keys(map).map(function (k) { return map[k]; });
+        }
+
+        function mesclarListaPorId(localLista, nuvemLista) {
+            var map = {};
+            (localLista || []).forEach(function (x) {
+                if (x && x.id) map[x.id] = x;
+            });
+            (nuvemLista || []).forEach(function (n) {
+                if (!n || !n.id) return;
+                var L = map[n.id];
+                if (!L) {
+                    map[n.id] = n;
+                    return;
+                }
+                var tL = new Date(L.atualizadoEm || L.criadoEm || 0).getTime();
+                var tN = new Date(n.atualizadoEm || n.criadoEm || 0).getTime();
+                map[n.id] = tN >= tL ? Object.assign({}, L, n) : L;
+            });
+            return Object.keys(map).map(function (k) { return map[k]; });
+        }
+
+        async function enviarBaseNuvem(db) {
+            var sessao = await obterSessaoFirebase();
+            var fsMod = sessao.fsMod;
+            var dbFs = sessao.dbFs;
+            var base = {
+                empresa: db.empresa || empresaPadrao(),
+                clientes: db.clientes || [],
+                produtos: db.produtos || [],
+                orcamentos: db.orcamentos || [],
+                caixa: db.caixa || [],
+                caixaBanco: db.caixaBanco || [],
+                pendentes: db.pendentes || [],
+                caixaConfig: db.caixaConfig || { inicialBalcao: 0, inicialBanco: 0 },
+                atualizadoEm: new Date().toISOString()
+            };
+            await fsMod.setDoc(fsMod.doc(dbFs, 'hm_automotivo_base', 'principal'), base);
+            return base;
+        }
+
+        async function baixarBaseNuvemSilencioso(sessao) {
+            try {
+                var s = sessao || await obterSessaoFirebase();
+                var snap = await s.fsMod.getDoc(s.fsMod.doc(s.dbFs, 'hm_automotivo_base', 'principal'));
+                if (!snap.exists()) return null;
+                return snap.data() || null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function baixarBaseNuvem() {
+            var sessao = await obterSessaoFirebase();
+            var fsMod = sessao.fsMod;
+            var dbFs = sessao.dbFs;
+            var snap = await fsMod.getDoc(fsMod.doc(dbFs, 'hm_automotivo_base', 'principal'));
+            if (!snap.exists()) return null;
+            return snap.data() || null;
+        }
+
+        async function sincronizarTodosNuvem() {
+            var cfg = carregarConfigNuvem();
+            if (!cfg || !cfg.apiKey || !cfg.projectId) {
+                toast('Nuvem sem chaves no firebase-env.js.');
+                return;
+            }
+            toast('Entrando na nuvem e sincronizando…');
+            await obterSessaoFirebase();
+
+            var canalAntes = canalVendas;
+            canalVendas = 'normal';
+            var db = carregar();
+            var ok = 0, falha = 0;
+
+            /* 1) Baixa e mescla base (clientes, estoque, caixa…) */
+            var baseNuv = await baixarBaseNuvem();
+            if (baseNuv) {
+                if (baseNuv.empresa && (!db.empresa || !db.empresa.nome || db.empresa.nome === 'HM Centro Automotivo')) {
+                    db.empresa = baseNuv.empresa;
+                } else if (baseNuv.empresa && baseNuv.atualizadoEm && db.empresa) {
+                    var tEmpN = new Date(baseNuv.atualizadoEm || 0).getTime();
+                    var tEmpL = new Date(db.empresa.atualizadoEm || 0).getTime();
+                    if (tEmpN >= tEmpL) db.empresa = baseNuv.empresa;
+                } else if (baseNuv.empresa && !db.empresa) {
+                    db.empresa = baseNuv.empresa;
+                }
+                db.clientes = mesclarListaPorId(db.clientes, baseNuv.clientes);
+                db.produtos = mesclarListaPorId(db.produtos, baseNuv.produtos);
+                db.orcamentos = mesclarListaPorId(db.orcamentos, baseNuv.orcamentos);
+                db.caixa = mesclarListaPorId(db.caixa, baseNuv.caixa);
+                db.caixaBanco = mesclarListaPorId(db.caixaBanco, baseNuv.caixaBanco);
+                db.pendentes = mesclarListaPorId(db.pendentes, baseNuv.pendentes);
+                if (baseNuv.caixaConfig) db.caixaConfig = baseNuv.caixaConfig;
+            }
+
+            /* 2) Baixa e mescla OS + fotos */
+            var nuvemLista = await baixarAtendimentosNuvem();
+            db.atendimentos = mesclarAtendimentosLocalNuvem(db.atendimentos, nuvemLista);
+
+            /* 3) Envia o resultado mesclado de volta */
+            await enviarBaseNuvem(db);
+            for (var i = 0; i < (db.atendimentos || []).length; i++) {
+                var r = await enviarAtendimentoNuvem(db.atendimentos[i]);
+                if (r.ok) {
+                    ok++;
+                    if (r.atendimento) {
+                        var locais = db.atendimentos[i].fotos || [];
+                        var nuvFotos = r.atendimento.fotos || [];
+                        db.atendimentos[i].syncNuvemEm = new Date().toISOString();
+                        db.atendimentos[i].fotos = nuvFotos.map(function (fn, idx) {
+                            var fl = locais.find(function (x) { return x && fn && x.id === fn.id; }) || locais[idx] || {};
+                            return {
+                                id: (fn && fn.id) || fl.id || uid(),
+                                data: fl.data || null,
+                                url: fl.url || (fn && fn.url) || null
+                            };
+                        });
+                        if (!db.atendimentos[i].fotos.length && locais.length) {
+                            db.atendimentos[i].fotos = locais;
+                        }
+                    }
+                } else falha++;
+            }
+
+            salvar(db);
+            canalVendas = canalAntes;
+
+            toast('Nuvem OK: ' + ok + ' OS · ' + (db.clientes || []).length + ' cliente(s)' +
+                (falha ? ' · ' + falha + ' falha(s)' : '') + '. Abra no outro aparelho e sincronize também.');
+            atualizarStatusNuvemUI();
+            renderTudo();
+        }
+
         document.getElementById('btnConfigPasta').addEventListener('click', configurarPastaRaiz);
         document.getElementById('btnAtualizarPasta').addEventListener('click', atualizarStatusPastaUI);
+        document.getElementById('btnSyncNuvem').addEventListener('click', function () {
+            sincronizarTodosNuvem().catch(function (err) {
+                toast('Erro na nuvem: ' + (err.message || err.code || 'verifique login e regras'));
+            });
+        });
+
+        /* ---------- Login = Firebase Authentication ---------- */
+        function liberarApp() {
+            document.body.classList.remove('aguardando-login');
+            document.getElementById('telaLogin').classList.add('oculto');
+            document.getElementById('loginErro').style.display = 'none';
+            atualizarStatusNuvemUI();
+        }
+
+        function bloquearApp() {
+            document.body.classList.add('aguardando-login');
+            document.getElementById('telaLogin').classList.remove('oculto');
+            prepararTelaLogin();
+            atualizarStatusNuvemUI();
+        }
+
+        function mostrarErroLogin(msg) {
+            var el = document.getElementById('loginErro');
+            el.textContent = msg || '';
+            el.style.display = msg ? 'block' : 'none';
+        }
+
+        function mensagemErroFirebase(err) {
+            var c = (err && (err.code || err.message)) || '';
+            if (String(c).indexOf('auth/invalid-credential') >= 0 || String(c).indexOf('auth/wrong-password') >= 0) {
+                return 'E-mail ou senha incorretos.';
+            }
+            if (String(c).indexOf('auth/user-not-found') >= 0) return 'Usuário não encontrado no Firebase.';
+            if (String(c).indexOf('auth/too-many-requests') >= 0) return 'Muitas tentativas. Aguarde e tente de novo.';
+            if (String(c).indexOf('auth/invalid-email') >= 0) return 'E-mail inválido.';
+            if (String(c).indexOf('firebase-env') >= 0 || String(c).indexOf('chaves') >= 0) {
+                return String(err.message || c);
+            }
+            return err.message || err.code || 'Falha no login.';
+        }
+
+        function prepararTelaLogin() {
+            document.getElementById('loginTitulo').textContent = 'Entrar no sistema';
+            document.getElementById('loginHint').textContent = 'Use o e-mail e a senha do Firebase Authentication.';
+            mostrarErroLogin('');
+            document.getElementById('loginEmail').value = localStorage.getItem(LOGIN_EMAIL_KEY) || '';
+            document.getElementById('loginSenha').value = '';
+            setTimeout(function () {
+                var email = document.getElementById('loginEmail');
+                var senha = document.getElementById('loginSenha');
+                if (email && email.value) senha.focus();
+                else if (email) email.focus();
+            }, 80);
+        }
+
+        async function iniciarLoginApp() {
+            document.getElementById('loginHint').textContent = 'Conectando…';
+            try {
+                var sessao = await initFirebaseApp();
+                await new Promise(function (resolve) {
+                    var done = false;
+                    var unsub = sessao.authMod.onAuthStateChanged(sessao.auth, function (user) {
+                        if (done) return;
+                        done = true;
+                        try { unsub(); } catch (e) { /* ok */ }
+                        if (user) {
+                            if (user.email) localStorage.setItem(LOGIN_EMAIL_KEY, user.email);
+                            liberarApp();
+                        } else {
+                            prepararTelaLogin();
+                        }
+                        resolve();
+                    });
+                    setTimeout(function () {
+                        if (!done) {
+                            done = true;
+                            try { unsub(); } catch (e) { /* ok */ }
+                            if (sessao.auth.currentUser) liberarApp();
+                            else prepararTelaLogin();
+                            resolve();
+                        }
+                    }, 4000);
+                });
+            } catch (err) {
+                prepararTelaLogin();
+                mostrarErroLogin(mensagemErroFirebase(err));
+            }
+        }
+
+        document.getElementById('btnLoginEntrar').addEventListener('click', async function () {
+            var email = document.getElementById('loginEmail').value.trim();
+            var senha = document.getElementById('loginSenha').value;
+            if (!email || !senha) { mostrarErroLogin('Informe e-mail e senha.'); return; }
+            mostrarErroLogin('');
+            document.getElementById('loginHint').textContent = 'Entrando…';
+            try {
+                var user = await loginComFirebase(email, senha);
+                if (user && user.email) localStorage.setItem(LOGIN_EMAIL_KEY, user.email);
+                liberarApp();
+                toast('Login OK — ' + (user.email || 'conectado') + '.');
+            } catch (err) {
+                document.getElementById('loginHint').textContent = 'Use o e-mail e a senha do Firebase Authentication.';
+                mostrarErroLogin(mensagemErroFirebase(err));
+            }
+        });
+
+        document.getElementById('loginSenha').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') document.getElementById('btnLoginEntrar').click();
+        });
+        document.getElementById('loginEmail').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') document.getElementById('loginSenha').focus();
+        });
+
+        document.getElementById('btnAppSair').addEventListener('click', async function () {
+            await logoutFirebase();
+            bloquearApp();
+            toast('Saiu da conta.');
+        });
 
         function somaPorTipo(tipo) {
             return itensTemp.reduce(function (s, it) {
@@ -3099,6 +3664,40 @@
                 var pasta = await salvarAtendimentoNaPastaPC(payload, resolvido.clienteNome);
                 if (pasta.ok) extras.push('PC: ' + pasta.pasta);
             } catch (errPasta) { /* opcional */ }
+
+            var cfgN = carregarConfigNuvem();
+            if (cfgN && cfgN.apiKey && cfgN.projectId && _fbSessao && _fbSessao.auth && _fbSessao.auth.currentUser) {
+                try {
+                    await enviarBaseNuvem(carregar());
+                    var nuv = await enviarAtendimentoNuvem(payload);
+                    if (nuv.ok) {
+                        extras.push('nuvem OK');
+                        if (nuv.atendimento && nuv.atendimento.fotos) {
+                            var db2 = carregar();
+                            var ix = db2.atendimentos.findIndex(function (a) { return a.id === payload.id; });
+                            if (ix >= 0) {
+                                var locais = db2.atendimentos[ix].fotos || payload.fotos || [];
+                                var nuvFotos = nuv.atendimento.fotos || [];
+                                db2.atendimentos[ix].fotos = nuvFotos.map(function (fn, idx) {
+                                    var fl = locais.find(function (x) { return x && fn && x.id === fn.id; }) || locais[idx] || {};
+                                    return {
+                                        id: (fn && fn.id) || fl.id || uid(),
+                                        data: fl.data || null,
+                                        url: fl.url || (fn && fn.url) || null
+                                    };
+                                });
+                                if (!db2.atendimentos[ix].fotos.length && locais.length) {
+                                    db2.atendimentos[ix].fotos = locais;
+                                }
+                                db2.atendimentos[ix].syncNuvemEm = new Date().toISOString();
+                                salvar(db2);
+                            }
+                        }
+                    } else extras.push('nuvem: ' + (nuv.motivo || 'falhou'));
+                } catch (errN) {
+                    extras.push('nuvem: erro');
+                }
+            }
 
             toast(
                 (id ? 'Atendimento atualizado' : 'Atendimento salvo') +
@@ -3499,6 +4098,7 @@
             var comFotos = await perguntarEnviarComFotos(a, { forcarPergunta: true });
             if (comFotos === null) return;
             if (comFotos) {
+                a = await garantirFotosCarregadas(a);
                 var okFoto = (a.fotos || []).some(function (f) { return f && (f.data || f.url); });
                 if (!okFoto) {
                     toast('Não há fotos disponíveis — imprimindo só o documento.');
@@ -3549,6 +4149,24 @@
             return doc;
         }
 
+        async function garantirFotosCarregadas(a) {
+            if (!a || !a.fotos || !a.fotos.length) return a;
+            var precisa = a.fotos.some(function (f) { return f && f.id && !f.data && !f.url; });
+            if (!precisa) return a;
+            var cfgN = carregarConfigNuvem();
+            if (!cfgN || !cfgN.apiKey || !cfgN.projectId) return a;
+            try {
+                await hidratarFotosDaNuvem(a);
+                var db = carregar();
+                var ix = db.atendimentos.findIndex(function (x) { return x.id === a.id; });
+                if (ix >= 0) {
+                    db.atendimentos[ix].fotos = a.fotos;
+                    salvar(db);
+                }
+            } catch (e) { /* segue */ }
+            return a;
+        }
+
         async function abrirLinkAssinatura(id) {
             var db = carregar();
             var a = db.atendimentos.find(function (x) { return x.id === id; });
@@ -3556,6 +4174,7 @@
             var comFotos = await perguntarEnviarComFotos(a, { forcarPergunta: true });
             if (comFotos === null) return;
             if (comFotos) {
+                a = await garantirFotosCarregadas(a);
                 var okFoto = (a.fotos || []).some(function (f) { return f && (f.data || f.url); });
                 if (!okFoto) {
                     toast('Não há fotos disponíveis neste atendimento. Enviando só o documento.');
@@ -4838,7 +5457,9 @@
         atualizarBadgeCanal();
         renderTudo();
         preencherFormEmpresa();
+        atualizarStatusNuvemUI();
         atualizarStatusPastaUI();
+        iniciarLoginApp();
 
         /* PWA — instalar como aplicativo (logo na tela inicial) */
         var deferredInstallPrompt = null;
