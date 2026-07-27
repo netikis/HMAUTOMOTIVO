@@ -1,7 +1,7 @@
 /**
- * Modelo de firebase-env.js (SEM chaves reais).
- * No PC: rode `npm run build` com .env preenchido,
- * ou copie este arquivo para firebase-env.js e edite (firebase-env.js é ignorado pelo git).
+ * Modelo — copie para firebase-config.js se precisar.
+ * No projeto já existe firebase-config.js com as chaves do cliente.
+ * NÃO coloque senha aqui.
  */
 window.HM_FIREBASE_CONFIG = {
   apiKey: "",
@@ -9,7 +9,5 @@ window.HM_FIREBASE_CONFIG = {
   projectId: "",
   storageBucket: "",
   messagingSenderId: "",
-  appId: "",
-  email: "",
-  senha: ""
+  appId: ""
 };

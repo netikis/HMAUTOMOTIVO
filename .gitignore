@@ -5,7 +5,7 @@
 .env.development.local
 .env.production.local
 
-# Gerado no build (Vercel / npm run build) — chaves injetadas
+# Gerado no build local/Vercel (opcional). No GitHub Pages usamos firebase-config.js
 firebase-env.js
 
 # Dependências e deploy

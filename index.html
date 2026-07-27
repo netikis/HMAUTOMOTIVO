@@ -14,8 +14,9 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <!-- Gerado no build (Vercel/.env). Ignorado pelo git — sem chaves no GitHub. -->
-    <script src="firebase-env.js"></script>
+    <!-- Config pública do Firebase (GitHub Pages). firebase-env.js é opcional (Vercel/local). -->
+    <script src="firebase-config.js"></script>
+    <script src="firebase-env.js" onerror="/* opcional */"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
@@ -3122,7 +3123,7 @@
         async function initFirebaseApp() {
             var cfg = carregarConfigNuvem();
             if (!cfg || !cfg.apiKey || !cfg.projectId) {
-                throw new Error('Nuvem sem chaves no firebase-env.js. Rode o build com .env.');
+                throw new Error('Nuvem sem chaves. Envie o arquivo firebase-config.js para o GitHub e atualize o site.');
             }
             if (_fbSessao && _fbSessao.projectId === cfg.projectId && _fbSessao.auth) {
                 return _fbSessao;
