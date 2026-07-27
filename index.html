@@ -860,6 +860,22 @@
             letter-spacing: 0.04em;
         }
         .nota-espelho .nota-sub { color: #444; font-size: 1rem; }
+        .nota-espelho .nota-sub-end {
+            margin-top: 10px;
+            margin-bottom: 0;
+            line-height: 1.35;
+        }
+        .nota-espelho .nota-titulo-espelho {
+            margin-top: 18px;
+            margin-bottom: 0;
+            font-weight: 700;
+            color: #0d3d6e;
+            letter-spacing: 0.04em;
+        }
+        .nota-espelho .nota-registro {
+            margin-top: 18px;
+            margin-bottom: 0;
+        }
         .nota-bloco { margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; }
         .nota-bloco .tit {
             padding: 8px 12px;
@@ -979,6 +995,16 @@
             .mirror-print-section .nota-sub {
                 font-size: 22px !important;
                 line-height: 1.35;
+            }
+            .mirror-print-section .nota-sub-end {
+                margin-top: 12px !important;
+            }
+            .mirror-print-section .nota-titulo-espelho {
+                margin-top: 22px !important;
+                margin-bottom: 0 !important;
+            }
+            .mirror-print-section .nota-registro {
+                margin-top: 22px !important;
             }
             .mirror-print-section .nota-bloco .tit {
                 font-size: 22px !important;
@@ -3246,13 +3272,13 @@
             return '<div class="nota-espelho" id="notaEspelhoHtml">' +
                 '<div class="nota-topo">' +
                 '<img src="' + esc(logoSrc(emp)) + '" alt="' + esc(emp.nome || 'HM Centro Automotivo') + '">' +
-                '<div class="nota-sub">' +
+                '<div class="nota-sub nota-sub-end">' +
                 (end ? esc(end) : '') +
                 (end && contatos.length ? '<br>' : '') +
                 (contatos.length ? esc(contatos.join(' · ')) : '') +
                 '</div>' +
-                '<div class="nota-sub" style="margin-top:6px;font-weight:700;color:#0d3d6e">ESPELHO DE ATENDIMENTO</div>' +
-                '<div class="nota-sub">Registro ' + esc(fmtData(a.entrada || a.criadoEm)) +
+                '<div class="nota-sub nota-titulo-espelho">ESPELHO DE ATENDIMENTO</div>' +
+                '<div class="nota-sub nota-registro">Registro ' + esc(fmtData(a.entrada || a.criadoEm)) +
                 (a.id ? ' · ID ' + esc(String(a.id).slice(-6)) : '') + '</div>' +
                 '</div>' +
                 '<div class="nota-bloco compacto"><div class="tit azul">Cliente &amp; Oficina</div><div class="nota-grid nota-grid-compacta">' +
@@ -4842,7 +4868,35 @@
         });
 
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').catch(function () {});
+            var swRefreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', function () {
+                if (swRefreshing) return;
+                swRefreshing = true;
+                window.location.reload();
+            });
+
+            navigator.serviceWorker.register('./sw.js').then(function (reg) {
+                function checarAtualizacao() {
+                    try { reg.update(); } catch (e) { /* ok */ }
+                }
+                /* Ao abrir / voltar ao app (PC ou celular), busca versão nova */
+                checarAtualizacao();
+                document.addEventListener('visibilitychange', function () {
+                    if (!document.hidden) checarAtualizacao();
+                });
+                window.addEventListener('focus', checarAtualizacao);
+                setInterval(checarAtualizacao, 5 * 60 * 1000);
+
+                reg.addEventListener('updatefound', function () {
+                    var novo = reg.installing;
+                    if (!novo) return;
+                    novo.addEventListener('statechange', function () {
+                        if (novo.state === 'installed' && navigator.serviceWorker.controller) {
+                            toast('Nova versão disponível — atualizando…');
+                        }
+                    });
+                });
+            }).catch(function () {});
         }
     })();
     </script>
