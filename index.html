@@ -14,8 +14,6 @@
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <!-- Gerado no build (Vercel/.env). Ignorado pelo git — sem chaves no GitHub. -->
-    <script src="firebase-env.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
@@ -1871,39 +1869,6 @@
             </div>
 
             <div class="box">
-                <h2>Nuvem (Firebase) — celular ↔ PC</h2>
-                <p class="hint">
-                    Plano <strong>Spark (grátis)</strong>: usa Firestore + login. <strong>Não precisa pagar</strong> nem ativar Storage.
-                    Fotos sobem comprimidas no banco. Só quem tiver e-mail/senha acessa.
-                </p>
-                <p class="config-status aviso" id="nuvemStatusTexto"><strong>Nuvem:</strong> aguardando configuração.</p>
-                <div class="row">
-                    <div class="col"><label>API Key</label><input id="nuvemApiKey" autocomplete="off" placeholder="AIza..."></div>
-                    <div class="col"><label>Project ID</label><input id="nuvemProjectId" placeholder="hmautomotivo-f29dc"></div>
-                </div>
-                <div class="row" style="margin-top:10px">
-                    <div class="col"><label>Auth Domain</label><input id="nuvemAuthDomain" placeholder="hmautomotivo-f29dc.firebaseapp.com"></div>
-                    <div class="col"><label>Storage Bucket (opcional)</label><input id="nuvemStorageBucket" placeholder="deixe em branco se não usar Storage"></div>
-                </div>
-                <div class="row" style="margin-top:10px">
-                    <div class="col"><label>Messaging Sender ID</label><input id="nuvemSenderId" placeholder="123456789"></div>
-                    <div class="col"><label>App ID</label><input id="nuvemAppId" placeholder="1:123:web:abc"></div>
-                </div>
-                <h3 style="margin-top:16px">Login da nuvem (protege os dados)</h3>
-                <p class="hint">Crie este usuário em Firebase → Authentication → E-mail/senha. Use o mesmo no celular e no PC.</p>
-                <div class="row">
-                    <div class="col"><label>E-mail</label><input id="nuvemEmail" type="email" autocomplete="username" placeholder="seu@email.com"></div>
-                    <div class="col"><label>Senha</label><input id="nuvemSenha" type="password" autocomplete="current-password" placeholder="mínimo 6 caracteres"></div>
-                </div>
-                <div class="row" style="margin-top:14px">
-                    <button type="button" class="btn btn-ok" id="btnSalvarNuvem">Salvar configuração da nuvem</button>
-                    <button type="button" class="btn btn-primary" id="btnSyncNuvem">☁ Sincronizar agora</button>
-                    <button type="button" class="btn btn-secondary" id="btnTestarNuvem">Testar login</button>
-                    <button type="button" class="btn btn-secondary" id="btnLimparNuvem">Remover config</button>
-                </div>
-            </div>
-
-            <div class="box">
                 <h2>Backup e limpeza</h2>
                 <p class="hint">Armazenamento exclusivo: <strong>localStorage → hm_automotivo_v1</strong> (não mexe nos outros sistemas).</p>
                 <div class="row">
@@ -2029,7 +1994,6 @@
         var fotosAtuais = [];
         var LOGO_PADRAO = 'logo-hm.png';
         var PASTA_IDB = 'hm_automotivo_pasta_v1';
-        var NUVEM_KEY = 'hm_automotivo_nuvem';
         var FOTOS_MAX = 12;
 
         function empresaPadrao() {
@@ -2495,7 +2459,6 @@
             if (id === 'painelRelatorioCaixa') renderRelatorioCaixa();
             if (id === 'painelConfig') {
                 preencherFormEmpresa();
-                preencherFormNuvem();
                 atualizarStatusPastaUI();
             }
             fecharMenuMobile();
@@ -2923,7 +2886,7 @@
             if (!el) return;
             if (!('showDirectoryPicker' in window)) {
                 el.className = 'config-status aviso';
-                el.innerHTML = '<strong>Pasta PC:</strong> disponível só no Chrome/Edge no computador. No celular use a nuvem.';
+                el.innerHTML = '<strong>Pasta PC:</strong> disponível só no Chrome/Edge no computador.';
                 return;
             }
             var handle = await carregarHandlePastaRaiz();
@@ -2981,329 +2944,8 @@
             return { ok: true, pasta: root.name + '/' + slugPasta(clienteNome) };
         }
 
-        function configNuvemInjetada() {
-            var c = window.HM_FIREBASE_CONFIG;
-            if (!c || typeof c !== 'object') return null;
-            if (!c.apiKey || !c.projectId) return null;
-            return {
-                apiKey: String(c.apiKey || '').trim(),
-                authDomain: String(c.authDomain || '').trim(),
-                projectId: String(c.projectId || '').trim(),
-                storageBucket: String(c.storageBucket || '').trim(),
-                messagingSenderId: String(c.messagingSenderId || '').trim(),
-                appId: String(c.appId || '').trim(),
-                email: String(c.email || '').trim(),
-                senha: String(c.senha || '')
-            };
-        }
-
-        function carregarConfigNuvem() {
-            var local = null;
-            try {
-                local = JSON.parse(localStorage.getItem(NUVEM_KEY) || 'null');
-            } catch (e) {
-                local = null;
-            }
-            var inj = configNuvemInjetada();
-            if (!local && !inj) return null;
-            if (!local) return inj;
-            if (!inj) return local;
-            /* Deploy (Vercel) preenche o que estiver vazio no aparelho */
-            return {
-                apiKey: local.apiKey || inj.apiKey,
-                authDomain: local.authDomain || inj.authDomain,
-                projectId: local.projectId || inj.projectId,
-                storageBucket: local.storageBucket || inj.storageBucket,
-                messagingSenderId: local.messagingSenderId || inj.messagingSenderId,
-                appId: local.appId || inj.appId,
-                email: local.email || inj.email,
-                senha: local.senha || inj.senha
-            };
-        }
-
-        function salvarConfigNuvem(cfg) {
-            if (!cfg) localStorage.removeItem(NUVEM_KEY);
-            else localStorage.setItem(NUVEM_KEY, JSON.stringify(cfg));
-        }
-
-        function preencherFormNuvem() {
-            var cfg = carregarConfigNuvem() || {};
-            document.getElementById('nuvemApiKey').value = cfg.apiKey || '';
-            document.getElementById('nuvemProjectId').value = cfg.projectId || '';
-            document.getElementById('nuvemAuthDomain').value = cfg.authDomain || '';
-            document.getElementById('nuvemStorageBucket').value = cfg.storageBucket || '';
-            document.getElementById('nuvemSenderId').value = cfg.messagingSenderId || '';
-            document.getElementById('nuvemAppId').value = cfg.appId || '';
-            document.getElementById('nuvemEmail').value = cfg.email || '';
-            document.getElementById('nuvemSenha').value = cfg.senha || '';
-            atualizarStatusNuvemUI();
-        }
-
-        function atualizarStatusNuvemUI() {
-            var el = document.getElementById('nuvemStatusTexto');
-            if (!el) return;
-            var cfg = carregarConfigNuvem();
-            var inj = configNuvemInjetada();
-            if (cfg && cfg.apiKey && cfg.projectId && cfg.email) {
-                el.className = 'config-status';
-                el.innerHTML = '<strong>Nuvem:</strong> configurada (' + esc(cfg.projectId) + ') · login ' + esc(cfg.email) +
-                    (inj ? ' · chaves via deploy (não estão no GitHub)' : '') +
-                    '. Firestore protegido por senha — sem custo de Storage.';
-            } else if (cfg && cfg.apiKey && cfg.projectId) {
-                el.className = 'config-status aviso';
-                el.innerHTML = '<strong>Nuvem:</strong> falta e-mail/senha do login. Sem isso as regras fechadas bloqueiam a sync.';
-            } else {
-                el.className = 'config-status aviso';
-                el.innerHTML = '<strong>Nuvem:</strong> aguardando configuração. Preencha Firebase + e-mail/senha (ou configure .env / Vercel).';
-            }
-        }
-
-        function lerConfigNuvemDoForm() {
-            return {
-                apiKey: document.getElementById('nuvemApiKey').value.trim(),
-                projectId: document.getElementById('nuvemProjectId').value.trim(),
-                authDomain: document.getElementById('nuvemAuthDomain').value.trim(),
-                storageBucket: document.getElementById('nuvemStorageBucket').value.trim(),
-                messagingSenderId: document.getElementById('nuvemSenderId').value.trim(),
-                appId: document.getElementById('nuvemAppId').value.trim(),
-                email: document.getElementById('nuvemEmail').value.trim(),
-                senha: document.getElementById('nuvemSenha').value
-            };
-        }
-
-        var _fbSessao = null;
-
-        async function obterSessaoFirebase() {
-            var cfg = carregarConfigNuvem();
-            if (!cfg || !cfg.apiKey || !cfg.projectId) throw new Error('Configure a nuvem (API Key e Project ID).');
-            if (!cfg.email || !cfg.senha) throw new Error('Informe e-mail e senha do login da nuvem.');
-
-            if (_fbSessao && _fbSessao.projectId === cfg.projectId) {
-                try {
-                    if (_fbSessao.auth.currentUser) return _fbSessao;
-                } catch (e) { /* reinicia */ }
-            }
-
-            var firebaseConfig = {
-                apiKey: cfg.apiKey,
-                authDomain: cfg.authDomain || (cfg.projectId + '.firebaseapp.com'),
-                projectId: cfg.projectId,
-                storageBucket: cfg.storageBucket || undefined,
-                messagingSenderId: cfg.messagingSenderId || '',
-                appId: cfg.appId || ''
-            };
-            var appMod = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js');
-            var authMod = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js');
-            var fsMod = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js');
-            var appName = 'hm-auto-' + cfg.projectId;
-            var app;
-            try {
-                app = appMod.getApp(appName);
-            } catch (e) {
-                app = appMod.initializeApp(firebaseConfig, appName);
-            }
-            var auth = authMod.getAuth(app);
-            if (!auth.currentUser) {
-                await authMod.signInWithEmailAndPassword(auth, cfg.email, cfg.senha);
-            }
-            var dbFs = fsMod.getFirestore(app);
-            _fbSessao = { projectId: cfg.projectId, app: app, auth: auth, dbFs: dbFs, fsMod: fsMod };
-            return _fbSessao;
-        }
-
-        async function enviarAtendimentoNuvem(atendimento) {
-            var sessao = await obterSessaoFirebase();
-            var fsMod = sessao.fsMod;
-            var dbFs = sessao.dbFs;
-            var docOut = JSON.parse(JSON.stringify(atendimento));
-            var fotos = docOut.fotos || [];
-            for (var i = 0; i < fotos.length; i++) {
-                var f = fotos[i];
-                if (!f.data || !String(f.data).startsWith('data:')) continue;
-                var fotoId = f.id || ('f' + i);
-                f.id = fotoId;
-                try {
-                    await fsMod.setDoc(fsMod.doc(dbFs, 'hm_automotivo_midia', atendimento.id + '_' + fotoId), {
-                        atendimentoId: atendimento.id,
-                        fotoId: fotoId,
-                        data: f.data,
-                        atualizadoEm: new Date().toISOString()
-                    });
-                    delete f.data;
-                } catch (midErr) {
-                    return { ok: false, motivo: 'falha ao enviar foto: ' + (midErr.message || midErr.code || '') };
-                }
-            }
-            docOut.atualizadoEm = new Date().toISOString();
-            await fsMod.setDoc(fsMod.doc(dbFs, 'hm_automotivo_atendimentos', atendimento.id), docOut);
-            return { ok: true, atendimento: docOut };
-        }
-
-        async function hidratarFotosDaNuvem(atendimento) {
-            var sessao = await obterSessaoFirebase();
-            var fsMod = sessao.fsMod;
-            var dbFs = sessao.dbFs;
-            var fotos = atendimento.fotos || [];
-            for (var i = 0; i < fotos.length; i++) {
-                var f = fotos[i];
-                if (f.data || f.url) continue;
-                if (!f.id) continue;
-                try {
-                    var snap = await fsMod.getDoc(fsMod.doc(dbFs, 'hm_automotivo_midia', atendimento.id + '_' + f.id));
-                    if (snap.exists()) {
-                        var d = snap.data() || {};
-                        if (d.data) f.data = d.data;
-                        if (d.url) f.url = d.url;
-                    }
-                } catch (e) { /* segue */ }
-            }
-            return atendimento;
-        }
-
-        async function baixarAtendimentosNuvem() {
-            var sessao = await obterSessaoFirebase();
-            var fsMod = sessao.fsMod;
-            var dbFs = sessao.dbFs;
-            var snap = await fsMod.getDocs(fsMod.collection(dbFs, 'hm_automotivo_atendimentos'));
-            var lista = [];
-            snap.forEach(function (docSnap) {
-                var a = docSnap.data() || {};
-                if (!a.id) a.id = docSnap.id;
-                lista.push(a);
-            });
-            for (var i = 0; i < lista.length; i++) {
-                await hidratarFotosDaNuvem(lista[i]);
-            }
-            return lista;
-        }
-
-        function mesclarAtendimentosLocalNuvem(localLista, nuvemLista) {
-            var map = {};
-            (localLista || []).forEach(function (a) {
-                if (a && a.id) map[a.id] = a;
-            });
-            (nuvemLista || []).forEach(function (n) {
-                if (!n || !n.id) return;
-                var L = map[n.id];
-                if (!L) {
-                    map[n.id] = n;
-                    return;
-                }
-                var tL = new Date(L.atualizadoEm || L.criadoEm || 0).getTime();
-                var tN = new Date(n.atualizadoEm || n.criadoEm || 0).getTime();
-                if (tN >= tL) {
-                    var fotosLoc = L.fotos || [];
-                    var fotosNuv = n.fotos || [];
-                    map[n.id] = Object.assign({}, L, n);
-                    if (fotosNuv.length) {
-                        map[n.id].fotos = fotosNuv.map(function (fn, idx) {
-                            if (fn.data || fn.url) return fn;
-                            var fl = fotosLoc.find(function (x) { return x.id === fn.id; }) || fotosLoc[idx];
-                            if (fl && (fl.data || fl.url)) return Object.assign({}, fn, { data: fl.data || null, url: fl.url || null });
-                            return fn;
-                        });
-                    } else if (fotosLoc.length) {
-                        map[n.id].fotos = fotosLoc;
-                    }
-                } else {
-                    /* local mais novo: mantém local, mas completa foto só na nuvem */
-                    (n.fotos || []).forEach(function (fn) {
-                        if (!fn.id) return;
-                        var fl = (L.fotos || []).find(function (x) { return x.id === fn.id; });
-                        if (fl && !fl.data && !fl.url && (fn.data || fn.url)) {
-                            fl.data = fn.data || null;
-                            fl.url = fn.url || null;
-                        }
-                    });
-                }
-            });
-            return Object.keys(map).map(function (k) { return map[k]; });
-        }
-
-        async function sincronizarTodosNuvem() {
-            var cfg = carregarConfigNuvem();
-            if (!cfg || !cfg.apiKey || !cfg.projectId) {
-                toast('Configure a nuvem antes de sincronizar.');
-                return;
-            }
-            if (!cfg.email || !cfg.senha) {
-                toast('Informe e-mail e senha do login da nuvem.');
-                return;
-            }
-            toast('Entrando na nuvem e sincronizando…');
-            await obterSessaoFirebase();
-
-            var canalAntes = canalVendas;
-            canalVendas = 'normal';
-            var db = carregar();
-            var ok = 0, falha = 0;
-
-            for (var i = 0; i < (db.atendimentos || []).length; i++) {
-                var r = await enviarAtendimentoNuvem(db.atendimentos[i]);
-                if (r.ok) {
-                    ok++;
-                    if (r.atendimento) {
-                        db.atendimentos[i] = Object.assign({}, db.atendimentos[i], {
-                            fotos: r.atendimento.fotos,
-                            syncNuvemEm: new Date().toISOString()
-                        });
-                    }
-                } else falha++;
-            }
-
-            var nuvemLista = await baixarAtendimentosNuvem();
-            db.atendimentos = mesclarAtendimentosLocalNuvem(db.atendimentos, nuvemLista);
-            salvar(db);
-            canalVendas = canalAntes;
-
-            toast('Nuvem OK: ' + ok + ' enviado(s), ' + nuvemLista.length + ' na nuvem' +
-                (falha ? ', ' + falha + ' falha(s).' : '.'));
-            atualizarStatusNuvemUI();
-            renderTudo();
-        }
-
         document.getElementById('btnConfigPasta').addEventListener('click', configurarPastaRaiz);
         document.getElementById('btnAtualizarPasta').addEventListener('click', atualizarStatusPastaUI);
-        document.getElementById('btnSalvarNuvem').addEventListener('click', function () {
-            var cfg = lerConfigNuvemDoForm();
-            if (!cfg.apiKey || !cfg.projectId) {
-                toast('Informe pelo menos API Key e Project ID.');
-                return;
-            }
-            if (!cfg.email || !cfg.senha) {
-                toast('Informe e-mail e senha para proteger a nuvem.');
-                return;
-            }
-            salvarConfigNuvem(cfg);
-            _fbSessao = null;
-            atualizarStatusNuvemUI();
-            toast('Configuração da nuvem salva neste aparelho.');
-        });
-        document.getElementById('btnLimparNuvem').addEventListener('click', function () {
-            if (!confirm('Remover a configuração da nuvem deste aparelho?')) return;
-            salvarConfigNuvem(null);
-            _fbSessao = null;
-            preencherFormNuvem();
-            toast('Configuração da nuvem removida.');
-        });
-        document.getElementById('btnTestarNuvem').addEventListener('click', function () {
-            var cfg = lerConfigNuvemDoForm();
-            salvarConfigNuvem(cfg);
-            _fbSessao = null;
-            obterSessaoFirebase().then(function () {
-                toast('Login na nuvem OK — pode sincronizar.');
-                atualizarStatusNuvemUI();
-            }).catch(function (err) {
-                toast('Login falhou: ' + (err.message || err.code || 'verifique e-mail/senha e Authentication'));
-            });
-        });
-        document.getElementById('btnSyncNuvem').addEventListener('click', function () {
-            var cfg = lerConfigNuvemDoForm();
-            if (cfg.apiKey) salvarConfigNuvem(cfg);
-            sincronizarTodosNuvem().catch(function (err) {
-                toast('Erro na nuvem: ' + (err.message || err.code || 'verifique login e regras do Firestore'));
-            });
-        });
 
         function somaPorTipo(tipo) {
             return itensTemp.reduce(function (s, it) {
@@ -3431,40 +3073,6 @@
                 var pasta = await salvarAtendimentoNaPastaPC(payload, resolvido.clienteNome);
                 if (pasta.ok) extras.push('PC: ' + pasta.pasta);
             } catch (errPasta) { /* opcional */ }
-
-            var cfgN = carregarConfigNuvem();
-            if (cfgN && cfgN.apiKey && cfgN.projectId) {
-                try {
-                    var nuv = await enviarAtendimentoNuvem(payload);
-                    if (nuv.ok) {
-                        extras.push('nuvem OK');
-                        if (nuv.atendimento && nuv.atendimento.fotos) {
-                            var db2 = carregar();
-                            var ix = db2.atendimentos.findIndex(function (a) { return a.id === payload.id; });
-                            if (ix >= 0) {
-                                /* Mantém data/url locais — a nuvem só guarda referência (sem apagar a foto da ficha) */
-                                var locais = db2.atendimentos[ix].fotos || payload.fotos || [];
-                                var nuvFotos = nuv.atendimento.fotos || [];
-                                db2.atendimentos[ix].fotos = nuvFotos.map(function (fn, idx) {
-                                    var fl = locais.find(function (x) { return x && fn && x.id === fn.id; }) || locais[idx] || {};
-                                    return {
-                                        id: (fn && fn.id) || fl.id || uid(),
-                                        data: fl.data || null,
-                                        url: fl.url || (fn && fn.url) || null
-                                    };
-                                });
-                                if (!db2.atendimentos[ix].fotos.length && locais.length) {
-                                    db2.atendimentos[ix].fotos = locais;
-                                }
-                                db2.atendimentos[ix].syncNuvemEm = new Date().toISOString();
-                                salvar(db2);
-                            }
-                        }
-                    } else extras.push('nuvem: ' + (nuv.motivo || 'falhou'));
-                } catch (errN) {
-                    extras.push('nuvem: erro');
-                }
-            }
 
             toast(
                 (id ? 'Atendimento atualizado' : 'Atendimento salvo') +
@@ -3637,10 +3245,12 @@
             }
             return '<div class="nota-espelho" id="notaEspelhoHtml">' +
                 '<div class="nota-topo">' +
-                '<img src="' + esc(logoSrc(emp)) + '" alt="' + esc(emp.nome) + '">' +
-                '<h1>' + esc(emp.nome || 'HM Centro Automotivo') + '</h1>' +
-                '<div class="nota-sub">Funilaria e Pintura' + (end ? '<br>' + esc(end) : '') +
-                (contatos.length ? '<br>' + esc(contatos.join(' · ')) : '') + '</div>' +
+                '<img src="' + esc(logoSrc(emp)) + '" alt="' + esc(emp.nome || 'HM Centro Automotivo') + '">' +
+                '<div class="nota-sub">' +
+                (end ? esc(end) : '') +
+                (end && contatos.length ? '<br>' : '') +
+                (contatos.length ? esc(contatos.join(' · ')) : '') +
+                '</div>' +
                 '<div class="nota-sub" style="margin-top:6px;font-weight:700;color:#0d3d6e">ESPELHO DE ATENDIMENTO</div>' +
                 '<div class="nota-sub">Registro ' + esc(fmtData(a.entrada || a.criadoEm)) +
                 (a.id ? ' · ID ' + esc(String(a.id).slice(-6)) : '') + '</div>' +
@@ -3863,7 +3473,6 @@
             var comFotos = await perguntarEnviarComFotos(a, { forcarPergunta: true });
             if (comFotos === null) return;
             if (comFotos) {
-                a = await garantirFotosCarregadas(a);
                 var okFoto = (a.fotos || []).some(function (f) { return f && (f.data || f.url); });
                 if (!okFoto) {
                     toast('Não há fotos disponíveis — imprimindo só o documento.');
@@ -3914,24 +3523,6 @@
             return doc;
         }
 
-        async function garantirFotosCarregadas(a) {
-            if (!a || !a.fotos || !a.fotos.length) return a;
-            var precisa = a.fotos.some(function (f) { return f && f.id && !f.data && !f.url; });
-            if (!precisa) return a;
-            var cfgN = carregarConfigNuvem();
-            if (!cfgN || !cfgN.apiKey || !cfgN.projectId) return a;
-            try {
-                await hidratarFotosDaNuvem(a);
-                var db = carregar();
-                var ix = db.atendimentos.findIndex(function (x) { return x.id === a.id; });
-                if (ix >= 0) {
-                    db.atendimentos[ix].fotos = a.fotos;
-                    salvar(db);
-                }
-            } catch (e) { /* segue com o que tiver */ }
-            return a;
-        }
-
         async function abrirLinkAssinatura(id) {
             var db = carregar();
             var a = db.atendimentos.find(function (x) { return x.id === id; });
@@ -3939,7 +3530,6 @@
             var comFotos = await perguntarEnviarComFotos(a, { forcarPergunta: true });
             if (comFotos === null) return;
             if (comFotos) {
-                a = await garantirFotosCarregadas(a);
                 var okFoto = (a.fotos || []).some(function (f) { return f && (f.data || f.url); });
                 if (!okFoto) {
                     toast('Não há fotos disponíveis neste atendimento. Enviando só o documento.');
@@ -5057,7 +4647,7 @@
             var emp = getEmpresa(db);
             document.getElementById('printNota').innerHTML =
                 '<div class="nota-espelho">' +
-                '<div class="nota-topo"><img src="' + esc(logoSrc(emp)) + '" alt=""><h1>' + esc(emp.nome) + '</h1>' +
+                '<div class="nota-topo"><img src="' + esc(logoSrc(emp)) + '" alt="">' +
                 '<div class="nota-sub">Relatório de Caixa · ' + esc(fmtData(hojeISO())) + '</div></div>' +
                 document.getElementById('relCxConteudo').innerHTML +
                 '<div style="margin-top:12px">Balcão: <strong>' + document.getElementById('relCxBalcao').textContent +
@@ -5222,7 +4812,6 @@
         atualizarBadgeCanal();
         renderTudo();
         preencherFormEmpresa();
-        preencherFormNuvem();
         atualizarStatusPastaUI();
 
         /* PWA — instalar como aplicativo (logo na tela inicial) */
