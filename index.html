@@ -731,6 +731,18 @@
 
         .fotos-contador { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
 
+        .cliente-card-os {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(126, 200, 255, 0.35);
+            background: rgba(26, 111, 196, 0.12);
+            font-size: 0.86rem;
+            line-height: 1.45;
+        }
+        .cliente-card-os strong { color: #9fd3ff; }
+        .cliente-card-os .linha { margin-top: 4px; color: var(--text); }
+
         .nota-fotos {
             display: flex;
             flex-wrap: wrap;
@@ -839,21 +851,21 @@
             margin-bottom: 12px;
         }
         .nota-espelho .nota-topo img {
-            max-width: 280px;
-            max-height: 72px;
+            max-width: 360px;
+            max-height: 110px;
             object-fit: contain;
         }
         .nota-espelho h1 {
-            font-size: 1.15rem;
+            font-size: 1.4rem;
             margin: 8px 0 2px;
             color: #0d3d6e;
             letter-spacing: 0.04em;
         }
-        .nota-espelho .nota-sub { color: #444; font-size: 0.85rem; }
+        .nota-espelho .nota-sub { color: #444; font-size: 1rem; }
         .nota-bloco { margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; }
         .nota-bloco .tit {
-            padding: 6px 10px;
-            font-size: 0.78rem;
+            padding: 8px 12px;
+            font-size: 0.95rem;
             font-weight: 700;
             text-transform: uppercase;
             color: #fff;
@@ -864,21 +876,78 @@
         .nota-bloco .tit.verde { background: #1e8449; }
         .nota-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
         .nota-campo.full { grid-column: 1 / -1; }
-        .nota-label { display: block; font-size: 0.68rem; color: #666; text-transform: uppercase; font-weight: 700; }
-        .nota-valor { display: block; font-size: 0.92rem; margin-top: 2px; white-space: pre-wrap; }
-        .nota-itens { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        .nota-itens th, .nota-itens td { border-bottom: 1px solid #ddd; padding: 6px 4px; text-align: left; }
-        .nota-total { text-align: right; font-size: 1.15rem; font-weight: 700; margin-top: 8px; color: #0d3d6e; }
-        .nota-sigs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+        .nota-label { display: block; font-size: 0.8rem; color: #666; text-transform: uppercase; font-weight: 700; }
+        .nota-valor { display: block; font-size: 1.05rem; margin-top: 2px; white-space: pre-wrap; }
+
+        /* Cliente & Oficina: mais compacto (label + valor na mesma linha) */
+        .nota-grid-compacta {
+            gap: 2px 14px;
+            padding: 6px 8px;
+        }
+        .nota-grid-compacta .nota-campo {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 0 6px;
+            line-height: 1.2;
+            padding: 1px 0;
+        }
+        .nota-grid-compacta .nota-label {
+            display: inline;
+            font-size: 0.68rem;
+            margin: 0;
+        }
+        .nota-grid-compacta .nota-label::after { content: ':'; }
+        .nota-grid-compacta .nota-valor {
+            display: inline;
+            margin-top: 0;
+            font-size: 0.92rem;
+        }
+        .nota-bloco.compacto { margin-bottom: 8px; }
+        .nota-bloco.compacto .tit { padding: 5px 10px; font-size: 0.82rem; }
+        .nota-itens { width: 100%; border-collapse: collapse; font-size: 1rem; }
+        .nota-itens th, .nota-itens td { border-bottom: 1px solid #ddd; padding: 8px 4px; text-align: left; }
+        .nota-itens.compacta { font-size: 0.88rem; }
+        .nota-itens.compacta th, .nota-itens.compacta td { padding: 4px 3px; }
+        .nota-subtotais { margin-top: 8px; font-size: 1rem; color: #444; }
+        .nota-subtotais.compacto { margin-top: 4px; font-size: 0.88rem; }
+        .nota-total { text-align: right; font-size: 1.35rem; font-weight: 700; margin-top: 8px; color: #0d3d6e; }
+        .nota-total.compacto { font-size: 1.1rem; margin-top: 4px; }
+        .nota-valores-pad { padding: 10px; }
+        .nota-valores-pad.compacto { padding: 6px 8px; }
+        .nota-sigs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 22px; }
         .nota-sig {
-            border-top: 1px solid #333;
-            min-height: 70px;
-            padding-top: 8px;
+            border-top: none;
+            min-height: auto;
+            padding-top: 0;
             text-align: center;
-            font-size: 0.8rem;
+            font-size: 0.95rem;
             color: #444;
         }
-        .nota-sig img { max-height: 64px; max-width: 100%; background: #fff; }
+        .nota-sig-espaco {
+            min-height: 88px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 4px;
+        }
+        .nota-sig-base {
+            padding-top: 6px;
+            font-size: 0.85rem;
+            color: #444;
+        }
+        .nota-sigs.compacto {
+            gap: 18px;
+            margin-top: 20px;
+        }
+        .nota-sigs.compacto .nota-sig-espaco {
+            min-height: 80px;
+        }
+        .nota-sigs.compacto .nota-sig-base {
+            font-size: 0.8rem;
+        }
+        .nota-sig img { max-height: 70px; max-width: 100%; background: #fff; }
 
         .mirror-print-section { display: none; }
 
@@ -890,11 +959,106 @@
                 position: absolute;
                 left: 0; top: 0;
                 width: 100%;
-                padding: 12px;
+                padding: 10mm;
                 background: #fff;
                 color: #111;
             }
             .sidebar, .main, .toast, .modal-overlay, .sidebar-overlay, .install-banner, .btn-menu { display: none !important; }
+
+            /* Impressão: logo maior + letras ampliadas (+2 tamanhos) */
+            .mirror-print-section .nota-espelho {
+                font-size: 24px;
+                padding: 0;
+            }
+            .mirror-print-section .nota-topo img {
+                max-width: 520px !important;
+                max-height: 180px !important;
+            }
+            .mirror-print-section .nota-espelho h1 {
+                font-size: 32px !important;
+                margin: 10px 0 4px !important;
+            }
+            .mirror-print-section .nota-sub {
+                font-size: 22px !important;
+                line-height: 1.35;
+            }
+            .mirror-print-section .nota-bloco .tit {
+                font-size: 22px !important;
+                padding: 10px 12px !important;
+            }
+            .mirror-print-section .nota-label {
+                font-size: 20px !important;
+            }
+            .mirror-print-section .nota-valor {
+                font-size: 24px !important;
+                margin-top: 4px !important;
+            }
+            .mirror-print-section .nota-bloco.compacto {
+                margin-bottom: 8px !important;
+            }
+            .mirror-print-section .nota-bloco.compacto .tit {
+                font-size: 16px !important;
+                padding: 5px 8px !important;
+            }
+            .mirror-print-section .nota-grid-compacta {
+                gap: 1px 12px !important;
+                padding: 4px 8px !important;
+            }
+            .mirror-print-section .nota-grid-compacta .nota-label {
+                font-size: 14px !important;
+            }
+            .mirror-print-section .nota-grid-compacta .nota-valor {
+                font-size: 16px !important;
+                margin-top: 0 !important;
+                line-height: 1.2 !important;
+            }
+            .mirror-print-section .nota-itens {
+                font-size: 18px !important;
+            }
+            .mirror-print-section .nota-itens th,
+            .mirror-print-section .nota-itens td {
+                padding: 4px 4px !important;
+            }
+            .mirror-print-section .nota-itens.compacta {
+                font-size: 16px !important;
+            }
+            .mirror-print-section .nota-itens.compacta th,
+            .mirror-print-section .nota-itens.compacta td {
+                padding: 3px 3px !important;
+            }
+            .mirror-print-section .nota-valores-pad.compacto {
+                padding: 4px 6px !important;
+            }
+            .mirror-print-section .nota-subtotais {
+                font-size: 18px !important;
+            }
+            .mirror-print-section .nota-subtotais.compacto {
+                font-size: 16px !important;
+                margin-top: 4px !important;
+            }
+            .mirror-print-section .nota-total {
+                font-size: 22px !important;
+            }
+            .mirror-print-section .nota-total.compacto {
+                font-size: 20px !important;
+                margin-top: 4px !important;
+            }
+            .mirror-print-section .nota-sigs.compacto {
+                gap: 18px !important;
+                margin-top: 18px !important;
+                page-break-inside: avoid;
+            }
+            .mirror-print-section .nota-sigs.compacto .nota-sig-espaco {
+                min-height: 95px !important;
+            }
+            .mirror-print-section .nota-sigs.compacto .nota-sig-base {
+                font-size: 15px !important;
+                padding-top: 6px !important;
+            }
+            .mirror-print-section .nota-fotos img {
+                width: 180px !important;
+                height: 135px !important;
+            }
         }
 
         /* Tablet */
@@ -1173,6 +1337,7 @@
                         </div>
                     </div>
                     <p class="hint" style="margin-top:10px" id="atClienteStatus">Digite o nome: se existir no cadastro, aparece na busca; se não, fica como cliente avulso.</p>
+                    <div id="atClienteCard" class="cliente-card-os" style="display:none"></div>
                 </div>
                 <div class="box">
                     <h2>Responsável</h2>
@@ -1230,11 +1395,12 @@
                 </div>
 
                 <div class="box photo-zone">
-                    <h2>Fotos do veículo (chegada)</h2>
-                    <p class="hint">Igual ao controle de carros: tire foto ou escolha da galeria. Fica salvo no atendimento (navegador). Se configurar a pasta no PC e a nuvem em <strong>Config</strong>, também grava no computador e sincroniza depois.</p>
+                    <h2>Fotos do veículo (uso interno)</h2>
+                    <p class="hint">As fotos ficam guardadas na ficha/pasta do cliente (só para você). Na hora de <strong>imprimir ou enviar ao cliente</strong>, o sistema pergunta se inclui as fotos ou não.</p>
                     <div class="photo-buttons">
                         <button type="button" class="btn btn-primary" id="btnTirarFoto">📷 Tirar foto</button>
                         <button type="button" class="btn btn-secondary" id="btnGaleriaFoto">🖼️ Galeria / arquivo</button>
+                        <button type="button" class="btn btn-secondary" id="btnExportarFotosForm" style="display:none">📤 Exportar imagens</button>
                         <button type="button" class="btn btn-danger" id="btnLimparFotos" style="display:none">Limpar todas</button>
                     </div>
                     <input type="file" id="inFotoCamera" accept="image/*" capture="environment">
@@ -1782,8 +1948,34 @@
             <div id="modalNotaCorpo"></div>
             <div class="modal-acoes">
                 <button type="button" class="btn btn-pdf" id="btnNotaPdf">Salvar / Imprimir PDF</button>
-                <button type="button" class="btn btn-assinar" id="btnNotaLink">Link p/ Cliente Assinar</button>
+                <button type="button" class="btn btn-assinar" id="btnNotaLink">Enviar nota ao cliente</button>
+                <button type="button" class="btn btn-secondary" id="btnNotaExportFotos">Exportar fotos</button>
                 <button type="button" class="btn btn-secondary" id="btnNotaFechar">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalFotosCliente">
+        <div class="modal-box" style="width:min(480px,100%)">
+            <h3>Enviar nota ao cliente</h3>
+            <p class="hint" id="modalFotosClienteMsg">As fotos ficam salvas internamente na pasta/ficha do cliente. Escolha como enviar o documento:</p>
+            <div class="modal-acoes" style="flex-direction:column">
+                <button type="button" class="btn btn-ok" id="btnFotosSim" style="width:100%">📷 COM FOTOS — documento + fotos anexadas</button>
+                <button type="button" class="btn btn-secondary" id="btnFotosNao" style="width:100%">📄 SEM FOTOS — apenas o documento</button>
+                <button type="button" class="btn btn-danger" id="btnFotosCancelar" style="width:100%">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalExportFotos">
+        <div class="modal-box" style="width:min(480px,100%)">
+            <h3>Exportar imagens internas</h3>
+            <p class="hint">Escolha o formato. Os arquivos baixam no seu computador (pasta de downloads).</p>
+            <div class="modal-acoes" style="flex-direction:column">
+                <button type="button" class="btn btn-primary" id="btnExpJpeg" style="width:100%">🖼️ JPEG (.jpg)</button>
+                <button type="button" class="btn btn-primary" id="btnExpPng" style="width:100%">🖼️ PNG (.png)</button>
+                <button type="button" class="btn btn-pdf" id="btnExpPdf" style="width:100%">📄 PDF (álbum das fotos)</button>
+                <button type="button" class="btn btn-secondary" id="btnExpFechar" style="width:100%">Fechar</button>
             </div>
         </div>
     </div>
@@ -1791,7 +1983,7 @@
     <div class="modal-overlay" id="modalLinkAssinatura">
         <div class="modal-box">
             <h3>Link para o cliente assinar</h3>
-            <p class="hint">Envie por WhatsApp. O cliente abre o espelho e assina na tela (como no relatório de veículos).</p>
+            <p class="hint">Documento gerado conforme sua escolha (com ou sem fotos). Envie por WhatsApp para o cliente abrir e assinar.</p>
             <input type="text" id="inputLinkAssinatura" class="modal-link-input" readonly>
             <div class="modal-acoes">
                 <button type="button" class="btn btn-primary" id="btnCopiarLink">Copiar link</button>
@@ -2109,23 +2301,97 @@
             return { ok: true, clienteId: null, clienteNome: nome, clienteAvulso: true };
         }
 
+        function snapshotClienteCadastro(db, resolvido) {
+            if (!resolvido || !resolvido.ok) return null;
+            if (resolvido.clienteAvulso) {
+                return {
+                    nome: resolvido.clienteNome || '',
+                    avulso: true,
+                    cpf: '',
+                    cnpj: '',
+                    telefone: '',
+                    email: '',
+                    cidade: '',
+                    cep: '',
+                    endereco: '',
+                    numero: ''
+                };
+            }
+            var c = db.clientes.find(function (x) { return x.id === resolvido.clienteId; });
+            if (!c) {
+                return { nome: resolvido.clienteNome || '', avulso: false };
+            }
+            return {
+                nome: c.nome || '',
+                avulso: false,
+                cpf: c.cpf || '',
+                cnpj: c.cnpj || '',
+                telefone: c.telefone || c.tel || '',
+                email: c.email || '',
+                cidade: c.cidade || '',
+                cep: c.cep || '',
+                endereco: c.endereco || '',
+                numero: c.numero || ''
+            };
+        }
+
+        function dadosClienteDoAtendimento(db, a) {
+            if (a && a.clienteCadastro) return a.clienteCadastro;
+            if (a && a.clienteId) {
+                return snapshotClienteCadastro(db, {
+                    ok: true,
+                    clienteId: a.clienteId,
+                    clienteNome: a.clienteNome,
+                    clienteAvulso: false
+                });
+            }
+            return {
+                nome: (a && a.clienteNome) || nomeAtendimento(db, a),
+                avulso: !!(a && a.clienteAvulso),
+                cpf: '', cnpj: '', telefone: '', email: '', cidade: '', cep: '', endereco: '', numero: ''
+            };
+        }
+
+        function htmlCardClienteOs(cad) {
+            if (!cad) return '';
+            var linhas = [];
+            if (cad.cpf) linhas.push('<div class="linha"><strong>CPF:</strong> ' + esc(cad.cpf) + '</div>');
+            if (cad.cnpj) linhas.push('<div class="linha"><strong>CNPJ:</strong> ' + esc(cad.cnpj) + '</div>');
+            if (cad.telefone) linhas.push('<div class="linha"><strong>Telefone:</strong> ' + esc(cad.telefone) + '</div>');
+            if (cad.email) linhas.push('<div class="linha"><strong>E-mail:</strong> ' + esc(cad.email) + '</div>');
+            var end = [cad.endereco, cad.numero].filter(Boolean).join(', ');
+            if (end) linhas.push('<div class="linha"><strong>Endereço:</strong> ' + esc(end) + '</div>');
+            if (cad.cep) linhas.push('<div class="linha"><strong>CEP:</strong> ' + esc(cad.cep) + '</div>');
+            if (cad.cidade) linhas.push('<div class="linha"><strong>Cidade:</strong> ' + esc(cad.cidade) + '</div>');
+            return '<div style="font-weight:700;margin-bottom:6px;color:#8fe0b8">Cadastro: ' + esc(cad.nome || '—') + '</div>' +
+                (linhas.length ? linhas.join('') : '<div class="linha muted">Sem CPF/telefone no cadastro — complete em Clientes.</div>');
+        }
+
         function atualizarStatusClienteAt() {
             var db = carregar();
             var texto = document.getElementById('atClienteBusca').value.trim();
             var status = document.getElementById('atClienteStatus');
             var hid = document.getElementById('atClienteId');
+            var card = document.getElementById('atClienteCard');
             if (!texto) {
                 hid.value = '';
                 status.innerHTML = 'Digite o nome: se existir no cadastro, aparece na busca; se não, fica como cliente avulso.';
+                card.style.display = 'none';
+                card.innerHTML = '';
                 return;
             }
             var r = resolverClienteAtendimento(db, texto);
             if (!r.clienteAvulso) {
                 hid.value = r.clienteId;
-                status.innerHTML = '<span style="color:#8fe0b8;font-weight:700">Cliente cadastrado</span> — ' + esc(r.clienteNome);
+                status.innerHTML = '<span style="color:#8fe0b8;font-weight:700">Cliente cadastrado</span> — dados do cadastro carregados abaixo.';
+                var snap = snapshotClienteCadastro(db, r);
+                card.innerHTML = htmlCardClienteOs(snap);
+                card.style.display = '';
             } else {
                 hid.value = '';
                 status.innerHTML = '<span style="color:#9fd3ff;font-weight:700">Cliente avulso</span> — será salvo só com este nome.';
+                card.style.display = 'none';
+                card.innerHTML = '';
             }
         }
 
@@ -2474,8 +2740,10 @@
             var cont = document.getElementById('fotosContador');
             var btnLimpar = document.getElementById('btnLimparFotos');
             var n = fotosAtuais.length;
-            cont.textContent = n ? (n + ' foto' + (n > 1 ? 's' : '')) : 'Nenhuma foto';
+            cont.textContent = n ? (n + ' foto' + (n > 1 ? 's' : '') + ' (internas)') : 'Nenhuma foto';
             btnLimpar.style.display = n ? '' : 'none';
+            var btnExp = document.getElementById('btnExportarFotosForm');
+            if (btnExp) btnExp.style.display = n ? '' : 'none';
             if (!n) {
                 box.innerHTML = '';
                 return;
@@ -3127,6 +3395,7 @@
                 clienteId: resolvido.clienteId,
                 clienteNome: resolvido.clienteNome,
                 clienteAvulso: resolvido.clienteAvulso,
+                clienteCadastro: snapshotClienteCadastro(db, resolvido),
                 responsavel: document.getElementById('atResponsavel').value.trim(),
                 carro: document.getElementById('atCarro').value.trim(),
                 placa: (document.getElementById('atPlaca').value || '').toUpperCase().trim(),
@@ -3318,27 +3587,40 @@
             }).join('');
             var pecas = lista.reduce(function (s, it) { return s + ((it.tipo || 'peca') === 'peca' ? (Number(it.valor) || 0) : 0); }, 0);
             var mao = lista.reduce(function (s, it) { return s + (it.tipo === 'mao' ? (Number(it.valor) || 0) : 0); }, 0);
-            return '<table class="nota-itens"><thead><tr><th>Tipo</th><th>Descrição</th><th style="text-align:right">Valor</th></tr></thead><tbody>' +
+            return '<table class="nota-itens compacta"><thead><tr><th>Tipo</th><th>Descrição</th><th style="text-align:right">Valor</th></tr></thead><tbody>' +
                 rows + '</tbody></table>' +
-                '<div style="margin-top:8px;font-size:0.85rem;color:#444">Peças: <strong>' + moeda(pecas) +
+                '<div class="nota-subtotais compacto">Peças: <strong>' + moeda(pecas) +
                 '</strong> · Mão de obra: <strong>' + moeda(mao) + '</strong></div>' +
-                '<div class="nota-total">Total: ' + moeda(pecas + mao) + '</div>';
+                '<div class="nota-total compacto">Total: ' + moeda(pecas + mao) + '</div>';
         }
 
-        function htmlNotaEspelho(db, a) {
+        function htmlNotaEspelho(db, a, opts) {
+            opts = opts || {};
+            var incluirFotos = !!opts.incluirFotos;
             var emp = getEmpresa(db);
-            var nome = nomeAtendimento(db, a);
+            var cad = dadosClienteDoAtendimento(db, a);
+            var nome = cad.nome || nomeAtendimento(db, a);
             var end = enderecoCompleto(emp);
             var contatos = [];
             if (emp.cnpj) contatos.push('CNPJ: ' + emp.cnpj);
             if (emp.telefone) contatos.push('Tel: ' + emp.telefone);
             if (emp.email) contatos.push(emp.email);
-            var sig = '';
+            var sigEspaco = '';
+            var sigBase = 'Assinatura do Cliente';
             if (a.assinaturaCliente) {
-                sig = '<img src="' + a.assinaturaCliente + '" alt="Assinatura">' +
-                    '<div style="color:#155724;font-size:0.75rem;margin-top:4px">Assinado em ' + esc(fmtData(a.assinadoEm) + (a.assinadoEm && a.assinadoEm.length > 10 ? ' ' + String(a.assinadoEm).slice(11, 16) : '')) + '</div>';
-            } else {
-                sig = 'Assinatura do Cliente';
+                sigEspaco = '<img src="' + a.assinaturaCliente + '" alt="Assinatura">';
+                sigBase = 'Assinado em ' + esc(fmtData(a.assinadoEm) + (a.assinadoEm && a.assinadoEm.length > 10 ? ' ' + String(a.assinadoEm).slice(11, 16) : ''));
+            }
+            var endCli = [cad.endereco, cad.numero].filter(Boolean).join(', ');
+            var blocoFotos = '';
+            if (incluirFotos && a.fotos && a.fotos.length) {
+                blocoFotos =
+                    '<div class="nota-bloco compacto"><div class="tit azul">Fotos do veículo</div><div class="nota-fotos">' +
+                    a.fotos.map(function (f) {
+                        var s = f.url || f.data;
+                        return s ? '<img src="' + s + '" alt="Foto">' : '';
+                    }).join('') +
+                    '</div></div>';
             }
             return '<div class="nota-espelho" id="notaEspelhoHtml">' +
                 '<div class="nota-topo">' +
@@ -3350,14 +3632,19 @@
                 '<div class="nota-sub">Registro ' + esc(fmtData(a.entrada || a.criadoEm)) +
                 (a.id ? ' · ID ' + esc(String(a.id).slice(-6)) : '') + '</div>' +
                 '</div>' +
-                '<div class="nota-bloco"><div class="tit azul">Cliente &amp; Oficina</div><div class="nota-grid">' +
-                '<div class="nota-campo full"><span class="nota-label">Cliente</span><span class="nota-valor">' + esc(nome) + (a.clienteAvulso ? ' (avulso)' : '') + '</span></div>' +
+                '<div class="nota-bloco compacto"><div class="tit azul">Cliente &amp; Oficina</div><div class="nota-grid nota-grid-compacta">' +
+                '<div class="nota-campo full"><span class="nota-label">Cliente</span><span class="nota-valor">' + esc(nome) + (cad.avulso || a.clienteAvulso ? ' (avulso)' : '') + '</span></div>' +
+                (cad.cpf ? '<div class="nota-campo"><span class="nota-label">CPF</span><span class="nota-valor">' + esc(cad.cpf) + '</span></div>' : '') +
+                (cad.cnpj ? '<div class="nota-campo"><span class="nota-label">CNPJ</span><span class="nota-valor">' + esc(cad.cnpj) + '</span></div>' : '') +
+                (cad.telefone ? '<div class="nota-campo"><span class="nota-label">Telefone</span><span class="nota-valor">' + esc(cad.telefone) + '</span></div>' : '') +
+                (cad.email ? '<div class="nota-campo"><span class="nota-label">E-mail</span><span class="nota-valor">' + esc(cad.email) + '</span></div>' : '') +
+                (endCli ? '<div class="nota-campo full"><span class="nota-label">Endereço</span><span class="nota-valor">' + esc(endCli) + (cad.cidade ? ' — ' + esc(cad.cidade) : '') + '</span></div>' : '') +
                 '<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' + esc(a.responsavel || '—') + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Status</span><span class="nota-valor">' + esc(a.status || '—') + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Entrada</span><span class="nota-valor">' + esc(fmtData(a.entrada)) + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Saída</span><span class="nota-valor">' + esc(fmtData(a.saida)) + '</span></div>' +
                 '</div></div>' +
-                '<div class="nota-bloco"><div class="tit vermelho">Veículo</div><div class="nota-grid">' +
+                '<div class="nota-bloco compacto"><div class="tit vermelho">Veículo</div><div class="nota-grid nota-grid-compacta">' +
                 '<div class="nota-campo"><span class="nota-label">Modelo</span><span class="nota-valor">' + esc(a.carro || '—') + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Placa</span><span class="nota-valor" style="letter-spacing:2px;font-weight:700">' + esc((a.placa || '—').toUpperCase()) + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Cidade / UF</span><span class="nota-valor">' + esc(a.cidadePlaca || '—') + '</span></div>' +
@@ -3365,24 +3652,165 @@
                 '<div class="nota-campo"><span class="nota-label">Cor</span><span class="nota-valor">' + esc(a.cor || '—') + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Chassi</span><span class="nota-valor">' + esc(a.chassi || '—') + '</span></div>' +
                 '</div></div>' +
-                '<div class="nota-bloco"><div class="tit escuro">Chegada &amp; Serviços</div><div class="nota-grid">' +
+                '<div class="nota-bloco compacto"><div class="tit escuro">Chegada &amp; Serviços</div><div class="nota-grid nota-grid-compacta">' +
                 '<div class="nota-campo full"><span class="nota-label">Estado de chegada</span><span class="nota-valor">' + esc(a.estado || 'Sem observações.') + '</span></div>' +
                 '<div class="nota-campo full"><span class="nota-label">Serviços</span><span class="nota-valor" style="color:#0d3d6e;font-weight:700">' + esc(a.servicos || '—') + '</span></div>' +
                 '</div></div>' +
-                ((a.fotos && a.fotos.length) ? (
-                    '<div class="nota-bloco"><div class="tit azul">Fotos do veículo</div><div class="nota-fotos">' +
-                    a.fotos.map(function (f) {
-                        var s = f.url || f.data;
-                        return s ? '<img src="' + s + '" alt="Foto">' : '';
-                    }).join('') +
-                    '</div></div>'
-                ) : '') +
-                '<div class="nota-bloco"><div class="tit verde">Valores</div><div style="padding:10px">' + htmlItensNota(a.itens) + '</div></div>' +
-                '<div class="nota-sigs">' +
-                '<div class="nota-sig">Assinatura do Responsável</div>' +
-                '<div class="nota-sig">' + sig + '</div>' +
+                blocoFotos +
+                '<div class="nota-bloco compacto"><div class="tit verde">Valores</div><div class="nota-valores-pad compacto">' + htmlItensNota(a.itens) + '</div></div>' +
+                '<div class="nota-sigs compacto">' +
+                '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Assinatura do Responsável</div></div>' +
+                '<div class="nota-sig"><div class="nota-sig-espaco">' + sigEspaco + '</div><div class="nota-sig-base">' + sigBase + '</div></div>' +
                 '</div></div>';
         }
+
+        function atendimentoTemFotos(a) {
+            return !!(a && a.fotos && a.fotos.some(function (f) { return f && (f.data || f.url); }));
+        }
+
+        var _fotosClienteResolve = null;
+        function perguntarEnviarComFotos(a, opts) {
+            opts = opts || {};
+            return new Promise(function (resolve) {
+                var tem = atendimentoTemFotos(a);
+                var btnCom = document.getElementById('btnFotosSim');
+                var msg = document.getElementById('modalFotosClienteMsg');
+                if (!tem && !opts.forcarPergunta) {
+                    resolve(false);
+                    return;
+                }
+                _fotosClienteResolve = resolve;
+                if (tem) {
+                    btnCom.style.display = '';
+                    btnCom.disabled = false;
+                    msg.textContent = 'Há ' + a.fotos.length + ' foto(s) na ficha (uso interno). Como deseja enviar a nota ao cliente?';
+                } else {
+                    btnCom.style.display = 'none';
+                    msg.textContent = 'Este atendimento não tem fotos. Será enviado apenas o documento.';
+                }
+                document.getElementById('modalFotosCliente').classList.add('aberto');
+            });
+        }
+        function fecharModalFotosCliente(resposta) {
+            document.getElementById('modalFotosCliente').classList.remove('aberto');
+            var btnCom = document.getElementById('btnFotosSim');
+            if (btnCom) { btnCom.style.display = ''; btnCom.disabled = false; }
+            if (_fotosClienteResolve) {
+                var r = _fotosClienteResolve;
+                _fotosClienteResolve = null;
+                r(resposta);
+            }
+        }
+
+        document.getElementById('btnFotosSim').addEventListener('click', function () { fecharModalFotosCliente(true); });
+        document.getElementById('btnFotosNao').addEventListener('click', function () { fecharModalFotosCliente(false); });
+        document.getElementById('btnFotosCancelar').addEventListener('click', function () { fecharModalFotosCliente(null); });
+        document.getElementById('modalFotosCliente').addEventListener('click', function (e) {
+            if (e.target.id === 'modalFotosCliente') fecharModalFotosCliente(null);
+        });
+
+        var _exportFotosCtx = null; /* { atendimento } ou { lista: fotosAtuais } */
+        function abrirModalExportFotos(ctx) {
+            var fotos = (ctx && ctx.atendimento && ctx.atendimento.fotos) || (ctx && ctx.lista) || [];
+            if (!fotos.length) { toast('Não há fotos para exportar.'); return; }
+            _exportFotosCtx = ctx;
+            document.getElementById('modalExportFotos').classList.add('aberto');
+        }
+        function fecharModalExportFotos() {
+            document.getElementById('modalExportFotos').classList.remove('aberto');
+            _exportFotosCtx = null;
+        }
+
+        function listaFotosExport() {
+            if (!_exportFotosCtx) return [];
+            if (_exportFotosCtx.atendimento) return _exportFotosCtx.atendimento.fotos || [];
+            return _exportFotosCtx.lista || [];
+        }
+
+        function baixarDataUrl(dataUrl, nomeArquivo) {
+            var a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = nomeArquivo;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        function dataUrlParaFormato(dataUrl, mime) {
+            return new Promise(function (resolve, reject) {
+                if (!dataUrl) { reject(new Error('sem imagem')); return; }
+                if (mime === 'image/jpeg' && String(dataUrl).indexOf('data:image/jpeg') === 0) {
+                    resolve(dataUrl);
+                    return;
+                }
+                var img = new Image();
+                img.onload = function () {
+                    var canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth || img.width;
+                    canvas.height = img.naturalHeight || img.height;
+                    var ctx = canvas.getContext('2d');
+                    if (mime === 'image/jpeg') {
+                        ctx.fillStyle = '#fff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    }
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL(mime, mime === 'image/jpeg' ? 0.92 : undefined));
+                };
+                img.onerror = reject;
+                img.src = dataUrl;
+            });
+        }
+
+        async function exportarFotosFormato(formato) {
+            var fotos = listaFotosExport().filter(function (f) { return f && (f.data || f.url); });
+            if (!fotos.length) { toast('Não há fotos para exportar.'); return; }
+            var baseNome = 'hm_fotos';
+            if (_exportFotosCtx && _exportFotosCtx.atendimento) {
+                var at = _exportFotosCtx.atendimento;
+                baseNome = slugPasta((at.clienteNome || 'cliente') + '_' + (at.placa || 'placa') + '_' + String(at.id || '').slice(-6));
+            } else if (_exportFotosCtx && _exportFotosCtx.lista) {
+                var placaForm = (document.getElementById('atPlaca') && document.getElementById('atPlaca').value) || 'placa';
+                var cliForm = (document.getElementById('atClienteBusca') && document.getElementById('atClienteBusca').value) || 'cliente';
+                baseNome = slugPasta(cliForm + '_' + placaForm);
+            }
+            if (formato === 'pdf') {
+                var html = '<div class="nota-espelho"><div class="nota-topo"><h1>Fotos do veículo (interno)</h1>' +
+                    '<div class="nota-sub">' + esc(baseNome) + ' · ' + fotos.length + ' foto(s)</div></div>' +
+                    '<div class="nota-fotos">' +
+                    fotos.map(function (f, i) {
+                        var s = f.data || f.url;
+                        return s ? '<div style="margin-bottom:12px;page-break-inside:avoid"><div class="nota-sub">Foto ' + (i + 1) + '</div><img src="' + s + '" style="max-width:100%;height:auto"></div>' : '';
+                    }).join('') +
+                    '</div></div>';
+                document.getElementById('printNota').innerHTML = html;
+                fecharModalExportFotos();
+                setTimeout(function () { window.print(); }, 300);
+                return;
+            }
+            var mime = formato === 'png' ? 'image/png' : 'image/jpeg';
+            var ext = formato === 'png' ? 'png' : 'jpg';
+            for (var i = 0; i < fotos.length; i++) {
+                try {
+                    var src = fotos[i].data || fotos[i].url;
+                    var out = await dataUrlParaFormato(src, mime);
+                    baixarDataUrl(out, baseNome + '_foto_' + (i + 1) + '.' + ext);
+                    await new Promise(function (r) { setTimeout(r, 350); });
+                } catch (e) { /* segue */ }
+            }
+            fecharModalExportFotos();
+            toast(fotos.length + ' arquivo(s) ' + ext.toUpperCase() + ' exportado(s).');
+        }
+
+        document.getElementById('btnExpJpeg').addEventListener('click', function () { exportarFotosFormato('jpeg'); });
+        document.getElementById('btnExpPng').addEventListener('click', function () { exportarFotosFormato('png'); });
+        document.getElementById('btnExpPdf').addEventListener('click', function () { exportarFotosFormato('pdf'); });
+        document.getElementById('btnExpFechar').addEventListener('click', fecharModalExportFotos);
+        document.getElementById('modalExportFotos').addEventListener('click', function (e) {
+            if (e.target.id === 'modalExportFotos') fecharModalExportFotos();
+        });
+        document.getElementById('btnExportarFotosForm').addEventListener('click', function () {
+            abrirModalExportFotos({ lista: fotosAtuais.slice() });
+        });
 
         function abrirNota(id) {
             sincronizarAssinaturasNoDb();
@@ -3392,7 +3820,11 @@
             atendimentoNotaAtual = a;
             document.getElementById('modalNotaTitulo').textContent =
                 'Nota — ' + (a.placa || '').toUpperCase() + ' · ' + nomeAtendimento(db, a);
-            document.getElementById('modalNotaCorpo').innerHTML = htmlNotaEspelho(db, a);
+            document.getElementById('modalNotaCorpo').innerHTML = htmlNotaEspelho(db, a, { incluirFotos: true }) +
+                (atendimentoTemFotos(a)
+                    ? '<p class="hint" style="margin-top:10px;color:#0d3d6e">Fotos acima são internas. Em <strong>Enviar nota ao cliente</strong> você escolhe COM FOTOS ou SEM FOTOS.</p>'
+                    : '');
+            document.getElementById('btnNotaExportFotos').style.display = atendimentoTemFotos(a) ? '' : 'none';
             document.getElementById('modalNota').classList.add('aberto');
         }
 
@@ -3400,21 +3832,29 @@
             document.getElementById('modalNota').classList.remove('aberto');
         }
 
-        function imprimirNotaPdf(id) {
+        async function imprimirNotaPdf(id) {
             sincronizarAssinaturasNoDb();
             var db = carregar();
             var a = id ? db.atendimentos.find(function (x) { return x.id === id; }) : atendimentoNotaAtual;
             if (!a) { toast('Selecione um atendimento.'); return; }
-            document.getElementById('printNota').innerHTML = htmlNotaEspelho(db, a);
+            var comFotos = await perguntarEnviarComFotos(a);
+            if (comFotos === null) return;
+            document.getElementById('printNota').innerHTML = htmlNotaEspelho(db, a, { incluirFotos: !!comFotos });
             setTimeout(function () { window.print(); }, 250);
         }
 
-        function documentoAssinatura(db, a) {
+        function documentoAssinatura(db, a, incluirFotos) {
             var emp = getEmpresa(db);
-            return {
+            var cad = dadosClienteDoAtendimento(db, a);
+            var doc = {
                 atendimentoId: a.id,
-                nomeCliente: nomeAtendimento(db, a),
-                clienteAvulso: !!a.clienteAvulso,
+                nomeCliente: cad.nome || nomeAtendimento(db, a),
+                clienteAvulso: !!(cad.avulso || a.clienteAvulso),
+                clienteCadastro: cad,
+                cpf: cad.cpf || '',
+                cnpj: cad.cnpj || '',
+                telefone: cad.telefone || '',
+                email: cad.email || '',
                 responsavel: a.responsavel || '',
                 carro: a.carro || '',
                 placa: a.placa || '',
@@ -3435,12 +3875,20 @@
                 empresaCnpj: emp.cnpj || '',
                 empresaLogo: logoSrc(emp)
             };
+            if (incluirFotos && a.fotos && a.fotos.length) {
+                doc.fotos = a.fotos.map(function (f) {
+                    return { id: f.id, url: f.url || null, data: f.data || null };
+                }).filter(function (f) { return f.data || f.url; });
+            }
+            return doc;
         }
 
-        function abrirLinkAssinatura(id) {
+        async function abrirLinkAssinatura(id) {
             var db = carregar();
             var a = db.atendimentos.find(function (x) { return x.id === id; });
             if (!a) { toast('Atendimento não encontrado.'); return; }
+            var comFotos = await perguntarEnviarComFotos(a, { forcarPergunta: true });
+            if (comFotos === null) return;
             if (!a.tokenAssinatura) a.tokenAssinatura = gerarTokenAssinatura();
 
             var mapa = carregarAssinaturas();
@@ -3448,7 +3896,7 @@
             var pack = {
                 token: a.tokenAssinatura,
                 atendimentoId: a.id,
-                documento: documentoAssinatura(db, a),
+                documento: documentoAssinatura(db, a, !!comFotos),
                 criadoEm: prev.criadoEm || new Date().toISOString(),
                 atualizadoEm: new Date().toISOString(),
                 assinaturaCliente: prev.assinaturaCliente || a.assinaturaCliente || null,
@@ -3471,7 +3919,10 @@
             document.getElementById('inputLinkAssinatura').value = link;
             document.getElementById('modalLinkAssinatura').classList.add('aberto');
             atendimentoNotaAtual = db.atendimentos[i] || a;
-            toast(pack.assinaturaCliente ? 'Cliente já assinou — link reenviado.' : 'Link pronto — envie ao cliente.');
+            toast(
+                (pack.assinaturaCliente ? 'Cliente já assinou — link reenviado.' : 'Link pronto — envie ao cliente.') +
+                (comFotos ? ' (com fotos)' : ' (sem fotos)')
+            );
             renderHistorico();
         }
 
@@ -3546,7 +3997,10 @@
                     '</select>' +
                     '<button type="button" class="btn btn-ver" data-ver="' + a.id + '">Ver nota</button>' +
                     '<button type="button" class="btn btn-pdf" data-pdf="' + a.id + '">PDF</button>' +
-                    '<button type="button" class="btn btn-assinar" data-link="' + a.id + '">Link Assinar</button>' +
+                    '<button type="button" class="btn btn-assinar" data-link="' + a.id + '">Enviar nota</button>' +
+                    (atendimentoTemFotos(a)
+                        ? '<button type="button" class="btn btn-secondary" data-expf="' + a.id + '">Exportar fotos</button>'
+                        : '') +
                     '<button type="button" class="btn btn-secondary" data-ed="' + a.id + '">Editar</button>' +
                     '<button type="button" class="btn btn-danger" data-ex="' + a.id + '">Excluir</button>' +
                     '</td>';
@@ -3565,6 +4019,13 @@
             });
             tb.querySelectorAll('[data-link]').forEach(function (b) {
                 b.addEventListener('click', function () { abrirLinkAssinatura(b.getAttribute('data-link')); });
+            });
+            tb.querySelectorAll('[data-expf]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    var dbx = carregar();
+                    var ax = dbx.atendimentos.find(function (x) { return x.id === b.getAttribute('data-expf'); });
+                    if (ax) abrirModalExportFotos({ atendimento: ax });
+                });
             });
             tb.querySelectorAll('[data-ed]').forEach(function (b) {
                 b.addEventListener('click', function () { editarAtendimento(b.getAttribute('data-ed')); });
@@ -3585,6 +4046,9 @@
         });
         document.getElementById('btnNotaLink').addEventListener('click', function () {
             if (atendimentoNotaAtual) abrirLinkAssinatura(atendimentoNotaAtual.id);
+        });
+        document.getElementById('btnNotaExportFotos').addEventListener('click', function () {
+            if (atendimentoNotaAtual) abrirModalExportFotos({ atendimento: atendimentoNotaAtual });
         });
         document.getElementById('btnFecharLink').addEventListener('click', fecharModalLink);
         document.getElementById('modalLinkAssinatura').addEventListener('click', function (e) {
