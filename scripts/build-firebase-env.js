@@ -39,17 +39,23 @@ const config = {
   projectId: env('FIREBASE_PROJECT_ID', 'VITE_FIREBASE_PROJECT_ID'),
   storageBucket: env('FIREBASE_STORAGE_BUCKET', 'VITE_FIREBASE_STORAGE_BUCKET'),
   messagingSenderId: env('FIREBASE_MESSAGING_SENDER_ID', 'VITE_FIREBASE_MESSAGING_SENDER_ID'),
-  appId: env('FIREBASE_APP_ID', 'VITE_FIREBASE_APP_ID'),
-  email: env('FIREBASE_AUTH_EMAIL'),
-  senha: env('FIREBASE_AUTH_PASSWORD')
+  appId: env('FIREBASE_APP_ID', 'VITE_FIREBASE_APP_ID')
 };
 
-const out = path.join(__dirname, '..', 'firebase-env.js');
-const body =
+const root = path.join(__dirname, '..');
+const bodyEnv =
   '/* GERADO AUTOMATICAMENTE — não edite nem commite */\n' +
   'window.HM_FIREBASE_CONFIG = ' + JSON.stringify(config, null, 2) + ';\n';
+const bodyPublic =
+  '/**\n' +
+  ' * Configuração pública do Firebase (cliente).\n' +
+  ' * Pode ir no GitHub Pages — a proteção dos dados é o login + regras do Firestore.\n' +
+  ' * NÃO coloque senha aqui.\n' +
+  ' */\n' +
+  'window.HM_FIREBASE_CONFIG = ' + JSON.stringify(config, null, 2) + ';\n';
 
-fs.writeFileSync(out, body, 'utf8');
+fs.writeFileSync(path.join(root, 'firebase-env.js'), bodyEnv, 'utf8');
+fs.writeFileSync(path.join(root, 'firebase-config.js'), bodyPublic, 'utf8');
 
 if (!config.apiKey || !config.projectId) {
   console.warn('[build-firebase-env] Aviso: FIREBASE_API_KEY / FIREBASE_PROJECT_ID vazios.');
