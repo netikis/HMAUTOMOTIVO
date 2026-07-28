@@ -3486,14 +3486,15 @@
                 return;
             }
             _htmlNotaImpressaoAtual = html;
-            var nomeArq = nomeArquivoOrcamentoPdf();
-            var titulo = _tituloNotaImpressao || nomeArq.replace(/\.pdf$/i, '');
+            var nomeArq = perguntarNomeArquivoPdf();
+            if (!nomeArq) return;
+            var titulo = nomeArq.replace(/\.pdf$/i, '');
             toast('Gerando PDF…');
 
             try {
                 var blob = await gerarPdfBlobDaNota(html, nomeArq);
                 var arquivo = new File([blob], nomeArq, { type: 'application/pdf' });
-                var texto = 'Orçamento / Espelho: ' + titulo.replace(/^Nota — |^Espelho — /, '');
+                var texto = titulo;
 
                 if (navigator.share) {
                     try {
@@ -3507,7 +3508,6 @@
                     }
                 }
 
-                /* Se o aparelho não compartilha arquivo, baixa o PDF com o nome do orçamento */
                 baixarBlobComoArquivo(blob, nomeArq);
                 toast('PDF salvo como ' + nomeArq + '. Anexe no WhatsApp.');
             } catch (err) {
@@ -3523,7 +3523,8 @@
                 return;
             }
             _htmlNotaImpressaoAtual = html;
-            var nomeArq = nomeArquivoOrcamentoPdf();
+            var nomeArq = perguntarNomeArquivoPdf();
+            if (!nomeArq) return;
             toast('Gerando PDF…');
             try {
                 var blob = await gerarPdfBlobDaNota(html, nomeArq);
@@ -3544,25 +3545,47 @@
             return '';
         }
 
-        function slugArquivo(s) {
-            return String(s || '')
-                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                .replace(/[^a-zA-Z0-9]+/g, '-')
-                .replace(/^-+|-+$/g, '')
-                .slice(0, 48);
+        function nomeCurtoVeiculo(carro) {
+            var p = String(carro || '').trim().split(/\s+/).filter(Boolean);
+            if (!p.length) return '';
+            if (p.length === 1) return p[0].toUpperCase();
+            return (p[0] + ' ' + p[1]).toUpperCase();
+        }
+
+        function nomeCurtoCliente(nome) {
+            var p = String(nome || '').trim().split(/\s+/).filter(Boolean);
+            if (!p.length) return 'CLIENTE';
+            return p[0].toUpperCase();
+        }
+
+        function nomeArquivoOrcamentoPdfPadrao(atendimento) {
+            var db = carregar();
+            var a = atendimento || atendimentoNotaAtual;
+            var veiculo = a ? nomeCurtoVeiculo(a.carro) : '';
+            var cliente = a ? nomeCurtoCliente(nomeAtendimento(db, a)) : 'CLIENTE';
+            var partes = ['ORÇAMENTO'];
+            if (veiculo) partes.push(veiculo);
+            if (cliente) partes.push(cliente);
+            return partes.join(' ');
+        }
+
+        function limparNomeArquivoPdf(nome) {
+            var n = String(nome || '').trim();
+            if (!n) n = 'ORÇAMENTO';
+            n = n.replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim();
+            if (!/\.pdf$/i.test(n)) n += '.pdf';
+            return n;
+        }
+
+        function perguntarNomeArquivoPdf() {
+            var padrao = nomeArquivoOrcamentoPdfPadrao();
+            var edit = prompt('Nome do PDF (pode alterar antes de salvar/enviar):', padrao);
+            if (edit === null) return null;
+            return limparNomeArquivoPdf(edit);
         }
 
         function nomeArquivoOrcamentoPdf(atendimento) {
-            var db = carregar();
-            var a = atendimento || atendimentoNotaAtual;
-            var placa = slugArquivo(((a && a.placa) || 'SEM-PLACA').toUpperCase()) || 'SEM-PLACA';
-            var cliente = '';
-            if (a) cliente = slugArquivo(nomeAtendimento(db, a));
-            if (!cliente) cliente = 'Cliente';
-            var carro = a && a.carro ? slugArquivo(a.carro) : '';
-            var partes = ['Orcamento', placa, cliente];
-            if (carro) partes.push(carro);
-            return partes.join('_') + '.pdf';
+            return limparNomeArquivoPdf(nomeArquivoOrcamentoPdfPadrao(atendimento));
         }
 
         function carregarHtml2Pdf() {
