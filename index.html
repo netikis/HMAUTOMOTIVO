@@ -265,7 +265,7 @@
             inset: 0;
             background: rgba(0, 0, 0, 0.55);
             z-index: 110;
-            backdrop-filter: blur(2px);
+            backdrop-filter: none;
         }
 
         .sidebar-close-mobile {
@@ -456,6 +456,98 @@
             margin: 0 0 10px;
             color: var(--chrome);
         }
+
+        .lista-relatorios-mes {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .item-relatorio-mes {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: rgba(0, 0, 0, 0.12);
+        }
+        .item-relatorio-mes .titulo-relatorio {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .item-relatorio-mes .desc-relatorio {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--muted, #95a5a6);
+        }
+        .acoes-relatorio-mes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .arvore-pastas-caixa {
+            background: rgba(0, 0, 0, 0.18);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 12px;
+            max-height: 520px;
+            overflow-y: auto;
+        }
+        .pasta-cx-ano,
+        .pasta-cx-mes,
+        .pasta-cx-tipo {
+            cursor: pointer;
+            font-weight: 700;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            user-select: none;
+        }
+        .pasta-cx-ano {
+            background: #1a5276;
+            color: #fff;
+            padding: 11px 12px;
+            border: 1px solid #154360;
+        }
+        .pasta-cx-mes {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 10px 12px 10px 28px;
+            border-left: 3px solid #f1c40f;
+        }
+        .pasta-cx-tipo {
+            background: #1a252f;
+            color: #bdc3c7;
+            padding: 8px 12px 8px 44px;
+            border-left: 3px solid #3498db;
+            font-size: 0.92rem;
+        }
+        .pasta-cx-mes-acoes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 4px 0 8px 28px;
+        }
+        .pasta-cx-conteudo {
+            padding: 8px 12px 8px 56px;
+            background: rgba(0, 0, 0, 0.22);
+            border-left: 3px solid #7f8c8d;
+            margin-bottom: 6px;
+        }
+        .pasta-cx-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 7px 0;
+            border-bottom: 1px solid rgba(127, 140, 141, 0.35);
+            font-size: 0.88rem;
+        }
+        .pasta-cx-item:last-child { border-bottom: none; }
+        .pasta-cx-item .val-ent { color: #27ae60; font-weight: 700; }
+        .pasta-cx-item .val-sai { color: #e74c3c; font-weight: 700; }
+        .pasta-cx-item .val-pen { color: #f39c12; font-weight: 700; }
 
         .grid-2 {
             display: grid;
@@ -815,6 +907,39 @@
             font-size: 0.82rem;
         }
         .btn-ver { background: #2c5aa0; color: #fff; }
+        .btn-receber {
+            background: transparent;
+            color: #2ecc71;
+            border: 1px solid #27ae60;
+            font-weight: 700;
+        }
+        .btn-receber:hover {
+            background: #27ae60;
+            color: #fff;
+        }
+        .badge-pago-os {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            background: rgba(39, 174, 96, 0.2);
+            color: #2ecc71;
+            border: 1px solid rgba(39, 174, 96, 0.45);
+        }
+        .receber-passo-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .receber-passo-btns .btn {
+            width: 100%;
+            padding: 12px 14px;
+            text-align: left;
+            font-size: 0.95rem;
+        }
         .btn-pdf { background: #c0392b; color: #fff; }
         .btn-assinar { background: #6f42c1; color: #fff; }
         .badge-assinado {
@@ -1005,28 +1130,89 @@
 
         .mirror-print-section { display: none; }
 
+        /* Durante print: sem blur/filtro na tela (evita desfoque no Chrome/Edge/celular) */
+        body.imprimindo {
+            background: #fff !important;
+        }
+        body.imprimindo .sidebar,
+        body.imprimindo .main,
+        body.imprimindo .toast,
+        body.imprimindo .modal-overlay,
+        body.imprimindo .sidebar-overlay,
+        body.imprimindo .install-banner,
+        body.imprimindo .btn-menu,
+        body.imprimindo .tela-login {
+            display: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            filter: none !important;
+        }
+        body.imprimindo .mirror-print-section {
+            display: block !important;
+            position: static !important;
+            width: 100%;
+            max-width: 190mm;
+            margin: 0 auto;
+            padding: 12px;
+            background: #fff;
+            color: #000;
+        }
+
         @media print {
             @page {
                 size: A4;
                 margin: 10mm;
             }
 
-            body * { visibility: hidden !important; }
-            .mirror-print-section, .mirror-print-section * { visibility: visible !important; }
+            html, body {
+                background: #fff !important;
+                color: #000 !important;
+                height: auto !important;
+                overflow: visible !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            /* Remove blur/filtros que “desfocam” a tela e o PDF */
+            *, *::before, *::after {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                filter: none !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
+                animation: none !important;
+                transition: none !important;
+            }
+
+            .sidebar,
+            .main,
+            .toast,
+            .modal-overlay,
+            .sidebar-overlay,
+            .install-banner,
+            .btn-menu,
+            .tela-login {
+                display: none !important;
+            }
+
             .mirror-print-section {
                 display: block !important;
-                position: absolute;
-                left: 0; top: 0;
-                width: 100%;
-                max-width: 190mm;
+                position: static !important;
+                left: auto !important;
+                top: auto !important;
+                width: 100% !important;
+                max-width: 190mm !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                background: #fff;
-                color: #000;
+                background: #fff !important;
+                color: #000 !important;
                 -webkit-text-size-adjust: 100%;
                 text-size-adjust: 100%;
+                visibility: visible !important;
             }
-            .sidebar, .main, .toast, .modal-overlay, .sidebar-overlay, .install-banner, .btn-menu, .tela-login { display: none !important; }
+            .mirror-print-section * {
+                visibility: visible !important;
+            }
 
             /* Tamanhos fixos em pt — iguais no PC e no celular */
             .mirror-print-section .nota-espelho {
@@ -1397,6 +1583,7 @@
         <div class="menu-grupo" data-grupo="interno">
             <button type="button" class="menu-grupo-btn" data-toggle-grupo="interno">🔒 Modo interno</button>
             <div class="submenu-lateral">
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelDespesasOs" data-canal="interno">🧾 Despesas por OS</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelProdutos" data-canal="interno">🏷️ Cadastro de Produtos</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamento" data-canal="interno">🧾 Venda / Orçamento</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixa" data-canal="interno">💰 Caixa / Balcão</button>
@@ -1881,6 +2068,18 @@
                 </form>
             </div>
             <div class="box">
+                <h2>📁 Pastas do balcão (Ano → Mês)</h2>
+                <p class="hint">Cada mês com movimento vira pasta com <strong>Entradas</strong>, <strong>Saídas</strong> e relatório. Arquive no PC ao fechar o mês.</p>
+                <div class="row" style="margin-bottom:10px">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarPastasBalcao">🔄 Atualizar pastas</button>
+                    <button type="button" class="btn btn-pdf" id="btnRelMesBalcao">📄 PDF do mês</button>
+                    <button type="button" class="btn btn-primary" id="btnArquivarMesBalcao">📂 Arquivar mês no PC…</button>
+                </div>
+                <div id="arvorePastasBalcao" class="arvore-pastas-caixa">
+                    <div class="muted" style="padding:8px;text-align:center">Carregando pastas…</div>
+                </div>
+            </div>
+            <div class="box">
                 <h2>Movimentações do balcão</h2>
                 <table>
                     <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Forma</th><th>Valor</th><th>Ações</th></tr></thead>
@@ -1927,6 +2126,18 @@
                 </form>
             </div>
             <div class="box">
+                <h2>📁 Pastas do banco (Ano → Mês)</h2>
+                <p class="hint">PIX, cartões e transferências agrupados por mês: <strong>Entradas</strong>, <strong>Saídas</strong> e relatório.</p>
+                <div class="row" style="margin-bottom:10px">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarPastasBanco">🔄 Atualizar pastas</button>
+                    <button type="button" class="btn btn-pdf" id="btnRelMesBanco">📄 PDF do mês</button>
+                    <button type="button" class="btn btn-primary" id="btnArquivarMesBanco">📂 Arquivar mês no PC…</button>
+                </div>
+                <div id="arvorePastasBanco" class="arvore-pastas-caixa">
+                    <div class="muted" style="padding:8px;text-align:center">Carregando pastas…</div>
+                </div>
+            </div>
+            <div class="box">
                 <h2>Movimentações digitais</h2>
                 <table>
                     <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Forma</th><th>Valor</th><th>Ações</th></tr></thead>
@@ -1956,6 +2167,18 @@
                 <div class="card"><div class="k">Qtd. abertas</div><div class="v" id="pdQtd">0</div></div>
             </div>
             <div class="box">
+                <h2>📁 Pastas a receber (Ano → Mês)</h2>
+                <p class="hint">Pendentes agrupados por mês. Use o relatório PDF ou arquive a pasta no PC ao fechar o período.</p>
+                <div class="row" style="margin-bottom:10px">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarPastasPend">🔄 Atualizar pastas</button>
+                    <button type="button" class="btn btn-pdf" id="btnRelMesPend">📄 PDF do mês</button>
+                    <button type="button" class="btn btn-primary" id="btnArquivarMesPend">📂 Arquivar mês no PC…</button>
+                </div>
+                <div id="arvorePastasPendentes" class="arvore-pastas-caixa">
+                    <div class="muted" style="padding:8px;text-align:center">Carregando pastas…</div>
+                </div>
+            </div>
+            <div class="box">
                 <h2>Pendências abertas</h2>
                 <table>
                     <thead><tr><th>Cliente</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Ações</th></tr></thead>
@@ -1967,10 +2190,10 @@
         <section id="painelRelatorioCaixa" class="panel">
             <div class="box">
                 <h2>Relatório Caixa</h2>
-                <p class="hint">Resumo unificado do balcão + banco + pendentes (somente leitura).</p>
+                <p class="hint">Resumo unificado do balcão + banco + pendentes. Ao fechar o mês, use as pastas abaixo (Entradas / Saídas / Relatório geral) — igual ao FH Control.</p>
                 <div class="row" style="margin-bottom:12px">
                     <button type="button" class="btn btn-secondary" id="btnAtualizarRelCx">🔄 Atualizar resumo</button>
-                    <button type="button" class="btn btn-pdf" id="btnImprimirRelCx">🖨️ Imprimir / PDF</button>
+                    <button type="button" class="btn btn-pdf" id="btnImprimirRelCx">🖨️ Imprimir resumo</button>
                 </div>
             </div>
             <div class="cards" style="margin-bottom:14px">
@@ -1979,12 +2202,156 @@
                 <div class="card"><div class="k">Pendentes</div><div class="v" id="relCxPend">R$ 0</div></div>
                 <div class="card"><div class="k">Saldo geral</div><div class="v" id="relCxGeral">R$ 0</div></div>
             </div>
+
+            <div class="box">
+                <h2>Relatórios mensais (PDF)</h2>
+                <p class="hint">Informe o mês/ano (Ex: 07/2026). Cada relatório separa entradas, saídas e, no geral, pendentes.</p>
+                <div class="lista-relatorios-mes">
+                    <div class="item-relatorio-mes">
+                        <div>
+                            <span class="titulo-relatorio">💰 Relatório Mensal — Caixa / Balcão</span>
+                            <span class="desc-relatorio">Entradas e saídas do balcão (dinheiro / gaveta)</span>
+                        </div>
+                        <div class="acoes-relatorio-mes">
+                            <button type="button" class="btn btn-pdf" data-rel-mes="balcao">📄 PDF</button>
+                        </div>
+                    </div>
+                    <div class="item-relatorio-mes">
+                        <div>
+                            <span class="titulo-relatorio">🏦 Relatório Mensal — Caixa Banco</span>
+                            <span class="desc-relatorio">PIX, cartões e lançamentos do banco</span>
+                        </div>
+                        <div class="acoes-relatorio-mes">
+                            <button type="button" class="btn btn-pdf" data-rel-mes="banco">📄 PDF</button>
+                        </div>
+                    </div>
+                    <div class="item-relatorio-mes">
+                        <div>
+                            <span class="titulo-relatorio">⏳ Relatório Mensal — Contas a Receber</span>
+                            <span class="desc-relatorio">Somente pendentes do período</span>
+                        </div>
+                        <div class="acoes-relatorio-mes">
+                            <button type="button" class="btn btn-pdf" data-rel-mes="pendentes">📄 PDF</button>
+                        </div>
+                    </div>
+                    <div class="item-relatorio-mes">
+                        <div>
+                            <span class="titulo-relatorio">📊 Relatório Mensal Geral</span>
+                            <span class="desc-relatorio">Tudo: balcão + banco + contas a receber (entradas, saídas e pendentes)</span>
+                        </div>
+                        <div class="acoes-relatorio-mes">
+                            <button type="button" class="btn btn-pdf" data-rel-mes="geral">📄 PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="box">
+                <h2>📁 Pastas do caixa (Ano → Mês)</h2>
+                <p class="hint">Cada mês com movimento vira pasta com <strong>Entradas</strong>, <strong>Saídas</strong> e <strong>Pendentes</strong>. Use <strong>Arquivar mês no PC</strong> para gravar os arquivos na pasta configurada em Config (Chrome/Edge no computador).</p>
+                <div class="row" style="margin-bottom:10px">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarPastasCx">🔄 Atualizar pastas</button>
+                    <button type="button" class="btn btn-primary" id="btnArquivarMesPc">📂 Arquivar mês no PC…</button>
+                </div>
+                <div id="arvorePastasCaixa" class="arvore-pastas-caixa">
+                    <div class="muted" style="padding:8px;text-align:center">Carregando pastas…</div>
+                </div>
+            </div>
+
             <div class="box" id="relCxConteudo">
                 <h2>Detalhamento por forma de pagamento</h2>
                 <table>
                     <thead><tr><th>Origem</th><th>Forma</th><th>Tipo</th><th>Qtd</th><th>Total</th></tr></thead>
                     <tbody id="tabelaRelCx"></tbody>
                 </table>
+            </div>
+        </section>
+
+        <!-- DESPESAS POR OS (só Modo Interno) -->
+        <section id="painelDespesasOs" class="panel">
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card"><div class="k">OS oficiais</div><div class="v" id="dosQtdOs">0</div></div>
+                <div class="card" style="background:#27ae60"><div class="k">Bruto (OS)</div><div class="v" id="dosBruto">R$ 0</div></div>
+                <div class="card" style="background:#e74c3c"><div class="k">Despesas internas</div><div class="v" id="dosDespesas">R$ 0</div></div>
+                <div class="card" style="background:#2980b9"><div class="k">Lucro estimado</div><div class="v" id="dosLucro">R$ 0</div></div>
+            </div>
+
+            <div class="box">
+                <h2>📁 Pastas de despesas por OS (Ano → Mês)</h2>
+                <p class="hint">Igual ao FH Control: ao completar o mês, a pasta do mês reúne <strong>Bruto (entradas)</strong>, <strong>Despesas (saídas)</strong> e o <strong>relatório geral de lucro</strong>. Arquive no PC para gravar os arquivos.</p>
+                <div class="lista-relatorios-mes" style="margin-bottom:14px">
+                    <div class="item-relatorio-mes">
+                        <div>
+                            <span class="titulo-relatorio">📊 Relatório Mensal — Lucro por OS</span>
+                            <span class="desc-relatorio">Bruto das OS oficiais − despesas internas do período (PDF)</span>
+                        </div>
+                        <div class="acoes-relatorio-mes">
+                            <button type="button" class="btn btn-pdf" id="btnRelMesDespesasOs">📄 PDF do mês</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="margin-bottom:10px">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarPastasDos">🔄 Atualizar pastas</button>
+                    <button type="button" class="btn btn-primary" id="btnArquivarMesDosPc">📂 Arquivar mês no PC…</button>
+                </div>
+                <div id="arvorePastasDespesasOs" class="arvore-pastas-caixa">
+                    <div class="muted" style="padding:8px;text-align:center">Carregando pastas…</div>
+                </div>
+            </div>
+
+            <div class="box">
+                <h2>Despesas por OS (Modo Interno)</h2>
+                <p class="hint">Lista as OS do balcão oficial. Lance aqui as <strong>despesas internas</strong> do serviço (só no banco interno) para fechar o lucro: bruto − despesas.</p>
+                <div class="toolbar">
+                    <input type="search" id="buscaDespesasOs" class="search" placeholder="Buscar OS por cliente, placa, veículo...">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarDespesasOs">🔄 Atualizar</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Cliente</th>
+                            <th>Veículo / Placa</th>
+                            <th>Status</th>
+                            <th>Bruto OS</th>
+                            <th>Despesas</th>
+                            <th>Lucro</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaDespesasOs"></tbody>
+                </table>
+                <div id="listaDespesasOsVazia" class="empty" style="display:none;margin-top:12px">Nenhuma OS oficial encontrada.</div>
+            </div>
+
+            <div class="box" id="boxLancarDespesaOs" style="display:none;border-color:rgba(231,76,60,0.45)">
+                <h2 id="tituloLancarDespesaOs">Lançar despesa na OS</h2>
+                <p class="hint" id="hintLancarDespesaOs"></p>
+                <input type="hidden" id="dosAtendimentoId">
+                <form id="formDespesaOs">
+                    <div class="row">
+                        <div class="col" style="flex:2"><label>Descrição da despesa</label><input id="dosDesc" required placeholder="Ex: tinta, lixa, peça, mão de obra auxiliar..."></div>
+                        <div class="col"><label>Valor (R$)</label><input id="dosValor" inputmode="decimal" required placeholder="0,00"></div>
+                        <div class="col"><label>Forma</label>
+                            <select id="dosForma">
+                                <option>Dinheiro</option>
+                                <option>PIX</option>
+                                <option>Cartão</option>
+                                <option>Transferência</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:14px">
+                        <button type="submit" class="btn btn-primary">Lançar despesa interna</button>
+                        <button type="button" class="btn btn-secondary" id="btnCancelarDespesaOs">Fechar</button>
+                    </div>
+                </form>
+                <h3 style="margin-top:18px">Despesas desta OS</h3>
+                <table>
+                    <thead><tr><th>Data</th><th>Descrição</th><th>Forma</th><th>Valor</th><th>Ações</th></tr></thead>
+                    <tbody id="tabelaDespesasOsDetalhe"></tbody>
+                </table>
+                <div id="listaDespesasOsDetalheVazia" class="empty" style="display:none;margin-top:10px">Nenhuma despesa lançada nesta OS.</div>
             </div>
         </section>
 
@@ -2104,6 +2471,38 @@
 
     <div class="toast" id="toast"></div>
 
+    <div class="modal-overlay" id="modalReceberOs">
+        <div class="modal-box" style="width:min(480px,100%)">
+            <h3>💰 Receber pagamento da OS</h3>
+            <p class="hint" id="receberOsResumo"></p>
+            <p class="hint" id="receberOsValor" style="color:#f1c40f;font-weight:700"></p>
+
+            <div id="receberOsPasso1">
+                <h3 style="font-size:0.95rem;margin-top:8px">1. Onde registrar?</h3>
+                <p class="hint">Escolha o banco de destino do recebimento.</p>
+                <div class="receber-passo-btns">
+                    <button type="button" class="btn btn-primary" id="btnRecDestNormal">💰 Caixa / Relatórios (oficial)</button>
+                    <button type="button" class="btn btn-secondary" id="btnRecDestInterno" style="border-color:#f1c40f;color:#f1c40f">🔒 Modo Interno</button>
+                </div>
+            </div>
+
+            <div id="receberOsPasso2" style="display:none">
+                <h3 style="font-size:0.95rem;margin-top:8px">2. Forma de pagamento</h3>
+                <p class="hint" id="receberOsDestinoTxt"></p>
+                <div class="receber-passo-btns">
+                    <button type="button" class="btn btn-ok" data-rec-forma="Dinheiro">💵 Dinheiro → Caixa / Balcão</button>
+                    <button type="button" class="btn btn-primary" data-rec-forma="PIX">📱 PIX → Caixa do Banco</button>
+                    <button type="button" class="btn btn-primary" data-rec-forma="Cartão">💳 Cartão → Caixa do Banco</button>
+                    <button type="button" class="btn btn-secondary" id="btnReceberOsVoltar">← Voltar</button>
+                </div>
+            </div>
+
+            <div class="modal-acoes">
+                <button type="button" class="btn btn-danger" id="btnReceberOsFechar" style="width:100%">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modalNota">
         <div class="modal-box" style="width:min(820px,100%)">
             <h3 id="modalNotaTitulo">Nota do atendimento</h3>
@@ -2178,10 +2577,11 @@
             painelHistorico: ['Histórico de Atendimentos', 'Veículos e serviços registrados'],
             painelProdutos: ['Cadastro de Produtos', 'Estoque local simplificado'],
             painelOrcamento: ['Venda / Orçamento', 'Documentos do balcão local'],
-            painelCaixa: ['Caixa / Balcão', 'Dinheiro e lançamentos do balcão'],
-            painelCaixaBanco: ['Caixa do Banco', 'PIX, cartões e transferências'],
-            painelPendentes: ['Contas a Receber', 'Pendentes aguardando recebimento'],
-            painelRelatorioCaixa: ['Relatório Caixa', 'Resumo balcão + banco + pendentes'],
+            painelCaixa: ['Caixa / Balcão', 'Pastas mensais · entradas · saídas'],
+            painelCaixaBanco: ['Caixa do Banco', 'Pastas mensais · PIX · cartões'],
+            painelPendentes: ['Contas a Receber', 'Pastas mensais · a receber'],
+            painelRelatorioCaixa: ['Relatório Caixa', 'Pastas mensais · entradas · saídas · relatório geral'],
+            painelDespesasOs: ['Despesas por OS', 'Pastas mensais · bruto · despesas · lucro'],
             painelConfig: ['Config / Empresa', 'Empresa, logo, endereço e backup']
         };
 
@@ -2539,6 +2939,55 @@
             toast._t = setTimeout(function () { el.classList.remove('show'); }, 2600);
         }
 
+        /* Impressão limpa: evita desfoque da tela (visibility/blur) e restaura UI ao fechar o PDF */
+        var _printCleanupTimer = null;
+        function limparAposImpressao() {
+            document.body.classList.remove('imprimindo');
+            var el = document.getElementById('printNota');
+            if (el) el.innerHTML = '';
+            if (_printCleanupTimer) {
+                clearTimeout(_printCleanupTimer);
+                _printCleanupTimer = null;
+            }
+        }
+        function executarImpressaoHtml(html) {
+            var el = document.getElementById('printNota');
+            if (!el) return;
+            el.innerHTML = html || '';
+            document.querySelectorAll('.modal-overlay.aberto').forEach(function (m) {
+                m.classList.remove('aberto');
+            });
+            var overlay = document.getElementById('sidebarOverlay');
+            if (overlay) overlay.classList.remove('aberto');
+            document.body.classList.remove('menu-aberto');
+            document.body.classList.add('imprimindo');
+            window.removeEventListener('afterprint', limparAposImpressao);
+            window.addEventListener('afterprint', limparAposImpressao);
+            if (_printCleanupTimer) clearTimeout(_printCleanupTimer);
+            /* Só limpa se afterprint não disparar (alguns celulares) — não limpar cedo demais */
+            _printCleanupTimer = setTimeout(limparAposImpressao, 120000);
+            setTimeout(function () {
+                try {
+                    window.print();
+                } catch (e) {
+                    limparAposImpressao();
+                }
+            }, 80);
+            /* Quando o modo print do navegador sai, restaura a tela nítida */
+            try {
+                var mql = window.matchMedia('print');
+                if (mql && mql.addEventListener) {
+                    var onChange = function (ev) {
+                        if (!ev.matches) {
+                            limparAposImpressao();
+                            mql.removeEventListener('change', onChange);
+                        }
+                    };
+                    mql.addEventListener('change', onChange);
+                }
+            } catch (e2) { /* ignore */ }
+        }
+
         function moeda(n) {
             var v = Number(n) || 0;
             return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -2788,6 +3237,12 @@
                 renderCarrinhoVenda();
             }
             if (id === 'painelRelatorioCaixa') renderRelatorioCaixa();
+            if (id === 'painelDespesasOs') {
+                canalVendas = 'interno';
+                atualizarBadgeCanal();
+                fecharBoxDespesaOs();
+                renderDespesasOs();
+            }
             if (id === 'painelConfig') {
                 preencherFormEmpresa();
                 atualizarStatusNuvemUI();
@@ -2797,6 +3252,7 @@
         }
 
         var PAINEIS_CANAL = {
+            painelDespesasOs: true,
             painelProdutos: true,
             painelOrcamento: true,
             painelCaixa: true,
@@ -4235,17 +4691,13 @@
                     '<div class="nota-sub nota-registro">Registro ' + esc(fmtData(a.entrada || a.criadoEm)) +
                     (a.id ? ' · ID ' + esc(String(a.id).slice(-6)) : '') + '</div>'
                 ) +
-                '<div class="nota-bloco compacto"><div class="tit azul">Cliente &amp; Oficina</div><div class="nota-grid nota-grid-compacta">' +
+                '<div class="nota-bloco compacto"><div class="tit azul">Cliente</div><div class="nota-grid nota-grid-compacta">' +
                 '<div class="nota-campo full"><span class="nota-label">Cliente</span><span class="nota-valor">' + esc(nome) + (cad.avulso || a.clienteAvulso ? ' (avulso)' : '') + '</span></div>' +
                 (cad.cpf ? '<div class="nota-campo"><span class="nota-label">CPF</span><span class="nota-valor">' + esc(cad.cpf) + '</span></div>' : '') +
                 (cad.cnpj ? '<div class="nota-campo"><span class="nota-label">CNPJ</span><span class="nota-valor">' + esc(cad.cnpj) + '</span></div>' : '') +
                 (cad.telefone ? '<div class="nota-campo"><span class="nota-label">Telefone</span><span class="nota-valor">' + esc(cad.telefone) + '</span></div>' : '') +
                 (cad.email ? '<div class="nota-campo"><span class="nota-label">E-mail</span><span class="nota-valor">' + esc(cad.email) + '</span></div>' : '') +
                 (endCli ? '<div class="nota-campo full"><span class="nota-label">Endereço</span><span class="nota-valor">' + esc(endCli) + (cad.cidade ? ' — ' + esc(cad.cidade) : '') + '</span></div>' : '') +
-                '<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' + esc(a.responsavel || '—') + '</span></div>' +
-                '<div class="nota-campo"><span class="nota-label">Status</span><span class="nota-valor">' + esc(a.status || '—') + '</span></div>' +
-                '<div class="nota-campo"><span class="nota-label">Entrada</span><span class="nota-valor">' + esc(fmtData(a.entrada)) + '</span></div>' +
-                '<div class="nota-campo"><span class="nota-label">Saída</span><span class="nota-valor">' + esc(fmtData(a.saida)) + '</span></div>' +
                 '</div></div>' +
                 '<div class="nota-bloco compacto"><div class="tit vermelho">Veículo</div><div class="nota-grid nota-grid-compacta">' +
                 '<div class="nota-campo"><span class="nota-label">Modelo</span><span class="nota-valor">' + esc(a.carro || '—') + '</span></div>' +
@@ -4255,7 +4707,11 @@
                 '<div class="nota-campo"><span class="nota-label">Cor</span><span class="nota-valor">' + esc(a.cor || '—') + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Chassi</span><span class="nota-valor">' + esc(a.chassi || '—') + '</span></div>' +
                 '</div></div>' +
-                '<div class="nota-bloco compacto"><div class="tit escuro">Chegada &amp; Serviços</div><div class="nota-grid nota-grid-compacta">' +
+                '<div class="nota-bloco compacto"><div class="tit escuro">Oficina, Chegada &amp; Serviços</div><div class="nota-grid nota-grid-compacta">' +
+                '<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' + esc(a.responsavel || '—') + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Status</span><span class="nota-valor">' + esc(a.status || '—') + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Entrada</span><span class="nota-valor">' + esc(fmtData(a.entrada)) + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Saída</span><span class="nota-valor">' + esc(fmtData(a.saida)) + '</span></div>' +
                 '<div class="nota-campo full"><span class="nota-label">Estado de chegada</span><span class="nota-valor">' + esc(a.estado || 'Sem observações.') + '</span></div>' +
                 '<div class="nota-campo full"><span class="nota-label">Serviços</span><span class="nota-valor" style="color:#000;font-weight:800">' + esc(a.servicos || '—') + '</span></div>' +
                 '</div></div>' +
@@ -4395,9 +4851,8 @@
                         return s ? '<div style="margin-bottom:12px;page-break-inside:avoid"><div class="nota-sub">Foto ' + (i + 1) + '</div><img src="' + s + '" style="max-width:100%;height:auto"></div>' : '';
                     }).join('') +
                     '</div></div>';
-                document.getElementById('printNota').innerHTML = html;
                 fecharModalExportFotos();
-                setTimeout(function () { window.print(); }, 300);
+                executarImpressaoHtml(html);
                 return;
             }
             var mime = formato === 'png' ? 'image/png' : 'image/jpeg';
@@ -4460,8 +4915,7 @@
                     comFotos = false;
                 }
             }
-            document.getElementById('printNota').innerHTML = htmlNotaEspelho(db, a, { incluirFotos: !!comFotos });
-            setTimeout(function () { window.print(); }, 250);
+            executarImpressaoHtml(htmlNotaEspelho(db, a, { incluirFotos: !!comFotos }));
         }
 
         function documentoAssinatura(db, a, incluirFotos) {
@@ -4631,10 +5085,18 @@
                     ? ' <span style="font-size:0.68rem;font-weight:700;color:#8fe0b8">AVULSO</span>'
                     : '';
                 var statusAtual = a.status || 'Em andamento';
+                var jaPago = String(a.statusPagamento || '').toUpperCase() === 'PAGO';
+                var badgePago = jaPago
+                    ? '<div class="badge-pago-os">PAGO · ' + esc(a.formaPagamento || '—') +
+                        (a.canalRecebimento === 'interno' ? ' · Interno' : ' · Oficial') + '</div>'
+                    : '';
+                var btnReceber = jaPago
+                    ? ''
+                    : '<button type="button" class="btn btn-receber" data-rec="' + a.id + '">💰 Receber</button>';
                 var tr = document.createElement('tr');
                 tr.innerHTML =
                     '<td>' + esc(fmtData(a.entrada || a.criadoEm)) + '</td>' +
-                    '<td>' + esc(nome) + tagAvulso + badgeAssinatura(a) + '</td>' +
+                    '<td>' + esc(nome) + tagAvulso + badgeAssinatura(a) + badgePago + '</td>' +
                     '<td>' + esc(a.carro || '—') + '</td>' +
                     '<td>' + esc(a.placa || '—') + '</td>' +
                     '<td>' + moeda(a.total) + '</td>' +
@@ -4642,6 +5104,7 @@
                     '<select class="status-at-select" data-st="' + a.id + '" title="Alterar status" style="min-width:140px;padding:6px 8px;font-size:0.75rem;font-weight:700">' +
                     opcoesStatusAt(statusAtual) +
                     '</select>' +
+                    btnReceber +
                     '<button type="button" class="btn btn-ver" data-ver="' + a.id + '">Ver nota</button>' +
                     '<button type="button" class="btn btn-pdf" data-pdf="' + a.id + '">PDF</button>' +
                     '<button type="button" class="btn btn-assinar" data-link="' + a.id + '">Enviar nota</button>' +
@@ -4657,6 +5120,9 @@
                 sel.addEventListener('change', function () {
                     alterarStatusAtendimento(sel.getAttribute('data-st'), sel.value);
                 });
+            });
+            tb.querySelectorAll('[data-rec]').forEach(function (b) {
+                b.addEventListener('click', function () { abrirModalReceberOs(b.getAttribute('data-rec')); });
             });
             tb.querySelectorAll('[data-ver]').forEach(function (b) {
                 b.addEventListener('click', function () { abrirNota(b.getAttribute('data-ver')); });
@@ -4681,6 +5147,163 @@
                 b.addEventListener('click', function () { excluirAtendimento(b.getAttribute('data-ex')); });
             });
         }
+
+        /* ---------- Receber OS (Histórico → Caixa oficial ou Interno) ---------- */
+        var receberOsIdAtual = null;
+        var receberOsCanalDestino = null;
+
+        function fecharModalReceberOs() {
+            receberOsIdAtual = null;
+            receberOsCanalDestino = null;
+            document.getElementById('modalReceberOs').classList.remove('aberto');
+            document.getElementById('receberOsPasso1').style.display = '';
+            document.getElementById('receberOsPasso2').style.display = 'none';
+        }
+
+        function abrirModalReceberOs(atendimentoId) {
+            var main = carregarMain();
+            var a = (main.atendimentos || []).find(function (x) { return x.id === atendimentoId; });
+            if (!a) {
+                toast('OS não encontrada.');
+                return;
+            }
+            if (String(a.statusPagamento || '').toUpperCase() === 'PAGO') {
+                alert('Esta OS já está marcada como PAGA (' + (a.formaPagamento || '—') +
+                    (a.canalRecebimento === 'interno' ? ' · Modo Interno' : ' · Caixa oficial') + ').');
+                return;
+            }
+            var valor = Number(a.total) || 0;
+            if (!(valor > 0)) {
+                toast('Esta OS está sem valor para receber.');
+                return;
+            }
+            receberOsIdAtual = atendimentoId;
+            receberOsCanalDestino = null;
+            var nome = nomeAtendimento(main, a);
+            document.getElementById('receberOsResumo').innerHTML =
+                '<strong>' + esc(nome) + '</strong> — ' + esc(a.carro || '—') +
+                ' · Placa <strong>' + esc((a.placa || '—').toUpperCase()) + '</strong>';
+            document.getElementById('receberOsValor').textContent = 'Valor a receber: ' + moeda(valor);
+            document.getElementById('receberOsPasso1').style.display = '';
+            document.getElementById('receberOsPasso2').style.display = 'none';
+            document.getElementById('modalReceberOs').classList.add('aberto');
+        }
+
+        function receberOsIrPassoForma(canalDestino) {
+            receberOsCanalDestino = canalDestino;
+            document.getElementById('receberOsDestinoTxt').innerHTML = canalDestino === 'interno'
+                ? 'Destino: <strong style="color:#f1c40f">Modo Interno</strong> — o valor entra no caixa interno.'
+                : 'Destino: <strong style="color:#7ec8ff">Caixa / Relatórios (oficial)</strong> — o valor entra no caixa oficial.';
+            document.getElementById('receberOsPasso1').style.display = 'none';
+            document.getElementById('receberOsPasso2').style.display = '';
+        }
+
+        function confirmarRecebimentoOs(forma) {
+            if (!receberOsIdAtual || !receberOsCanalDestino) return;
+            var main = carregarMain();
+            var idx = (main.atendimentos || []).findIndex(function (x) { return x.id === receberOsIdAtual; });
+            if (idx < 0) {
+                toast('OS não encontrada.');
+                fecharModalReceberOs();
+                return;
+            }
+            var a = main.atendimentos[idx];
+            if (String(a.statusPagamento || '').toUpperCase() === 'PAGO') {
+                alert('Esta OS já foi recebida.');
+                fecharModalReceberOs();
+                renderHistorico();
+                return;
+            }
+            var valor = Number(a.total) || 0;
+            if (!(valor > 0)) {
+                toast('OS sem valor.');
+                return;
+            }
+            var nome = nomeAtendimento(main, a);
+            var placa = (a.placa || '—').toUpperCase();
+            var digital = formaPagamentoEhDigital(forma);
+            var lancId = uid();
+            var agora = new Date().toISOString();
+            var lanc = {
+                id: lancId,
+                tipo: 'entrada',
+                descricao: 'Recebimento OS ' + placa + ' — ' + nome,
+                valor: valor,
+                forma: forma,
+                conta: digital ? 'banco' : 'balcao',
+                atendimentoId: a.id,
+                osResumo: {
+                    cliente: nome,
+                    placa: placa,
+                    carro: a.carro || '',
+                    totalOs: valor,
+                    entrada: a.entrada || a.criadoEm || ''
+                },
+                criadoEm: agora
+            };
+
+            var canalAntes = canalVendas;
+            canalVendas = receberOsCanalDestino === 'interno' ? 'interno' : 'normal';
+            var dbCx = carregar();
+            if (digital) {
+                if (!dbCx.caixaBanco) dbCx.caixaBanco = [];
+                dbCx.caixaBanco.push(lanc);
+            } else {
+                if (!dbCx.caixa) dbCx.caixa = [];
+                dbCx.caixa.push(lanc);
+            }
+            salvar(dbCx);
+            canalVendas = canalAntes;
+            atualizarBadgeCanal();
+
+            a.statusPagamento = 'PAGO';
+            a.formaPagamento = forma;
+            a.canalRecebimento = receberOsCanalDestino === 'interno' ? 'interno' : 'oficial';
+            a.recebidoEm = agora;
+            a.lancamentoRecebimentoId = lancId;
+            a.atualizadoEm = agora;
+            main.atendimentos[idx] = a;
+            salvarMain(main);
+
+            var destinoTxt = receberOsCanalDestino === 'interno' ? 'Modo Interno' : 'Caixa / Relatórios (oficial)';
+            var contaTxt = digital ? 'Caixa do Banco (PIX/cartão)' : 'Caixa / Balcão (dinheiro)';
+            fecharModalReceberOs();
+            renderHistorico();
+            renderCaixa();
+            renderCaixaBanco();
+            renderRelatorioCaixa();
+            atualizarKPIs(carregar());
+            toast('Recebido: ' + moeda(valor) + ' · ' + forma);
+            alert(
+                '✅ Pagamento registrado!\n\n' +
+                'OS: ' + placa + ' — ' + nome + '\n' +
+                'Valor: ' + moeda(valor) + '\n' +
+                'Forma: ' + forma + '\n' +
+                'Destino: ' + destinoTxt + '\n' +
+                'Conta: ' + contaTxt
+            );
+        }
+
+        document.getElementById('btnRecDestNormal').addEventListener('click', function () {
+            receberOsIrPassoForma('normal');
+        });
+        document.getElementById('btnRecDestInterno').addEventListener('click', function () {
+            receberOsIrPassoForma('interno');
+        });
+        document.getElementById('btnReceberOsVoltar').addEventListener('click', function () {
+            receberOsCanalDestino = null;
+            document.getElementById('receberOsPasso1').style.display = '';
+            document.getElementById('receberOsPasso2').style.display = 'none';
+        });
+        document.getElementById('btnReceberOsFechar').addEventListener('click', fecharModalReceberOs);
+        document.getElementById('modalReceberOs').addEventListener('click', function (e) {
+            if (e.target.id === 'modalReceberOs') fecharModalReceberOs();
+        });
+        document.querySelectorAll('[data-rec-forma]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                confirmarRecebimentoOs(b.getAttribute('data-rec-forma'));
+            });
+        });
 
         document.getElementById('buscaAtend').addEventListener('input', renderHistorico);
 
@@ -5445,6 +6068,253 @@
             });
         }
 
+        /* ---------- Despesas por OS (Modo Interno) ---------- */
+        var despesaOsSelecionadaId = null;
+
+        function listarDespesasInternasPorOs(atendimentoId) {
+            var intDb = carregarInternoRaw();
+            return (intDb.caixa || []).filter(function (x) {
+                return x && x.tipo === 'saida' && x.atendimentoId === atendimentoId;
+            });
+        }
+
+        function totalDespesasInternasPorOs(atendimentoId) {
+            return listarDespesasInternasPorOs(atendimentoId).reduce(function (s, x) {
+                return s + (Number(x.valor) || 0);
+            }, 0);
+        }
+
+        function resumoLucroOs(atendimento) {
+            var bruto = Number(atendimento && atendimento.total) || 0;
+            var despesas = totalDespesasInternasPorOs(atendimento && atendimento.id);
+            return {
+                bruto: bruto,
+                despesas: despesas,
+                lucro: bruto - despesas
+            };
+        }
+
+        function fecharBoxDespesaOs() {
+            despesaOsSelecionadaId = null;
+            var box = document.getElementById('boxLancarDespesaOs');
+            if (box) box.style.display = 'none';
+            document.getElementById('dosAtendimentoId').value = '';
+            document.getElementById('formDespesaOs').reset();
+            document.getElementById('tabelaDespesasOsDetalhe').innerHTML = '';
+            document.getElementById('listaDespesasOsDetalheVazia').style.display = 'none';
+        }
+
+        function abrirLancarDespesaOs(atendimentoId) {
+            var main = carregarMain();
+            var a = (main.atendimentos || []).find(function (x) { return x.id === atendimentoId; });
+            if (!a) {
+                toast('OS não encontrada.');
+                return;
+            }
+            canalVendas = 'interno';
+            atualizarBadgeCanal();
+            despesaOsSelecionadaId = atendimentoId;
+            document.getElementById('dosAtendimentoId').value = atendimentoId;
+            var nome = nomeAtendimento(main, a);
+            var resumo = resumoLucroOs(a);
+            document.getElementById('tituloLancarDespesaOs').textContent =
+                'Despesas — ' + nome + ' · ' + ((a.placa || '—').toUpperCase());
+            document.getElementById('hintLancarDespesaOs').innerHTML =
+                'Bruto OS: <strong>' + moeda(resumo.bruto) +
+                '</strong> · Despesas: <strong>' + moeda(resumo.despesas) +
+                '</strong> · Lucro: <strong>' + moeda(resumo.lucro) + '</strong>';
+            document.getElementById('boxLancarDespesaOs').style.display = '';
+            renderDespesasOsDetalhe(atendimentoId);
+            document.getElementById('dosDesc').focus();
+        }
+
+        function renderDespesasOsDetalhe(atendimentoId) {
+            var lista = listarDespesasInternasPorOs(atendimentoId);
+            var tb = document.getElementById('tabelaDespesasOsDetalhe');
+            var vazio = document.getElementById('listaDespesasOsDetalheVazia');
+            tb.innerHTML = '';
+            if (!lista.length) {
+                vazio.style.display = '';
+                return;
+            }
+            vazio.style.display = 'none';
+            lista.slice().reverse().forEach(function (x) {
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + esc(fmtData(x.criadoEm)) + '</td>' +
+                    '<td>' + esc(x.descricao || '—') + '</td>' +
+                    '<td>' + esc(x.forma || '—') + '</td>' +
+                    '<td>' + moeda(x.valor) + '</td>' +
+                    '<td class="actions"><button type="button" class="btn btn-danger" data-dos-ex="' + esc(x.id) + '">Excluir</button></td>';
+                tb.appendChild(tr);
+            });
+            tb.querySelectorAll('[data-dos-ex]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    if (!confirm('Excluir esta despesa interna?')) return;
+                    var idEx = b.getAttribute('data-dos-ex');
+                    var canalAntes = canalVendas;
+                    canalVendas = 'interno';
+                    var db = carregar();
+                    db.caixa = (db.caixa || []).filter(function (x) { return x.id !== idEx; });
+                    salvar(db);
+                    canalVendas = canalAntes;
+                    toast('Despesa interna excluída.');
+                    renderDespesasOsDetalhe(atendimentoId);
+                    renderDespesasOs();
+                    renderCaixa();
+                    renderRelatorioCaixa();
+                });
+            });
+        }
+
+        function renderDespesasOs() {
+            var panel = document.getElementById('painelDespesasOs');
+            if (!panel) return;
+            var main = carregarMain();
+            var q = (document.getElementById('buscaDespesasOs').value || '').toLowerCase().trim();
+            var lista = (main.atendimentos || []).slice().sort(function (a, b) {
+                return String(b.entrada || b.criadoEm || '').localeCompare(String(a.entrada || a.criadoEm || ''));
+            });
+            if (q) {
+                lista = lista.filter(function (a) {
+                    var nome = nomeAtendimento(main, a);
+                    return [nome, a.placa, a.carro, a.status, a.responsavel].join(' ').toLowerCase().indexOf(q) > -1;
+                });
+            }
+
+            var totBruto = 0, totDesp = 0;
+            lista.forEach(function (a) {
+                var r = resumoLucroOs(a);
+                totBruto += r.bruto;
+                totDesp += r.despesas;
+            });
+            document.getElementById('dosQtdOs').textContent = String(lista.length);
+            document.getElementById('dosBruto').textContent = moeda(totBruto);
+            document.getElementById('dosDespesas').textContent = moeda(totDesp);
+            document.getElementById('dosLucro').textContent = moeda(totBruto - totDesp);
+
+            if (typeof gerarArvorePastasDespesasOs === 'function') gerarArvorePastasDespesasOs();
+
+            var tb = document.getElementById('tabelaDespesasOs');
+            var vazio = document.getElementById('listaDespesasOsVazia');
+            tb.innerHTML = '';
+            if (!lista.length) {
+                vazio.style.display = '';
+                return;
+            }
+            vazio.style.display = 'none';
+            lista.forEach(function (a) {
+                var r = resumoLucroOs(a);
+                var nome = nomeAtendimento(main, a);
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + esc(fmtData(a.entrada || a.criadoEm)) + '</td>' +
+                    '<td>' + esc(nome) + '</td>' +
+                    '<td>' + esc(a.carro || '—') + ' · <strong>' + esc((a.placa || '—').toUpperCase()) + '</strong></td>' +
+                    '<td>' + esc(a.status || '—') + '</td>' +
+                    '<td>' + moeda(r.bruto) + '</td>' +
+                    '<td>' + moeda(r.despesas) + '</td>' +
+                    '<td><strong>' + moeda(r.lucro) + '</strong></td>' +
+                    '<td class="actions">' +
+                    '<button type="button" class="btn btn-primary" data-dos-abrir="' + esc(a.id) + '">Despesas</button>' +
+                    '</td>';
+                tb.appendChild(tr);
+            });
+            tb.querySelectorAll('[data-dos-abrir]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    abrirLancarDespesaOs(b.getAttribute('data-dos-abrir'));
+                });
+            });
+
+            if (despesaOsSelecionadaId) {
+                var aindaExiste = lista.some(function (a) { return a.id === despesaOsSelecionadaId; });
+                if (aindaExiste) {
+                    var aSel = (main.atendimentos || []).find(function (x) { return x.id === despesaOsSelecionadaId; });
+                    if (aSel) {
+                        var resumo = resumoLucroOs(aSel);
+                        document.getElementById('hintLancarDespesaOs').innerHTML =
+                            'Bruto OS: <strong>' + moeda(resumo.bruto) +
+                            '</strong> · Despesas: <strong>' + moeda(resumo.despesas) +
+                            '</strong> · Lucro: <strong>' + moeda(resumo.lucro) + '</strong>';
+                        renderDespesasOsDetalhe(despesaOsSelecionadaId);
+                    }
+                }
+            }
+        }
+
+        function lancarDespesaOs(e) {
+            e.preventDefault();
+            var atendimentoId = document.getElementById('dosAtendimentoId').value || despesaOsSelecionadaId;
+            if (!atendimentoId) {
+                toast('Selecione uma OS para lançar a despesa.');
+                return;
+            }
+            var main = carregarMain();
+            var a = (main.atendimentos || []).find(function (x) { return x.id === atendimentoId; });
+            if (!a) {
+                toast('OS não encontrada no balcão oficial.');
+                return;
+            }
+            var desc = document.getElementById('dosDesc').value.trim();
+            var valor = parseMoeda(document.getElementById('dosValor').value);
+            var forma = document.getElementById('dosForma').value;
+            if (!desc) { toast('Informe a descrição da despesa.'); return; }
+            if (!(valor > 0)) { toast('Informe um valor válido.'); return; }
+
+            var canalAntes = canalVendas;
+            canalVendas = 'interno';
+            var db = carregar();
+            if (!db.caixa) db.caixa = [];
+            var nome = nomeAtendimento(main, a);
+            var placa = (a.placa || '—').toUpperCase();
+            db.caixa.push({
+                id: uid(),
+                tipo: 'saida',
+                descricao: desc,
+                valor: valor,
+                forma: forma,
+                conta: 'balcao',
+                atendimentoId: atendimentoId,
+                osResumo: {
+                    cliente: nome,
+                    placa: placa,
+                    carro: a.carro || '',
+                    totalOs: Number(a.total) || 0,
+                    entrada: a.entrada || a.criadoEm || ''
+                },
+                criadoEm: new Date().toISOString()
+            });
+            salvar(db);
+            canalVendas = canalAntes;
+            atualizarBadgeCanal();
+
+            document.getElementById('formDespesaOs').reset();
+            toast('Despesa interna lançada na OS ' + placa + '.');
+            renderDespesasOsDetalhe(atendimentoId);
+            renderDespesasOs();
+            renderCaixa();
+            renderRelatorioCaixa();
+            document.getElementById('dosDesc').focus();
+        }
+
+        document.getElementById('formDespesaOs').addEventListener('submit', lancarDespesaOs);
+        document.getElementById('btnCancelarDespesaOs').addEventListener('click', fecharBoxDespesaOs);
+        document.getElementById('btnAtualizarDespesasOs').addEventListener('click', function () {
+            renderDespesasOs();
+            toast('Lista de OS atualizada.');
+        });
+        document.getElementById('buscaDespesasOs').addEventListener('input', renderDespesasOs);
+        document.getElementById('btnAtualizarPastasDos').addEventListener('click', function () {
+            if (typeof gerarArvorePastasDespesasOs === 'function') gerarArvorePastasDespesasOs();
+            toast('Pastas de despesas atualizadas.');
+        });
+        document.getElementById('btnRelMesDespesasOs').addEventListener('click', function () {
+            if (typeof gerarRelatorioMensalDespesasOsPDF === 'function') gerarRelatorioMensalDespesasOsPDF();
+        });
+        document.getElementById('btnArquivarMesDosPc').addEventListener('click', function () {
+            if (typeof arquivarMesDespesasOsPastaPC === 'function') arquivarMesDespesasOsPastaPC();
+        });
+
         /* ---------- Caixa / Relatórios (modelo FH Control) ---------- */
         function getCaixaConfig(db) {
             return Object.assign({ inicialBalcao: 0, inicialBanco: 0 }, (db && db.caixaConfig) || {});
@@ -5507,16 +6377,23 @@
 
             var tb = document.getElementById('tabelaCaixa');
             tb.innerHTML = '';
+            if (typeof gerarArvorePastasCaixa === 'function') {
+                gerarArvorePastasCaixa({ elId: 'arvorePastasBalcao', filtro: 'balcao', idPrefix: 'pasta_bal' });
+            }
             if (!lista.length) {
                 tb.innerHTML = '<tr><td colspan="6" class="muted">Sem lançamentos no balcão.</td></tr>';
                 return;
             }
             lista.slice().reverse().forEach(function (x) {
                 var tr = document.createElement('tr');
+                var desc = x.descricao || '—';
+                if (x.atendimentoId && x.osResumo) {
+                    desc = '[OS ' + (x.osResumo.placa || '') + '] ' + desc;
+                }
                 tr.innerHTML =
                     '<td>' + esc(fmtData(x.criadoEm)) + '</td>' +
                     '<td>' + esc(x.tipo) + '</td>' +
-                    '<td>' + esc(x.descricao) + '</td>' +
+                    '<td>' + esc(desc) + '</td>' +
                     '<td>' + esc(x.forma) + '</td>' +
                     '<td>' + moeda(x.valor) + '</td>' +
                     '<td class="actions"><button type="button" class="btn btn-danger" data-ex="' + x.id + '">Excluir</button></td>';
@@ -5531,6 +6408,10 @@
                     db2.caixa = (db2.caixa || []).filter(function (x) { return x.id !== idEx; });
                     salvar(db2);
                     renderCaixa();
+                    if (canalVendas === 'interno') {
+                        renderDespesasOs();
+                        if (despesaOsSelecionadaId) renderDespesasOsDetalhe(despesaOsSelecionadaId);
+                    }
                     atualizarKPIs(db2);
                 });
             });
@@ -5583,6 +6464,9 @@
 
             var tb = document.getElementById('tabelaBanco');
             tb.innerHTML = '';
+            if (typeof gerarArvorePastasCaixa === 'function') {
+                gerarArvorePastasCaixa({ elId: 'arvorePastasBanco', filtro: 'banco', idPrefix: 'pasta_ban' });
+            }
             if (!lista.length) {
                 tb.innerHTML = '<tr><td colspan="6" class="muted">Sem lançamentos no banco.</td></tr>';
                 return;
@@ -5671,6 +6555,9 @@
             document.getElementById('pdQtd').textContent = String(lista.length);
             var tb = document.getElementById('tabelaPendentes');
             tb.innerHTML = '';
+            if (typeof gerarArvorePastasCaixa === 'function') {
+                gerarArvorePastasCaixa({ elId: 'arvorePastasPendentes', filtro: 'pendentes', idPrefix: 'pasta_pen' });
+            }
             if (!lista.length) {
                 tb.innerHTML = '<tr><td colspan="5" class="muted">Nenhuma conta pendente.</td></tr>';
                 return;
@@ -5708,6 +6595,937 @@
             });
         }
 
+        /* ---------- Relatório mensal + pastas (modelo FH Control) ---------- */
+        var MES_NOMES_CX = {
+            '01': 'Janeiro', '02': 'Fevereiro', '03': 'Março', '04': 'Abril',
+            '05': 'Maio', '06': 'Junho', '07': 'Julho', '08': 'Agosto',
+            '09': 'Setembro', '10': 'Outubro', '11': 'Novembro', '12': 'Dezembro'
+        };
+        var REL_MES_TITULOS = {
+            geral: 'RELATÓRIO MENSAL GERAL (BALCÃO + BANCO + CONTAS A RECEBER)',
+            balcao: 'RELATÓRIO MENSAL — CAIXA / BALCÃO',
+            banco: 'RELATÓRIO MENSAL — CAIXA BANCO (PIX / CARTÕES)',
+            pendentes: 'RELATÓRIO MENSAL — CONTAS A RECEBER'
+        };
+        var REL_MES_PREFIXO = {
+            geral: 'Relatorio-Geral',
+            balcao: 'Relatorio-Balcao',
+            banco: 'Relatorio-Banco',
+            pendentes: 'Relatorio-ContasReceber'
+        };
+
+        function mesAnoDeIso(iso) {
+            if (!iso) return '';
+            var s = String(iso).trim();
+            if (/^\d{4}-\d{2}/.test(s)) return s.slice(5, 7) + '/' + s.slice(0, 4);
+            var limpa = s.split(/[\s,]/)[0];
+            var p = limpa.split('/');
+            if (p.length === 3) return p[1].padStart(2, '0') + '/' + p[2].slice(0, 4);
+            return '';
+        }
+
+        function mesAnoAtualPadrao() {
+            var d = new Date();
+            return String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+        }
+
+        function pastaMesLabel(mesAno) {
+            var p = String(mesAno || '').split('/');
+            if (p.length !== 2) return mesAno;
+            return (MES_NOMES_CX[p[0]] || p[0]) + ' / ' + p[1];
+        }
+
+        function coletarItensRelatorioMensal(db, filtro, mesAno) {
+            filtro = filtro || 'geral';
+            mesAno = String(mesAno || '').trim();
+            var itens = [];
+
+            function pushLanc(x, canal) {
+                if (!x) return;
+                var ma = mesAnoDeIso(x.criadoEm);
+                if (ma !== mesAno) return;
+                var desc = x.descricao || '';
+                if (x.atendimentoId && x.osResumo) {
+                    desc = '[OS ' + (x.osResumo.placa || '') + '] ' + desc;
+                }
+                itens.push({
+                    data: fmtData(x.criadoEm),
+                    doc: x.atendimentoId ? 'OS' : (canal === 'banco' ? 'BANCO' : 'CX'),
+                    tipo: x.tipo === 'saida' ? 'SAÍDA' : 'ENTRADA',
+                    descricao: desc,
+                    forma: x.forma || '—',
+                    valor: Number(x.valor) || 0,
+                    natureza: x.tipo === 'saida' ? 'SAIDA' : 'ENTRADA',
+                    canal: canal
+                });
+            }
+
+            (db.caixa || []).forEach(function (x) { pushLanc(x, 'balcao'); });
+            (db.caixaBanco || []).forEach(function (x) { pushLanc(x, 'banco'); });
+
+            (db.pendentes || []).forEach(function (p) {
+                if (!p || p.status === 'pago') return;
+                var ref = p.criadoEm || p.vencimento;
+                var ma = mesAnoDeIso(ref);
+                if (!ma && p.vencimento) {
+                    var v = String(p.vencimento);
+                    if (/^\d{4}-\d{2}/.test(v)) ma = v.slice(5, 7) + '/' + v.slice(0, 4);
+                }
+                if (ma !== mesAno) return;
+                itens.push({
+                    data: fmtData(ref) || (p.vencimento || '—'),
+                    doc: 'PEND',
+                    tipo: 'A RECEBER',
+                    descricao: (p.cliente ? p.cliente + ' — ' : '') + (p.descricao || ''),
+                    forma: p.vencimento ? ('Venc. ' + fmtData(p.vencimento)) : '—',
+                    valor: Number(p.valor) || 0,
+                    natureza: 'PENDENTE',
+                    canal: 'pendente'
+                });
+            });
+
+            itens = itens.filter(function (it) {
+                if (filtro === 'pendentes') return it.natureza === 'PENDENTE';
+                if (filtro === 'balcao') return it.canal === 'balcao' && it.natureza !== 'PENDENTE';
+                if (filtro === 'banco') return it.canal === 'banco' && it.natureza !== 'PENDENTE';
+                return true;
+            });
+
+            itens.sort(function (a, b) {
+                var da = String(a.data).split('/').reverse().join('');
+                var db2 = String(b.data).split('/').reverse().join('');
+                return da.localeCompare(db2);
+            });
+            return itens;
+        }
+
+        function montarHtmlSecoesRelatorioMes(itens, filtro) {
+            var totE = 0, totS = 0, totP = 0;
+            var linE = '', linS = '', linP = '';
+            itens.forEach(function (item) {
+                var linha =
+                    '<tr>' +
+                    '<td style="padding:6px;border-bottom:1px solid #ddd;width:70px">' + esc(item.data) + '</td>' +
+                    '<td style="padding:6px;border-bottom:1px solid #ddd;width:60px">' + esc(item.doc) + '</td>' +
+                    '<td style="padding:6px;border-bottom:1px solid #ddd;font-size:9px;width:80px">' + esc(item.tipo) + '</td>' +
+                    '<td style="padding:6px;border-bottom:1px solid #ddd">' + esc(item.descricao) +
+                    '<br><small style="color:#777">' + esc(item.forma) + '</small></td>';
+                if (item.natureza === 'PENDENTE') {
+                    totP += item.valor;
+                    linP += linha + '<td style="padding:6px;border-bottom:1px solid #ddd;color:#d35400;font-weight:bold;text-align:right">' +
+                        moeda(item.valor) + '</td></tr>';
+                } else if (item.natureza === 'ENTRADA') {
+                    totE += item.valor;
+                    linE += linha + '<td style="padding:6px;border-bottom:1px solid #ddd;color:#27ae60;font-weight:bold;text-align:right">+ ' +
+                        moeda(item.valor) + '</td></tr>';
+                } else {
+                    totS += item.valor;
+                    linS += linha + '<td style="padding:6px;border-bottom:1px solid #ddd;color:#e74c3c;font-weight:bold;text-align:right">- ' +
+                        moeda(item.valor) + '</td></tr>';
+                }
+            });
+            if (!linE) linE = '<tr><td colspan="5" style="padding:10px;text-align:center;color:#777">Nenhuma entrada neste período.</td></tr>';
+            if (!linS) linS = '<tr><td colspan="5" style="padding:10px;text-align:center;color:#777">Nenhuma saída neste período.</td></tr>';
+            if (!linP) linP = '<tr><td colspan="5" style="padding:10px;text-align:center;color:#777">Nenhum pendente neste período.</td></tr>';
+
+            var resumo;
+            if (filtro === 'pendentes') {
+                resumo =
+                    '<div class="resumo"><div class="resumo-box" style="color:#f39c12">TOTAL A RECEBER<b>' + moeda(totP) + '</b></div></div>';
+            } else {
+                resumo =
+                    '<div class="resumo">' +
+                    '<div class="resumo-box" style="color:#27ae60">RECEBIMENTOS / ENTRADAS<b>' + moeda(totE) + '</b></div>' +
+                    '<div class="resumo-box" style="color:#e74c3c">PAGAMENTOS / SAÍDAS<b>' + moeda(totS) + '</b></div>' +
+                    '<div class="resumo-box" style="color:#2980b9">SALDO LÍQUIDO DO MÊS<b>' + moeda(totE - totS) + '</b></div>' +
+                    '</div>';
+            }
+
+            var secE =
+                '<div class="section-title entrada"><span>ENTRADAS (RECEBIMENTOS)</span><span>TOTAL: ' + moeda(totE) + '</span></div>' +
+                '<table><thead><tr><th>Data</th><th>Doc</th><th>Tipo</th><th>Descrição / Forma</th><th style="text-align:right">Valor</th></tr></thead>' +
+                '<tbody>' + linE + '</tbody></table>';
+            var secS =
+                '<div class="section-title saida"><span>SAÍDAS E DESPESAS</span><span>TOTAL: ' + moeda(totS) + '</span></div>' +
+                '<table><thead><tr><th>Data</th><th>Doc</th><th>Tipo</th><th>Descrição / Motivo</th><th style="text-align:right">Valor</th></tr></thead>' +
+                '<tbody>' + linS + '</tbody></table>';
+            var secP =
+                '<div class="section-title pendente"><span>CONTAS A RECEBER</span><span>TOTAL: ' + moeda(totP) + '</span></div>' +
+                '<table><thead><tr><th>Data</th><th>Doc</th><th>Tipo</th><th>Cliente / Vencimento</th><th style="text-align:right">Valor</th></tr></thead>' +
+                '<tbody>' + linP + '</tbody></table>';
+
+            var secoes;
+            if (filtro === 'pendentes') secoes = secP;
+            else if (filtro === 'entradas') secoes = secE;
+            else if (filtro === 'saidas') secoes = secS;
+            else if (filtro === 'geral') secoes = secE + secS + secP;
+            else secoes = secE + secS;
+
+            return {
+                html: resumo + secoes,
+                totEntradas: totE,
+                totSaidas: totS,
+                totPendentes: totP,
+                saldo: totE - totS
+            };
+        }
+
+        function gerarRelatorioMensalPDF(filtro, mesAnoFixo) {
+            filtro = filtro || 'geral';
+            var mesAno = mesAnoFixo || prompt('Digite o mês e ano do relatório (Ex: 07/2026):', mesAnoAtualPadrao());
+            if (!mesAno) return;
+            mesAno = String(mesAno).trim();
+            if (!/^\d{2}\/\d{4}$/.test(mesAno)) {
+                alert('Use o formato MM/AAAA (Ex: 07/2026).');
+                return;
+            }
+            var db = carregar();
+            var emp = getEmpresa(db);
+            var itens = coletarItensRelatorioMensal(db, filtro, mesAno);
+            if (!itens.length) {
+                alert('Nenhum registro encontrado para o período: ' + mesAno);
+                return;
+            }
+            var montado = montarHtmlSecoesRelatorioMes(itens, filtro);
+            var titulo = REL_MES_TITULOS[filtro] || REL_MES_TITULOS.geral;
+            var html =
+                '<div class="nota-espelho relatorio-mensal-print">' +
+                htmlCabecalhoNotaEmpresa(emp,
+                    '<div class="nota-sub nota-titulo-espelho">' + esc(titulo) + '</div>' +
+                    '<div class="nota-sub">Competência: ' + esc(mesAno) + ' · ' + esc(pastaMesLabel(mesAno)) + '</div>'
+                ) +
+                '<style>' +
+                '.relatorio-mensal-print .resumo{display:flex;justify-content:space-around;flex-wrap:wrap;gap:10px;background:#f4f4f4;padding:12px;border:1px solid #ccc;margin:12px 0}' +
+                '.relatorio-mensal-print .resumo-box{text-align:center;font-size:11px}' +
+                '.relatorio-mensal-print .resumo-box b{display:block;font-size:14px;margin-top:4px}' +
+                '.relatorio-mensal-print .section-title{padding:8px 10px;font-size:11px;font-weight:bold;margin-top:18px;text-transform:uppercase;border-radius:4px 4px 0 0;display:flex;justify-content:space-between;color:#fff}' +
+                '.relatorio-mensal-print .section-title.entrada{background:#27ae60}' +
+                '.relatorio-mensal-print .section-title.saida{background:#e74c3c}' +
+                '.relatorio-mensal-print .section-title.pendente{background:#f39c12}' +
+                '.relatorio-mensal-print table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:11px}' +
+                '.relatorio-mensal-print th{background:#ecf0f1;color:#111;padding:8px;text-align:left;font-size:10px;border-bottom:2px solid #bdc3c7}' +
+                '</style>' +
+                montado.html +
+                '<div style="text-align:center;margin-top:24px;font-size:9px;color:#777">' +
+                'Documento gerado pelo HM Centro Automotivo em ' + esc(new Date().toLocaleString('pt-BR')) +
+                '</div></div>';
+            executarImpressaoHtml(html);
+        }
+
+        function montarArvoreCaixaDados(db) {
+            var arvore = {};
+            function addDoc(iso, item) {
+                var ma = mesAnoDeIso(iso);
+                if (!ma) return;
+                var p = ma.split('/');
+                var ano = p[1];
+                var mesNum = p[0];
+                var mesNome = MES_NOMES_CX[mesNum] || mesNum;
+                if (!arvore[ano]) arvore[ano] = {};
+                if (!arvore[ano][mesNome]) {
+                    arvore[ano][mesNome] = { mesNum: mesNum, mesAno: ma, entradas: [], saidas: [], pendentes: [] };
+                }
+                var bucket = arvore[ano][mesNome];
+                if (item.natureza === 'ENTRADA') bucket.entradas.push(item);
+                else if (item.natureza === 'SAIDA') bucket.saidas.push(item);
+                else bucket.pendentes.push(item);
+            }
+
+            (db.caixa || []).forEach(function (x) {
+                addDoc(x.criadoEm, {
+                    data: fmtData(x.criadoEm),
+                    descricao: x.descricao || '—',
+                    forma: x.forma || '—',
+                    valor: Number(x.valor) || 0,
+                    natureza: x.tipo === 'saida' ? 'SAIDA' : 'ENTRADA',
+                    origem: 'Balcão'
+                });
+            });
+            (db.caixaBanco || []).forEach(function (x) {
+                addDoc(x.criadoEm, {
+                    data: fmtData(x.criadoEm),
+                    descricao: x.descricao || '—',
+                    forma: x.forma || '—',
+                    valor: Number(x.valor) || 0,
+                    natureza: x.tipo === 'saida' ? 'SAIDA' : 'ENTRADA',
+                    origem: 'Banco'
+                });
+            });
+            (db.pendentes || []).forEach(function (p) {
+                if (!p || p.status === 'pago') return;
+                var ref = p.criadoEm || p.vencimento;
+                addDoc(ref, {
+                    data: fmtData(ref),
+                    descricao: (p.cliente ? p.cliente + ' — ' : '') + (p.descricao || '—'),
+                    forma: p.vencimento ? ('Venc. ' + fmtData(p.vencimento)) : '—',
+                    valor: Number(p.valor) || 0,
+                    natureza: 'PENDENTE',
+                    origem: 'Pendente'
+                });
+            });
+            return arvore;
+        }
+
+        function htmlItensPastaCx(lista, classeValor) {
+            if (!lista || !lista.length) {
+                return '<div class="muted" style="padding:6px 0">Nenhum lançamento nesta pasta.</div>';
+            }
+            return lista.map(function (it) {
+                return '<div class="pasta-cx-item">' +
+                    '<span><strong>[' + esc(it.origem || '') + ']</strong> ' + esc(it.data) + ' · ' + esc(it.descricao) +
+                    ' <small class="muted">(' + esc(it.forma) + ')</small></span>' +
+                    '<span class="' + classeValor + '">' + moeda(it.valor) + '</span></div>';
+            }).join('');
+        }
+
+        function togglePastaCaixa(id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'block' : 'none';
+        }
+        window.togglePastaCaixa = togglePastaCaixa;
+
+        function filtrarItensArvoreCaixa(lista, filtro) {
+            if (!lista) return [];
+            if (filtro === 'balcao') return lista.filter(function (x) { return x.origem === 'Balcão'; });
+            if (filtro === 'banco') return lista.filter(function (x) { return x.origem === 'Banco'; });
+            if (filtro === 'pendentes') return lista.filter(function (x) { return x.origem === 'Pendente'; });
+            return lista.slice();
+        }
+
+        function gerarArvorePastasCaixa(opts) {
+            opts = opts || {};
+            var elId = opts.elId || 'arvorePastasCaixa';
+            var filtro = opts.filtro || 'geral';
+            var idPrefix = opts.idPrefix || 'pasta_cx';
+            var el = document.getElementById(elId);
+            if (!el) return;
+            var db = carregar();
+            var arvoreFull = montarArvoreCaixaDados(db);
+            var arvore = {};
+            Object.keys(arvoreFull).forEach(function (ano) {
+                Object.keys(arvoreFull[ano]).forEach(function (mesNome) {
+                    var b = arvoreFull[ano][mesNome];
+                    var entradas = filtrarItensArvoreCaixa(b.entradas, filtro);
+                    var saidas = filtrarItensArvoreCaixa(b.saidas, filtro);
+                    var pendentes = filtrarItensArvoreCaixa(b.pendentes, filtro);
+                    if (filtro === 'pendentes') {
+                        entradas = [];
+                        saidas = [];
+                    } else if (filtro === 'balcao' || filtro === 'banco') {
+                        pendentes = [];
+                    }
+                    if (!entradas.length && !saidas.length && !pendentes.length) return;
+                    if (!arvore[ano]) arvore[ano] = {};
+                    arvore[ano][mesNome] = {
+                        mesNum: b.mesNum,
+                        mesAno: b.mesAno,
+                        entradas: entradas,
+                        saidas: saidas,
+                        pendentes: pendentes
+                    };
+                });
+            });
+            var anos = Object.keys(arvore).sort().reverse();
+            if (!anos.length) {
+                el.innerHTML = '<div class="muted" style="padding:10px;text-align:center">Ainda não há lançamentos para montar as pastas do mês.</div>';
+                return;
+            }
+            var html = '';
+            var idc = 0;
+            anos.forEach(function (ano) {
+                idc++;
+                var idAno = idPrefix + '_ano_' + idc;
+                html += '<div class="pasta-cx-ano" onclick="togglePastaCaixa(\'' + idAno + '\')">📁 Ano: ' + esc(ano) + '</div>';
+                html += '<div id="' + idAno + '" style="display:none">';
+                Object.keys(arvore[ano]).forEach(function (mesNome) {
+                    var bucket = arvore[ano][mesNome];
+                    idc++;
+                    var idMes = idPrefix + '_mes_' + idc;
+                    var totE = bucket.entradas.reduce(function (s, x) { return s + x.valor; }, 0);
+                    var totS = bucket.saidas.reduce(function (s, x) { return s + x.valor; }, 0);
+                    var totP = bucket.pendentes.reduce(function (s, x) { return s + x.valor; }, 0);
+                    var resumoMes = filtro === 'pendentes'
+                        ? ('a receber ' + moeda(totP))
+                        : ('saldo ' + moeda(totE - totS));
+                    html += '<div class="pasta-cx-mes" onclick="togglePastaCaixa(\'' + idMes + '\')">📂 Mês: ' +
+                        esc(mesNome) + ' <small style="font-weight:500;opacity:.85">(' + esc(bucket.mesAno) +
+                        ' · ' + resumoMes + ')</small></div>';
+                    html += '<div class="pasta-cx-mes-acoes">' +
+                        '<button type="button" class="btn btn-pdf" style="padding:6px 10px;font-size:12px" data-rel-mes-fixo="' +
+                        esc(bucket.mesAno) + '" data-rel-mes="' + esc(filtro) + '">📄 Relatório geral</button>' +
+                        '<button type="button" class="btn btn-secondary" style="padding:6px 10px;font-size:12px" data-arquivar-mes="' +
+                        esc(bucket.mesAno) + '" data-arquivar-filtro="' + esc(filtro) + '">📂 Arquivar no PC</button></div>';
+                    html += '<div id="' + idMes + '" style="display:none">';
+
+                    if (filtro !== 'pendentes') {
+                        idc++;
+                        var idE = idPrefix + '_e_' + idc;
+                        html += '<div class="pasta-cx-tipo" onclick="togglePastaCaixa(\'' + idE + '\')">✅ Entradas (' +
+                            bucket.entradas.length + ' · ' + moeda(totE) + ')</div>';
+                        html += '<div id="' + idE + '" class="pasta-cx-conteudo" style="display:none">' +
+                            htmlItensPastaCx(bucket.entradas, 'val-ent') + '</div>';
+
+                        idc++;
+                        var idS = idPrefix + '_s_' + idc;
+                        html += '<div class="pasta-cx-tipo" onclick="togglePastaCaixa(\'' + idS + '\')">🔻 Saídas (' +
+                            bucket.saidas.length + ' · ' + moeda(totS) + ')</div>';
+                        html += '<div id="' + idS + '" class="pasta-cx-conteudo" style="display:none">' +
+                            htmlItensPastaCx(bucket.saidas, 'val-sai') + '</div>';
+                    }
+
+                    if (filtro === 'geral' || filtro === 'pendentes') {
+                        idc++;
+                        var idP = idPrefix + '_p_' + idc;
+                        html += '<div class="pasta-cx-tipo" onclick="togglePastaCaixa(\'' + idP + '\')">⏳ Pendentes (' +
+                            bucket.pendentes.length + ' · ' + moeda(totP) + ')</div>';
+                        html += '<div id="' + idP + '" class="pasta-cx-conteudo" style="display:none">' +
+                            htmlItensPastaCx(bucket.pendentes, 'val-pen') + '</div>';
+                    }
+
+                    html += '</div>';
+                });
+                html += '</div>';
+            });
+            el.innerHTML = html;
+
+            el.querySelectorAll('[data-rel-mes-fixo]').forEach(function (b) {
+                b.addEventListener('click', function (ev) {
+                    ev.stopPropagation();
+                    gerarRelatorioMensalPDF(b.getAttribute('data-rel-mes') || 'geral', b.getAttribute('data-rel-mes-fixo'));
+                });
+            });
+            el.querySelectorAll('[data-arquivar-mes]').forEach(function (b) {
+                b.addEventListener('click', function (ev) {
+                    ev.stopPropagation();
+                    arquivarMesPastaPC(b.getAttribute('data-arquivar-mes'), b.getAttribute('data-arquivar-filtro') || filtro);
+                });
+            });
+        }
+
+        function atualizarTodasPastasCaixa() {
+            gerarArvorePastasCaixa({ elId: 'arvorePastasCaixa', filtro: 'geral', idPrefix: 'pasta_cx' });
+            gerarArvorePastasCaixa({ elId: 'arvorePastasBalcao', filtro: 'balcao', idPrefix: 'pasta_bal' });
+            gerarArvorePastasCaixa({ elId: 'arvorePastasBanco', filtro: 'banco', idPrefix: 'pasta_ban' });
+            gerarArvorePastasCaixa({ elId: 'arvorePastasPendentes', filtro: 'pendentes', idPrefix: 'pasta_pen' });
+        }
+
+        function htmlArquivoRelatorioMes(emp, titulo, mesAno, corpoHtml) {
+            return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">' +
+                '<title>' + esc(titulo) + ' — ' + esc(mesAno) + '</title>' +
+                '<style>body{font-family:Segoe UI,Arial,sans-serif;font-size:12px;color:#222;margin:24px}' +
+                'h1{font-size:18px;margin:0 0 4px}h2{font-size:14px;color:#555;margin:0 0 16px}' +
+                'table{width:100%;border-collapse:collapse;margin:10px 0}th,td{border-bottom:1px solid #ddd;padding:6px;text-align:left}' +
+                'th{background:#ecf0f1}.section-title{padding:8px 10px;color:#fff;font-weight:bold;margin-top:18px;display:flex;justify-content:space-between}' +
+                '.entrada{background:#27ae60}.saida{background:#e74c3c}.pendente{background:#f39c12}' +
+                '.resumo{display:flex;gap:12px;flex-wrap:wrap;background:#f4f4f4;padding:12px;border:1px solid #ccc;margin:12px 0}' +
+                '.resumo-box{text-align:center;flex:1;min-width:120px}.resumo-box b{display:block;margin-top:4px;font-size:14px}</style></head><body>' +
+                '<h1>' + esc(titulo) + '</h1>' +
+                '<h2>' + esc(emp.nome || 'HM Centro Automotivo') + ' — Competência: ' + esc(mesAno) + '</h2>' +
+                corpoHtml +
+                '<p style="margin-top:28px;font-size:10px;color:#888;text-align:center">Gerado em ' +
+                esc(new Date().toLocaleString('pt-BR')) + ' · HM Centro Automotivo</p></body></html>';
+        }
+
+        async function gravarTextoNaPasta(dirHandle, nomeArquivo, texto) {
+            var fh = await dirHandle.getFileHandle(nomeArquivo, { create: true });
+            var w = await fh.createWritable();
+            await w.write(texto);
+            await w.close();
+        }
+
+        async function arquivarMesPastaPC(mesAnoFixo, filtroFixo) {
+            if (!('showDirectoryPicker' in window)) {
+                toast('Arquivar na pasta do PC só funciona no Chrome/Edge no computador.');
+                return;
+            }
+            var filtro = filtroFixo || 'geral';
+            var mesAno = mesAnoFixo || prompt('Qual mês arquivar na pasta do PC? (Ex: 07/2026)', mesAnoAtualPadrao());
+            if (!mesAno) return;
+            mesAno = String(mesAno).trim();
+            if (!/^\d{2}\/\d{4}$/.test(mesAno)) {
+                alert('Use o formato MM/AAAA (Ex: 07/2026).');
+                return;
+            }
+            var root = await carregarHandlePastaRaiz();
+            if (!root) {
+                toast('Configure a pasta do PC em Config primeiro.');
+                return;
+            }
+            if (!(await solicitarPermissaoPasta(root))) {
+                toast('Sem permissão na pasta do PC.');
+                return;
+            }
+
+            var db = carregar();
+            var emp = getEmpresa(db);
+            var itens = coletarItensRelatorioMensal(db, filtro, mesAno);
+            if (!itens.length) {
+                alert('Nenhum registro para arquivar em ' + mesAno);
+                return;
+            }
+            var entradas = itens.filter(function (x) { return x.natureza === 'ENTRADA'; });
+            var saidas = itens.filter(function (x) { return x.natureza === 'SAIDA'; });
+            var pendentes = itens.filter(function (x) { return x.natureza === 'PENDENTE'; });
+            var filtroHtml = filtro === 'pendentes' ? 'pendentes' : (filtro === 'geral' ? 'geral' : filtro);
+            var montGeral = montarHtmlSecoesRelatorioMes(itens, filtroHtml);
+            var montEnt = montarHtmlSecoesRelatorioMes(entradas, 'entradas');
+            var montSai = montarHtmlSecoesRelatorioMes(saidas, 'saidas');
+
+            var partes = mesAno.split('/');
+            var ano = partes[1];
+            var mesNum = partes[0];
+            var mesNome = MES_NOMES_CX[mesNum] || mesNum;
+            var nomePastaMes = mesNum + '-' + slugPasta(mesNome);
+            var subTipo = filtro === 'balcao' ? 'Balcao' : (filtro === 'banco' ? 'Banco' : (filtro === 'pendentes' ? 'Pendentes' : 'Geral'));
+            var tituloRel = REL_MES_TITULOS[filtro] || REL_MES_TITULOS.geral;
+
+            try {
+                var pastaCaixa = await root.getDirectoryHandle('Caixa', { create: true });
+                var pastaTipo = await pastaCaixa.getDirectoryHandle(subTipo, { create: true });
+                var pastaAno = await pastaTipo.getDirectoryHandle(ano, { create: true });
+                var pastaMes = await pastaAno.getDirectoryHandle(nomePastaMes, { create: true });
+
+                if (filtro !== 'pendentes') {
+                    var pastaEntradas = await pastaMes.getDirectoryHandle('Entradas', { create: true });
+                    var pastaSaidas = await pastaMes.getDirectoryHandle('Saidas', { create: true });
+                    await gravarTextoNaPasta(pastaEntradas, 'entradas-' + mesNum + '-' + ano + '.html',
+                        htmlArquivoRelatorioMes(emp, 'ENTRADAS DO MÊS', mesAno, montEnt.html));
+                    await gravarTextoNaPasta(pastaEntradas, 'entradas-' + mesNum + '-' + ano + '.json',
+                        JSON.stringify(entradas, null, 2));
+                    await gravarTextoNaPasta(pastaSaidas, 'saidas-' + mesNum + '-' + ano + '.html',
+                        htmlArquivoRelatorioMes(emp, 'SAÍDAS DO MÊS', mesAno, montSai.html));
+                    await gravarTextoNaPasta(pastaSaidas, 'saidas-' + mesNum + '-' + ano + '.json',
+                        JSON.stringify(saidas, null, 2));
+                } else {
+                    var pastaPend = await pastaMes.getDirectoryHandle('Pendentes', { create: true });
+                    await gravarTextoNaPasta(pastaPend, 'pendentes-' + mesNum + '-' + ano + '.html',
+                        htmlArquivoRelatorioMes(emp, 'CONTAS A RECEBER', mesAno, montGeral.html));
+                    await gravarTextoNaPasta(pastaPend, 'pendentes-' + mesNum + '-' + ano + '.json',
+                        JSON.stringify(pendentes, null, 2));
+                }
+
+                await gravarTextoNaPasta(pastaMes, 'Relatorio-' + subTipo + '-' + mesNum + '-' + ano + '.html',
+                    htmlArquivoRelatorioMes(emp, tituloRel, mesAno, montGeral.html));
+                await gravarTextoNaPasta(pastaMes, 'resumo-' + mesNum + '-' + ano + '.json', JSON.stringify({
+                    mesAno: mesAno,
+                    mes: mesNome,
+                    filtro: filtro,
+                    geradoEm: new Date().toISOString(),
+                    totais: {
+                        entradas: montGeral.totEntradas,
+                        saidas: montGeral.totSaidas,
+                        pendentes: montGeral.totPendentes,
+                        saldo: montGeral.saldo
+                    },
+                    qtd: { entradas: entradas.length, saidas: saidas.length, pendentes: pendentes.length },
+                    pendentes: pendentes
+                }, null, 2));
+
+                var caminho = 'Caixa/' + subTipo + '/' + ano + '/' + nomePastaMes;
+                toast('Mês ' + mesAno + ' arquivado em ' + caminho);
+                alert(
+                    'Pasta do mês criada com sucesso!\n\n' +
+                    root.name + '/' + caminho + '/\n' +
+                    (filtro === 'pendentes'
+                        ? '  ├─ Pendentes/\n  └─ Relatorio-…html\n\nA receber: ' + moeda(montGeral.totPendentes)
+                        : '  ├─ Entradas/\n  ├─ Saidas/\n  └─ Relatorio-…html\n\nEntradas: ' + moeda(montGeral.totEntradas) +
+                          '\nSaídas: ' + moeda(montGeral.totSaidas) +
+                          '\nSaldo: ' + moeda(montGeral.saldo))
+                );
+            } catch (err) {
+                console.error(err);
+                toast('Falha ao gravar a pasta do mês no PC.');
+            }
+        }
+
+        /* ---------- Pastas mensais — Despesas por OS (Modo Interno) ---------- */
+        function listarOsDoMes(mesAno) {
+            var main = carregarMain();
+            return (main.atendimentos || []).filter(function (a) {
+                return mesAnoDeIso(a.entrada || a.criadoEm) === mesAno;
+            }).map(function (a) {
+                var r = resumoLucroOs(a);
+                var despesas = listarDespesasInternasPorOs(a.id);
+                return {
+                    id: a.id,
+                    data: fmtData(a.entrada || a.criadoEm),
+                    cliente: nomeAtendimento(main, a),
+                    placa: (a.placa || '—').toUpperCase(),
+                    carro: a.carro || '—',
+                    status: a.status || '—',
+                    bruto: r.bruto,
+                    despesas: r.despesas,
+                    lucro: r.lucro,
+                    lancamentosDespesa: despesas.map(function (x) {
+                        return {
+                            data: fmtData(x.criadoEm),
+                            descricao: x.descricao || '—',
+                            forma: x.forma || '—',
+                            valor: Number(x.valor) || 0
+                        };
+                    })
+                };
+            }).sort(function (a, b) {
+                return String(b.data).split('/').reverse().join('').localeCompare(String(a.data).split('/').reverse().join(''));
+            });
+        }
+
+        function montarArvoreDespesasOs() {
+            var main = carregarMain();
+            var arvore = {};
+            (main.atendimentos || []).forEach(function (a) {
+                var ma = mesAnoDeIso(a.entrada || a.criadoEm);
+                if (!ma) return;
+                var p = ma.split('/');
+                var ano = p[1];
+                var mesNum = p[0];
+                var mesNome = MES_NOMES_CX[mesNum] || mesNum;
+                if (!arvore[ano]) arvore[ano] = {};
+                if (!arvore[ano][mesNome]) {
+                    arvore[ano][mesNome] = { mesNum: mesNum, mesAno: ma, os: [] };
+                }
+                var r = resumoLucroOs(a);
+                arvore[ano][mesNome].os.push({
+                    id: a.id,
+                    data: fmtData(a.entrada || a.criadoEm),
+                    cliente: nomeAtendimento(main, a),
+                    placa: (a.placa || '—').toUpperCase(),
+                    carro: a.carro || '—',
+                    status: a.status || '—',
+                    bruto: r.bruto,
+                    despesas: r.despesas,
+                    lucro: r.lucro,
+                    lancamentos: listarDespesasInternasPorOs(a.id)
+                });
+            });
+            return arvore;
+        }
+
+        function htmlCorpoRelatorioDespesasOs(listaOs) {
+            var totB = 0, totD = 0, totL = 0;
+            var linhasOs = '';
+            var linhasDesp = '';
+            listaOs.forEach(function (o) {
+                totB += o.bruto;
+                totD += o.despesas;
+                totL += o.lucro;
+                linhasOs +=
+                    '<tr>' +
+                    '<td style="padding:6px;border-bottom:1px solid #ddd">' + esc(o.data) + '</td>' +
+                    '<td style="padding:6px;border-bottom:1px solid #ddd">' + esc(o.cliente) + '</td>' +
+                    '<td style="padding:6px;border-bottom:1px solid #ddd">' + esc(o.carro) + ' · ' + esc(o.placa) + '</td>' +
+                    '<td style="padding:6px;border-bottom:1px solid #ddd;text-align:right;color:#27ae60;font-weight:bold">' + moeda(o.bruto) + '</td>' +
+                    '<td style="padding:6px;border-bottom:1px solid #ddd;text-align:right;color:#e74c3c;font-weight:bold">' + moeda(o.despesas) + '</td>' +
+                    '<td style="padding:6px;border-bottom:1px solid #ddd;text-align:right;color:#2980b9;font-weight:bold">' + moeda(o.lucro) + '</td>' +
+                    '</tr>';
+                (o.lancamentosDespesa || o.lancamentos || []).forEach(function (d) {
+                    linhasDesp +=
+                        '<tr>' +
+                        '<td style="padding:6px;border-bottom:1px solid #ddd">' + esc(d.data || fmtData(d.criadoEm)) + '</td>' +
+                        '<td style="padding:6px;border-bottom:1px solid #ddd">' + esc(o.placa) + '</td>' +
+                        '<td style="padding:6px;border-bottom:1px solid #ddd">' + esc(d.descricao) + '</td>' +
+                        '<td style="padding:6px;border-bottom:1px solid #ddd">' + esc(d.forma) + '</td>' +
+                        '<td style="padding:6px;border-bottom:1px solid #ddd;text-align:right;color:#e74c3c;font-weight:bold">' + moeda(d.valor) + '</td>' +
+                        '</tr>';
+                });
+            });
+            if (!linhasOs) linhasOs = '<tr><td colspan="6" style="padding:10px;text-align:center;color:#777">Nenhuma OS neste período.</td></tr>';
+            if (!linhasDesp) linhasDesp = '<tr><td colspan="5" style="padding:10px;text-align:center;color:#777">Nenhuma despesa interna neste período.</td></tr>';
+
+            return {
+                html:
+                    '<div class="resumo">' +
+                    '<div class="resumo-box" style="color:#27ae60">BRUTO (OS)<b>' + moeda(totB) + '</b></div>' +
+                    '<div class="resumo-box" style="color:#e74c3c">DESPESAS INTERNAS<b>' + moeda(totD) + '</b></div>' +
+                    '<div class="resumo-box" style="color:#2980b9">LUCRO ESTIMADO<b>' + moeda(totL) + '</b></div>' +
+                    '</div>' +
+                    '<div class="section-title entrada"><span>BRUTO / ENTRADAS POR OS</span><span>TOTAL: ' + moeda(totB) + '</span></div>' +
+                    '<table><thead><tr><th>Data</th><th>Cliente</th><th>Veículo / Placa</th><th style="text-align:right">Bruto</th><th style="text-align:right">Despesas</th><th style="text-align:right">Lucro</th></tr></thead>' +
+                    '<tbody>' + linhasOs + '</tbody></table>' +
+                    '<div class="section-title saida"><span>DESPESAS / SAÍDAS INTERNAS</span><span>TOTAL: ' + moeda(totD) + '</span></div>' +
+                    '<table><thead><tr><th>Data</th><th>Placa</th><th>Descrição</th><th>Forma</th><th style="text-align:right">Valor</th></tr></thead>' +
+                    '<tbody>' + linhasDesp + '</tbody></table>',
+                totBruto: totB,
+                totDespesas: totD,
+                totLucro: totL
+            };
+        }
+
+        function gerarRelatorioMensalDespesasOsPDF(mesAnoFixo) {
+            var mesAno = mesAnoFixo || prompt('Digite o mês e ano do relatório de despesas por OS (Ex: 07/2026):', mesAnoAtualPadrao());
+            if (!mesAno) return;
+            mesAno = String(mesAno).trim();
+            if (!/^\d{2}\/\d{4}$/.test(mesAno)) {
+                alert('Use o formato MM/AAAA (Ex: 07/2026).');
+                return;
+            }
+            var lista = listarOsDoMes(mesAno);
+            if (!lista.length) {
+                alert('Nenhuma OS encontrada para o período: ' + mesAno);
+                return;
+            }
+            var emp = getEmpresa(carregarMain());
+            var montado = htmlCorpoRelatorioDespesasOs(lista);
+            var html =
+                '<div class="nota-espelho relatorio-mensal-print">' +
+                htmlCabecalhoNotaEmpresa(emp,
+                    '<div class="nota-sub nota-titulo-espelho">RELATÓRIO MENSAL — LUCRO POR OS (INTERNO)</div>' +
+                    '<div class="nota-sub">Competência: ' + esc(mesAno) + ' · ' + esc(pastaMesLabel(mesAno)) + '</div>'
+                ) +
+                '<style>' +
+                '.relatorio-mensal-print .resumo{display:flex;justify-content:space-around;flex-wrap:wrap;gap:10px;background:#f4f4f4;padding:12px;border:1px solid #ccc;margin:12px 0}' +
+                '.relatorio-mensal-print .resumo-box{text-align:center;font-size:11px}' +
+                '.relatorio-mensal-print .resumo-box b{display:block;font-size:14px;margin-top:4px}' +
+                '.relatorio-mensal-print .section-title{padding:8px 10px;font-size:11px;font-weight:bold;margin-top:18px;text-transform:uppercase;border-radius:4px 4px 0 0;display:flex;justify-content:space-between;color:#fff}' +
+                '.relatorio-mensal-print .section-title.entrada{background:#27ae60}' +
+                '.relatorio-mensal-print .section-title.saida{background:#e74c3c}' +
+                '.relatorio-mensal-print table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:11px}' +
+                '.relatorio-mensal-print th{background:#ecf0f1;color:#111;padding:8px;text-align:left;font-size:10px;border-bottom:2px solid #bdc3c7}' +
+                '</style>' +
+                montado.html +
+                '<div style="text-align:center;margin-top:24px;font-size:9px;color:#777">' +
+                'Documento interno · HM Centro Automotivo · ' + esc(new Date().toLocaleString('pt-BR')) +
+                '</div></div>';
+            executarImpressaoHtml(html);
+        }
+
+        function gerarArvorePastasDespesasOs() {
+            var el = document.getElementById('arvorePastasDespesasOs');
+            if (!el) return;
+            var arvore = montarArvoreDespesasOs();
+            var anos = Object.keys(arvore).sort().reverse();
+            if (!anos.length) {
+                el.innerHTML = '<div class="muted" style="padding:10px;text-align:center">Ainda não há OS oficiais para montar as pastas do mês.</div>';
+                return;
+            }
+            var html = '';
+            var idc = 0;
+            anos.forEach(function (ano) {
+                idc++;
+                var idAno = 'pasta_dos_ano_' + idc;
+                html += '<div class="pasta-cx-ano" onclick="togglePastaCaixa(\'' + idAno + '\')">📁 Ano: ' + esc(ano) + '</div>';
+                html += '<div id="' + idAno + '" style="display:none">';
+                Object.keys(arvore[ano]).forEach(function (mesNome) {
+                    var bucket = arvore[ano][mesNome];
+                    var totB = 0, totD = 0, totL = 0;
+                    bucket.os.forEach(function (o) {
+                        totB += o.bruto;
+                        totD += o.despesas;
+                        totL += o.lucro;
+                    });
+                    idc++;
+                    var idMes = 'pasta_dos_mes_' + idc;
+                    html += '<div class="pasta-cx-mes" onclick="togglePastaCaixa(\'' + idMes + '\')">📂 Mês: ' +
+                        esc(mesNome) + ' <small style="font-weight:500;opacity:.85">(' + esc(bucket.mesAno) +
+                        ' · ' + bucket.os.length + ' OS · lucro ' + moeda(totL) + ')</small></div>';
+                    html += '<div class="pasta-cx-mes-acoes">' +
+                        '<button type="button" class="btn btn-pdf" style="padding:6px 10px;font-size:12px" data-dos-rel="' +
+                        esc(bucket.mesAno) + '">📄 Relatório geral</button>' +
+                        '<button type="button" class="btn btn-secondary" style="padding:6px 10px;font-size:12px" data-dos-arquivar="' +
+                        esc(bucket.mesAno) + '">📂 Arquivar no PC</button></div>';
+                    html += '<div id="' + idMes + '" style="display:none">';
+
+                    /* Bruto / Entradas */
+                    idc++;
+                    var idE = 'pasta_dos_e_' + idc;
+                    html += '<div class="pasta-cx-tipo" onclick="togglePastaCaixa(\'' + idE + '\')">✅ Bruto / Entradas (' +
+                        bucket.os.length + ' OS · ' + moeda(totB) + ')</div>';
+                    html += '<div id="' + idE + '" class="pasta-cx-conteudo" style="display:none">';
+                    if (!bucket.os.length) {
+                        html += '<div class="muted">Nenhuma OS neste mês.</div>';
+                    } else {
+                        bucket.os.forEach(function (o) {
+                            html += '<div class="pasta-cx-item">' +
+                                '<span><strong>' + esc(o.data) + '</strong> · ' + esc(o.cliente) +
+                                ' · ' + esc(o.placa) +
+                                ' <button type="button" class="btn btn-primary" style="padding:3px 8px;font-size:11px;margin-left:8px" data-dos-abrir-pasta="' +
+                                esc(o.id) + '">Despesas</button></span>' +
+                                '<span class="val-ent">' + moeda(o.bruto) + '</span></div>';
+                        });
+                    }
+                    html += '</div>';
+
+                    /* Despesas / Saídas */
+                    idc++;
+                    var idS = 'pasta_dos_s_' + idc;
+                    var qtdDesp = 0;
+                    bucket.os.forEach(function (o) { qtdDesp += (o.lancamentos || []).length; });
+                    html += '<div class="pasta-cx-tipo" onclick="togglePastaCaixa(\'' + idS + '\')">🔻 Despesas / Saídas (' +
+                        qtdDesp + ' · ' + moeda(totD) + ')</div>';
+                    html += '<div id="' + idS + '" class="pasta-cx-conteudo" style="display:none">';
+                    if (!qtdDesp) {
+                        html += '<div class="muted">Nenhuma despesa interna lançada neste mês.</div>';
+                    } else {
+                        bucket.os.forEach(function (o) {
+                            (o.lancamentos || []).forEach(function (d) {
+                                html += '<div class="pasta-cx-item">' +
+                                    '<span><strong>[' + esc(o.placa) + ']</strong> ' + esc(fmtData(d.criadoEm)) +
+                                    ' · ' + esc(d.descricao || '—') +
+                                    ' <small class="muted">(' + esc(d.forma || '—') + ')</small></span>' +
+                                    '<span class="val-sai">' + moeda(d.valor) + '</span></div>';
+                            });
+                        });
+                    }
+                    html += '</div>';
+
+                    /* Relatório / Lucro */
+                    idc++;
+                    var idL = 'pasta_dos_l_' + idc;
+                    html += '<div class="pasta-cx-tipo" onclick="togglePastaCaixa(\'' + idL + '\')">📊 Lucro / Relatório (' +
+                        moeda(totL) + ')</div>';
+                    html += '<div id="' + idL + '" class="pasta-cx-conteudo" style="display:none">' +
+                        '<div class="pasta-cx-item"><span>Total bruto</span><span class="val-ent">' + moeda(totB) + '</span></div>' +
+                        '<div class="pasta-cx-item"><span>Total despesas</span><span class="val-sai">' + moeda(totD) + '</span></div>' +
+                        '<div class="pasta-cx-item"><span><strong>Lucro estimado do mês</strong></span><span class="val-ent"><strong>' +
+                        moeda(totL) + '</strong></span></div></div>';
+
+                    html += '</div>';
+                });
+                html += '</div>';
+            });
+            el.innerHTML = html;
+
+            el.querySelectorAll('[data-dos-rel]').forEach(function (b) {
+                b.addEventListener('click', function (ev) {
+                    ev.stopPropagation();
+                    gerarRelatorioMensalDespesasOsPDF(b.getAttribute('data-dos-rel'));
+                });
+            });
+            el.querySelectorAll('[data-dos-arquivar]').forEach(function (b) {
+                b.addEventListener('click', function (ev) {
+                    ev.stopPropagation();
+                    arquivarMesDespesasOsPastaPC(b.getAttribute('data-dos-arquivar'));
+                });
+            });
+            el.querySelectorAll('[data-dos-abrir-pasta]').forEach(function (b) {
+                b.addEventListener('click', function (ev) {
+                    ev.stopPropagation();
+                    abrirLancarDespesaOs(b.getAttribute('data-dos-abrir-pasta'));
+                });
+            });
+        }
+
+        async function arquivarMesDespesasOsPastaPC(mesAnoFixo) {
+            if (!('showDirectoryPicker' in window)) {
+                toast('Arquivar na pasta do PC só funciona no Chrome/Edge no computador.');
+                return;
+            }
+            var mesAno = mesAnoFixo || prompt('Qual mês de despesas por OS arquivar? (Ex: 07/2026)', mesAnoAtualPadrao());
+            if (!mesAno) return;
+            mesAno = String(mesAno).trim();
+            if (!/^\d{2}\/\d{4}$/.test(mesAno)) {
+                alert('Use o formato MM/AAAA (Ex: 07/2026).');
+                return;
+            }
+            var root = await carregarHandlePastaRaiz();
+            if (!root) {
+                toast('Configure a pasta do PC em Config primeiro.');
+                return;
+            }
+            if (!(await solicitarPermissaoPasta(root))) {
+                toast('Sem permissão na pasta do PC.');
+                return;
+            }
+
+            var lista = listarOsDoMes(mesAno);
+            if (!lista.length) {
+                alert('Nenhuma OS para arquivar em ' + mesAno);
+                return;
+            }
+            var emp = getEmpresa(carregarMain());
+            var montado = htmlCorpoRelatorioDespesasOs(lista);
+            var entradas = lista.map(function (o) {
+                return { data: o.data, cliente: o.cliente, placa: o.placa, carro: o.carro, bruto: o.bruto, status: o.status };
+            });
+            var saidas = [];
+            lista.forEach(function (o) {
+                (o.lancamentosDespesa || []).forEach(function (d) {
+                    saidas.push({
+                        data: d.data,
+                        placa: o.placa,
+                        cliente: o.cliente,
+                        descricao: d.descricao,
+                        forma: d.forma,
+                        valor: d.valor
+                    });
+                });
+            });
+
+            var partes = mesAno.split('/');
+            var ano = partes[1];
+            var mesNum = partes[0];
+            var mesNome = MES_NOMES_CX[mesNum] || mesNum;
+            var nomePastaMes = mesNum + '-' + slugPasta(mesNome);
+
+            var htmlEntradas =
+                '<div class="resumo"><div class="resumo-box" style="color:#27ae60">BRUTO TOTAL<b>' + moeda(montado.totBruto) + '</b></div></div>' +
+                '<table><thead><tr><th>Data</th><th>Cliente</th><th>Veículo / Placa</th><th style="text-align:right">Bruto</th></tr></thead><tbody>' +
+                entradas.map(function (o) {
+                    return '<tr><td>' + esc(o.data) + '</td><td>' + esc(o.cliente) + '</td><td>' +
+                        esc(o.carro) + ' · ' + esc(o.placa) + '</td><td style="text-align:right;color:#27ae60;font-weight:bold">' +
+                        moeda(o.bruto) + '</td></tr>';
+                }).join('') + '</tbody></table>';
+
+            var htmlSaidas =
+                '<div class="resumo"><div class="resumo-box" style="color:#e74c3c">DESPESAS TOTAL<b>' + moeda(montado.totDespesas) + '</b></div></div>' +
+                '<table><thead><tr><th>Data</th><th>Placa</th><th>Descrição</th><th>Forma</th><th style="text-align:right">Valor</th></tr></thead><tbody>' +
+                (saidas.length ? saidas.map(function (d) {
+                    return '<tr><td>' + esc(d.data) + '</td><td>' + esc(d.placa) + '</td><td>' + esc(d.descricao) +
+                        '</td><td>' + esc(d.forma) + '</td><td style="text-align:right;color:#e74c3c;font-weight:bold">' +
+                        moeda(d.valor) + '</td></tr>';
+                }).join('') : '<tr><td colspan="5" style="text-align:center;color:#777;padding:10px">Sem despesas neste mês.</td></tr>') +
+                '</tbody></table>';
+
+            try {
+                var pastaRaizDos = await root.getDirectoryHandle('Despesas-OS', { create: true });
+                var pastaAno = await pastaRaizDos.getDirectoryHandle(ano, { create: true });
+                var pastaMes = await pastaAno.getDirectoryHandle(nomePastaMes, { create: true });
+                var pastaEntradas = await pastaMes.getDirectoryHandle('Entradas', { create: true });
+                var pastaSaidas = await pastaMes.getDirectoryHandle('Saidas', { create: true });
+
+                await gravarTextoNaPasta(pastaEntradas, 'bruto-os-' + mesNum + '-' + ano + '.html',
+                    htmlArquivoRelatorioMes(emp, 'BRUTO / ENTRADAS POR OS', mesAno, htmlEntradas));
+                await gravarTextoNaPasta(pastaEntradas, 'bruto-os-' + mesNum + '-' + ano + '.json',
+                    JSON.stringify(entradas, null, 2));
+
+                await gravarTextoNaPasta(pastaSaidas, 'despesas-' + mesNum + '-' + ano + '.html',
+                    htmlArquivoRelatorioMes(emp, 'DESPESAS / SAÍDAS INTERNAS', mesAno, htmlSaidas));
+                await gravarTextoNaPasta(pastaSaidas, 'despesas-' + mesNum + '-' + ano + '.json',
+                    JSON.stringify(saidas, null, 2));
+
+                await gravarTextoNaPasta(pastaMes, 'Relatorio-Geral-Lucro-OS-' + mesNum + '-' + ano + '.html',
+                    htmlArquivoRelatorioMes(emp, 'RELATÓRIO MENSAL — LUCRO POR OS (INTERNO)', mesAno, montado.html));
+                await gravarTextoNaPasta(pastaMes, 'resumo-lucro-os-' + mesNum + '-' + ano + '.json', JSON.stringify({
+                    mesAno: mesAno,
+                    mes: mesNome,
+                    geradoEm: new Date().toISOString(),
+                    totais: {
+                        bruto: montado.totBruto,
+                        despesas: montado.totDespesas,
+                        lucro: montado.totLucro
+                    },
+                    qtdOs: lista.length,
+                    os: lista
+                }, null, 2));
+
+                toast('Mês ' + mesAno + ' arquivado em Despesas-OS/' + ano + '/' + nomePastaMes);
+                alert(
+                    'Pasta de despesas por OS criada!\n\n' +
+                    root.name + '/Despesas-OS/' + ano + '/' + nomePastaMes + '/\n' +
+                    '  ├─ Entradas/  (bruto das OS)\n' +
+                    '  ├─ Saidas/    (despesas internas)\n' +
+                    '  └─ Relatorio-Geral-Lucro-OS-…html\n\n' +
+                    'Bruto: ' + moeda(montado.totBruto) +
+                    '\nDespesas: ' + moeda(montado.totDespesas) +
+                    '\nLucro: ' + moeda(montado.totLucro)
+                );
+            } catch (err) {
+                console.error(err);
+                toast('Falha ao gravar a pasta de despesas por OS no PC.');
+            }
+        }
+
         function renderRelatorioCaixa() {
             var db = carregar();
             var cfg = getCaixaConfig(db);
@@ -5738,19 +7556,66 @@
             tb.innerHTML = '';
             if (!rows.length) {
                 tb.innerHTML = '<tr><td colspan="5" class="muted">Sem movimentações para resumir.</td></tr>';
-                return;
+            } else {
+                rows.sort(function (a, b) { return a.origem.localeCompare(b.origem) || a.forma.localeCompare(b.forma); });
+                rows.forEach(function (r) {
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td>' + esc(r.origem) + '</td>' +
+                        '<td>' + esc(r.forma) + '</td>' +
+                        '<td>' + esc(r.tipo) + '</td>' +
+                        '<td>' + r.qtd + '</td>' +
+                        '<td>' + moeda(r.total) + '</td>';
+                    tb.appendChild(tr);
+                });
             }
-            rows.sort(function (a, b) { return a.origem.localeCompare(b.origem) || a.forma.localeCompare(b.forma); });
-            rows.forEach(function (r) {
-                var tr = document.createElement('tr');
-                tr.innerHTML =
-                    '<td>' + esc(r.origem) + '</td>' +
-                    '<td>' + esc(r.forma) + '</td>' +
-                    '<td>' + esc(r.tipo) + '</td>' +
-                    '<td>' + r.qtd + '</td>' +
-                    '<td>' + moeda(r.total) + '</td>';
-                tb.appendChild(tr);
-            });
+
+            /* No modo interno: resumo de lucro por OS (despesas vinculadas) */
+            var boxRel = document.getElementById('relCxConteudo');
+            var oldLucro = document.getElementById('relLucroOsBox');
+            if (oldLucro) oldLucro.remove();
+            if (canalVendas === 'interno') {
+                var main = carregarMain();
+                var linhasLucro = [];
+                var totBruto = 0, totDesp = 0;
+                (main.atendimentos || []).forEach(function (a) {
+                    var r = resumoLucroOs(a);
+                    if (r.despesas <= 0 && r.bruto <= 0) return;
+                    if (r.despesas <= 0) return; /* só OS com despesa interna */
+                    totBruto += r.bruto;
+                    totDesp += r.despesas;
+                    linhasLucro.push({
+                        data: fmtData(a.entrada || a.criadoEm),
+                        cliente: nomeAtendimento(main, a),
+                        placa: (a.placa || '—').toUpperCase(),
+                        bruto: r.bruto,
+                        despesas: r.despesas,
+                        lucro: r.lucro
+                    });
+                });
+                var wrap = document.createElement('div');
+                wrap.id = 'relLucroOsBox';
+                wrap.style.marginTop = '18px';
+                if (!linhasLucro.length) {
+                    wrap.innerHTML = '<h2>Lucro por OS (despesas internas)</h2><p class="muted">Nenhuma despesa vinculada a OS ainda.</p>';
+                } else {
+                    wrap.innerHTML =
+                        '<h2>Lucro por OS (despesas internas)</h2>' +
+                        '<p class="hint">Bruto das OS oficiais − saídas do caixa interno vinculadas. Total despesas: <strong>' +
+                        moeda(totDesp) + '</strong> · Lucro: <strong>' + moeda(totBruto - totDesp) + '</strong></p>' +
+                        '<table><thead><tr><th>Data</th><th>Cliente</th><th>Placa</th><th>Bruto</th><th>Despesas</th><th>Lucro</th></tr></thead>' +
+                        '<tbody>' +
+                        linhasLucro.map(function (r) {
+                            return '<tr><td>' + esc(r.data) + '</td><td>' + esc(r.cliente) + '</td><td>' +
+                                esc(r.placa) + '</td><td>' + moeda(r.bruto) + '</td><td>' +
+                                moeda(r.despesas) + '</td><td><strong>' + moeda(r.lucro) + '</strong></td></tr>';
+                        }).join('') +
+                        '</tbody></table>';
+                }
+                boxRel.appendChild(wrap);
+            }
+
+            gerarArvorePastasCaixa({ elId: 'arvorePastasCaixa', filtro: 'geral', idPrefix: 'pasta_cx' });
         }
 
         document.getElementById('btnAtualizarRelCx').addEventListener('click', function () {
@@ -5761,7 +7626,7 @@
             renderRelatorioCaixa();
             var db = carregar();
             var emp = getEmpresa(db);
-            document.getElementById('printNota').innerHTML =
+            executarImpressaoHtml(
                 '<div class="nota-espelho">' +
                 htmlCabecalhoNotaEmpresa(emp,
                     '<div class="nota-sub nota-titulo-espelho">Relatório de Caixa · ' + esc(fmtData(hojeISO())) + '</div>'
@@ -5770,8 +7635,55 @@
                 '<div style="margin-top:12px">Balcão: <strong>' + document.getElementById('relCxBalcao').textContent +
                 '</strong> · Banco: <strong>' + document.getElementById('relCxBanco').textContent +
                 '</strong> · Pendentes: <strong>' + document.getElementById('relCxPend').textContent +
-                '</strong> · Geral: <strong>' + document.getElementById('relCxGeral').textContent + '</strong></div></div>';
-            setTimeout(function () { window.print(); }, 250);
+                '</strong> · Geral: <strong>' + document.getElementById('relCxGeral').textContent + '</strong></div></div>'
+            );
+        });
+
+        document.querySelectorAll('[data-rel-mes]').forEach(function (b) {
+            if (b.hasAttribute('data-rel-mes-fixo')) return;
+            b.addEventListener('click', function () {
+                gerarRelatorioMensalPDF(b.getAttribute('data-rel-mes') || 'geral');
+            });
+        });
+        document.getElementById('btnAtualizarPastasCx').addEventListener('click', function () {
+            gerarArvorePastasCaixa({ elId: 'arvorePastasCaixa', filtro: 'geral', idPrefix: 'pasta_cx' });
+            toast('Pastas atualizadas.');
+        });
+        document.getElementById('btnArquivarMesPc').addEventListener('click', function () {
+            arquivarMesPastaPC(null, 'geral');
+        });
+
+        document.getElementById('btnAtualizarPastasBalcao').addEventListener('click', function () {
+            gerarArvorePastasCaixa({ elId: 'arvorePastasBalcao', filtro: 'balcao', idPrefix: 'pasta_bal' });
+            toast('Pastas do balcão atualizadas.');
+        });
+        document.getElementById('btnRelMesBalcao').addEventListener('click', function () {
+            gerarRelatorioMensalPDF('balcao');
+        });
+        document.getElementById('btnArquivarMesBalcao').addEventListener('click', function () {
+            arquivarMesPastaPC(null, 'balcao');
+        });
+
+        document.getElementById('btnAtualizarPastasBanco').addEventListener('click', function () {
+            gerarArvorePastasCaixa({ elId: 'arvorePastasBanco', filtro: 'banco', idPrefix: 'pasta_ban' });
+            toast('Pastas do banco atualizadas.');
+        });
+        document.getElementById('btnRelMesBanco').addEventListener('click', function () {
+            gerarRelatorioMensalPDF('banco');
+        });
+        document.getElementById('btnArquivarMesBanco').addEventListener('click', function () {
+            arquivarMesPastaPC(null, 'banco');
+        });
+
+        document.getElementById('btnAtualizarPastasPend').addEventListener('click', function () {
+            gerarArvorePastasCaixa({ elId: 'arvorePastasPendentes', filtro: 'pendentes', idPrefix: 'pasta_pen' });
+            toast('Pastas a receber atualizadas.');
+        });
+        document.getElementById('btnRelMesPend').addEventListener('click', function () {
+            gerarRelatorioMensalPDF('pendentes');
+        });
+        document.getElementById('btnArquivarMesPend').addEventListener('click', function () {
+            arquivarMesPastaPC(null, 'pendentes');
         });
 
         /* ---------- Config / empresa / backup ---------- */
@@ -5922,6 +7834,10 @@
             renderCaixaBanco();
             renderPendentes();
             renderRelatorioCaixa();
+            if (document.getElementById('painelDespesasOs') &&
+                document.getElementById('painelDespesasOs').classList.contains('active')) {
+                renderDespesasOs();
+            }
             aplicarIdentidadeVisual();
         }
 
