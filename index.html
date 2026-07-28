@@ -1599,9 +1599,21 @@
                 <h2>Estoque / Lista</h2>
                 <div class="toolbar">
                     <input type="search" id="buscaProd" class="search" placeholder="Buscar nome ou bipar código...">
+                    <button type="button" class="btn btn-secondary" id="btnImprimirEtiquetas" style="border:2px solid #fff;font-weight:700;text-transform:uppercase;font-size:0.78rem">🖨️ Imprimir Etiquetas</button>
                 </div>
+                <p class="hint" style="margin-top:8px;color:#ff8a80">Marque as caixinhas na tabela para imprimir as etiquetas (Elgin L42 Pro — 2 por linha, 50×30 mm).</p>
                 <table>
-                    <thead><tr><th>Cód. Barras</th><th>Nome</th><th>Categoria</th><th>Qtd</th><th>Venda</th><th>Ações</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th style="width:36px;text-align:center"><input type="checkbox" id="chkTodasEtiquetas" title="Selecionar todos"></th>
+                            <th>Cód. Barras</th>
+                            <th>Nome</th>
+                            <th>Categoria</th>
+                            <th>Qtd</th>
+                            <th>Venda</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
                     <tbody id="tabelaProd"></tbody>
                 </table>
             </div>
@@ -4691,14 +4703,24 @@
                 return [p.nome, p.codigo, p.categoria].join(' ').toLowerCase().indexOf(q) > -1;
             });
             var tb = document.getElementById('tabelaProd');
+            var chkAll = document.getElementById('chkTodasEtiquetas');
+            if (chkAll) chkAll.checked = false;
             tb.innerHTML = '';
             if (!lista.length) {
-                tb.innerHTML = '<tr><td colspan="6" class="muted">Nenhum produto.</td></tr>';
+                tb.innerHTML = '<tr><td colspan="7" class="muted">Nenhum produto.</td></tr>';
                 return;
             }
             lista.forEach(function (p) {
                 var tr = document.createElement('tr');
+                var cod = normalizarCodigo(p.codigo) || '';
+                var vendaNum = Number(p.venda) || 0;
                 tr.innerHTML =
+                    '<td style="text-align:center">' +
+                    '<input type="checkbox" class="check-etiqueta"' +
+                    ' data-nome="' + esc(p.nome || '') + '"' +
+                    ' data-codigo="' + esc(cod) + '"' +
+                    ' data-venda="' + esc(String(vendaNum)) + '">' +
+                    '</td>' +
                     '<td>' + esc(p.codigo || '—') + '</td>' +
                     '<td>' + esc(p.nome) + '</td>' +
                     '<td>' + esc(p.categoria || '—') + '</td>' +
@@ -4718,7 +4740,102 @@
             });
         }
 
+        function toggleTodasEtiquetas(source) {
+            var checkboxes = document.querySelectorAll('#tabelaProd .check-etiqueta');
+            checkboxes.forEach(function (chk) { chk.checked = !!source.checked; });
+        }
+
+        function imprimirEtiquetasEstoque() {
+            var checkboxes = document.querySelectorAll('#tabelaProd .check-etiqueta:checked');
+            if (!checkboxes.length) {
+                alert('Selecione pelo menos um produto marcando a caixinha na tabela para imprimir.');
+                return;
+            }
+
+            var qtdCopias = prompt('Quantas cópias de CADA ETIQUETA você deseja imprimir?', '1');
+            if (qtdCopias == null) return;
+            qtdCopias = parseInt(qtdCopias, 10);
+            if (!qtdCopias || qtdCopias <= 0 || isNaN(qtdCopias)) return;
+
+            var htmlEtiquetas =
+                '<html><head><title>Impressão Elgin L42 Pro — HM Automotivo</title>' +
+                '<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>' +
+                '<style>' +
+                '* { margin: 0; padding: 0; box-sizing: border-box; }' +
+                '@page { size: 104mm 30mm; margin: 0mm !important; }' +
+                'body { font-family: Arial, sans-serif; background: #fff; width: 104mm; height: 30mm; margin: 0; padding: 0; color: #000; overflow: hidden; }' +
+                '.linha-etiquetas { display: flex; flex-direction: row; width: 104mm; height: 30mm; page-break-inside: avoid; page-break-after: always; justify-content: space-between; align-items: center; }' +
+                '.etiqueta { width: 50mm; height: 30mm; padding: 1.5mm; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }' +
+                '.etq-nome { font-size: 7pt; font-weight: bold; line-height: 1.1; margin-bottom: 2px; text-align: center; width: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }' +
+                '.etq-preco { font-size: 12pt; font-weight: 900; margin-bottom: 2px; text-align: center; }' +
+                '.etq-barcode-container { width: 100%; text-align: center; }' +
+                '.etq-barcode-container svg { max-width: 48mm; height: 42px !important; }' +
+                '@media print { .btn-imprimir { display: none !important; } }' +
+                '.btn-imprimir { position: fixed; bottom: 20px; right: 20px; background: #27ae60; color: white; border: none; padding: 15px 20px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; }' +
+                '</style></head><body>' +
+                '<button class="btn-imprimir" onclick="window.print()">🖨️ IMPRIMIR NA ELGIN</button>';
+
+            var arrayEtiquetas = [];
+            checkboxes.forEach(function (chk) {
+                var nome = chk.getAttribute('data-nome') || '';
+                if (nome.length > 45) nome = nome.substring(0, 45) + '...';
+                var cod = chk.getAttribute('data-codigo') || '00000000';
+                if (!cod) cod = '00000000';
+                var precoNum = Number(chk.getAttribute('data-venda')) || 0;
+                var precoFmt = precoNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                var i;
+                for (i = 0; i < qtdCopias; i++) {
+                    arrayEtiquetas.push(
+                        '<div class="etiqueta">' +
+                        '<div class="etq-nome">' + esc(nome) + '</div>' +
+                        '<div class="etq-preco">R$ ' + esc(precoFmt) + '</div>' +
+                        '<div class="etq-barcode-container">' +
+                        '<svg class="barcode"' +
+                        ' jsbarcode-value="' + esc(cod) + '"' +
+                        ' jsbarcode-displayvalue="true"' +
+                        ' jsbarcode-width="2"' +
+                        ' jsbarcode-height="42"' +
+                        ' jsbarcode-fontSize="11"' +
+                        ' jsbarcode-textmargin="0"' +
+                        ' jsbarcode-margin="0"></svg>' +
+                        '</div></div>'
+                    );
+                }
+            });
+
+            var j;
+            for (j = 0; j < arrayEtiquetas.length; j += 2) {
+                var etq1 = arrayEtiquetas[j];
+                var etq2 = arrayEtiquetas[j + 1]
+                    ? arrayEtiquetas[j + 1]
+                    : '<div class="etiqueta" style="border:none;visibility:hidden"></div>';
+                htmlEtiquetas +=
+                    '<div class="linha-etiquetas">' + etq1 + etq2 + '</div>';
+            }
+
+            htmlEtiquetas +=
+                '<script>' +
+                'window.onload = function () {' +
+                '  function initBc() { if (typeof JsBarcode !== "undefined") JsBarcode(".barcode").init(); }' +
+                '  initBc();' +
+                '  setTimeout(initBc, 400);' +
+                '};' +
+                '<\/script></body></html>';
+
+            var janela = window.open('', '', 'width=800,height=600');
+            if (!janela) {
+                alert('Permita pop-ups neste site para abrir a impressão de etiquetas.');
+                return;
+            }
+            janela.document.write(htmlEtiquetas);
+            janela.document.close();
+        }
+
         document.getElementById('buscaProd').addEventListener('input', renderProdutos);
+        document.getElementById('chkTodasEtiquetas').addEventListener('change', function () {
+            toggleTodasEtiquetas(this);
+        });
+        document.getElementById('btnImprimirEtiquetas').addEventListener('click', imprimirEtiquetasEstoque);
 
         /* ---------- Venda / Orçamento (modelo FH Control) ---------- */
         function formaPagamentoEhDigital(formaPag) {
