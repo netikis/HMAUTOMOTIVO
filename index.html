@@ -1902,7 +1902,7 @@
         <section id="painelConfig" class="panel">
             <div class="box">
                 <h2>Dados da Empresa</h2>
-                <p class="hint">Mesmo padrão do balcão: esses dados saem no cabeçalho das notas, PDF e link de assinatura. Ficam só no banco HM.</p>
+                <p class="hint">Esses dados saem no cabeçalho das notas, PDF e assinatura. Com login na nuvem, ao salvar sobem automaticamente — no outro PC/celular entram sozinhos ao logar ou ao sincronizar.</p>
                 <form id="formEmpresa">
                     <div class="row">
                         <div class="col" style="flex:2"><label>Nome da Empresa (Razão ou Fantasia)</label><input id="empNome" required placeholder="Ex: HM Centro Automotivo"></div>
@@ -1935,6 +1935,7 @@
             <div class="box">
                 <h2>☁ Sincronizar — PC ↔ Celular</h2>
                 <p class="config-status aviso" id="nuvemStatusTexto"><strong>Nuvem:</strong> verificando…</p>
+                <p class="hint" style="margin-top:8px">Dados da empresa sobem ao salvar. Use <strong>Sincronizar agora</strong> no PC e no celular para OS, clientes, estoque e caixa.</p>
                 <div class="row" style="margin-top:12px">
                     <button type="button" class="btn btn-primary" id="btnSyncNuvem">☁ Sincronizar agora</button>
                     <button type="button" class="btn btn-secondary" id="btnAppSair">Sair da conta</button>
@@ -2118,8 +2119,31 @@
                 cidade: '',
                 estado: '',
                 complemento: '',
-                logo: ''
+                logo: '',
+                logoNaMidia: false,
+                atualizadoEm: ''
             };
+        }
+
+        function empresaEstaPadrao(emp) {
+            var e = emp || {};
+            return !e.atualizadoEm &&
+                (!e.nome || e.nome === 'HM Centro Automotivo') &&
+                !e.cnpj && !e.ie && !e.telefone && !e.email &&
+                !e.cep && !e.rua && !e.numero && !e.bairro &&
+                !e.cidade && !e.estado && !e.complemento &&
+                !e.logo && !e.logoNaMidia;
+        }
+
+        function mesclarEmpresa(localEmp, nuvemEmp, baseAtualizadoEm) {
+            var L = Object.assign(empresaPadrao(), localEmp || {});
+            var N = nuvemEmp ? Object.assign(empresaPadrao(), nuvemEmp) : null;
+            if (!N) return L;
+            if (empresaEstaPadrao(L)) return N;
+            var tL = new Date(L.atualizadoEm || 0).getTime();
+            var tN = new Date(N.atualizadoEm || baseAtualizadoEm || 0).getTime();
+            if (!tL && tN) return N;
+            return tN >= tL ? N : L;
         }
 
         function estadoVazio() {
@@ -2229,6 +2253,8 @@
         }
 
         function lerEmpresaDoForm(logoAtual) {
+            var atual = getEmpresa();
+            var logo = logoAtual != null ? logoAtual : (atual.logo || '');
             return {
                 nome: document.getElementById('empNome').value.trim() || 'HM Centro Automotivo',
                 cnpj: document.getElementById('empCnpj').value.trim(),
@@ -2242,16 +2268,23 @@
                 cidade: document.getElementById('empCidade').value.trim(),
                 estado: (document.getElementById('empEstado').value || '').trim().toUpperCase(),
                 complemento: document.getElementById('empComplemento').value.trim(),
-                logo: logoAtual != null ? logoAtual : (getEmpresa().logo || '')
+                logo: logo,
+                logoNaMidia: !!(logo && String(logo).startsWith('data:')),
+                atualizadoEm: atual.atualizadoEm || ''
             };
         }
 
-        function salvarEmpresaObj(emp) {
+        function salvarEmpresaObj(emp, opts) {
+            opts = opts || {};
+            emp = Object.assign(empresaPadrao(), emp || {});
+            emp.atualizadoEm = new Date().toISOString();
+            emp.logoNaMidia = !!(emp.logo && String(emp.logo).startsWith('data:'));
             var db = carregarMain();
             db.empresa = emp;
             salvarMain(db);
             aplicarIdentidadeVisual();
             preencherFormEmpresa();
+            if (!opts.semNuvem) agendarEnvioEmpresaNuvem(emp);
         }
 
         function carregarMain() {
@@ -3110,7 +3143,7 @@
             if (user) {
                 el.className = 'config-status';
                 el.innerHTML = '<strong>Nuvem:</strong> conectado como ' + esc(user.email || 'usuário') +
-                    '. Use <em>Sincronizar agora</em> no PC e no celular.';
+                    '. Empresa sincroniza ao salvar; use <em>Sincronizar agora</em> para o restante.';
             } else {
                 el.className = 'config-status aviso';
                 el.innerHTML = '<strong>Nuvem:</strong> entre com o e-mail/senha do Firebase para sincronizar.';
@@ -3306,12 +3339,129 @@
             return Object.keys(map).map(function (k) { return map[k]; });
         }
 
+        async function enviarLogoEmpresaNuvem(logoDataUrl) {
+            var sessao = await obterSessaoFirebase();
+            var fsMod = sessao.fsMod;
+            var dbFs = sessao.dbFs;
+            if (logoDataUrl && String(logoDataUrl).startsWith('data:')) {
+                await fsMod.setDoc(fsMod.doc(dbFs, 'hm_automotivo_midia', 'logo_empresa'), {
+                    data: logoDataUrl,
+                    atualizadoEm: new Date().toISOString()
+                });
+                return true;
+            }
+            try {
+                await fsMod.deleteDoc(fsMod.doc(dbFs, 'hm_automotivo_midia', 'logo_empresa'));
+            } catch (e) { /* ok se não existir */ }
+            return false;
+        }
+
+        async function hidratarLogoEmpresa(emp) {
+            var e = Object.assign(empresaPadrao(), emp || {});
+            if (e.logo && String(e.logo).startsWith('data:')) return e;
+            if (e.logo && /^https?:\/\//i.test(e.logo)) return e;
+            if (!e.logoNaMidia && e.logo) return e;
+            try {
+                var sessao = await obterSessaoFirebase();
+                var snap = await sessao.fsMod.getDoc(
+                    sessao.fsMod.doc(sessao.dbFs, 'hm_automotivo_midia', 'logo_empresa')
+                );
+                if (snap.exists()) {
+                    var d = snap.data() || {};
+                    if (d.data) {
+                        e.logo = d.data;
+                        e.logoNaMidia = true;
+                    }
+                }
+            } catch (err) { /* segue sem logo */ }
+            return e;
+        }
+
+        function empresaParaBaseNuvem(emp) {
+            var out = Object.assign(empresaPadrao(), emp || {});
+            if (out.logo && String(out.logo).startsWith('data:')) {
+                out.logoNaMidia = true;
+                out.logo = '';
+            }
+            return out;
+        }
+
+        var _envioEmpTimer = null;
+        function agendarEnvioEmpresaNuvem(emp) {
+            clearTimeout(_envioEmpTimer);
+            _envioEmpTimer = setTimeout(function () {
+                enviarEmpresaNuvem(emp).then(function (ok) {
+                    if (ok) {
+                        atualizarStatusNuvemUI();
+                        toast('Configuração da empresa na nuvem OK.');
+                    }
+                }).catch(function () { /* sem login / offline: fica só local */ });
+            }, 350);
+        }
+
+        async function enviarEmpresaNuvem(emp) {
+            if (!_fbSessao || !_fbSessao.auth || !_fbSessao.auth.currentUser) return false;
+            var sessao = await obterSessaoFirebase();
+            var fsMod = sessao.fsMod;
+            var dbFs = sessao.dbFs;
+            var empLocal = Object.assign(empresaPadrao(), emp || getEmpresa());
+            await enviarLogoEmpresaNuvem(empLocal.logo);
+            var empNuv = empresaParaBaseNuvem(empLocal);
+            var snap = await fsMod.getDoc(fsMod.doc(dbFs, 'hm_automotivo_base', 'principal'));
+            var base = snap.exists() ? (snap.data() || {}) : {};
+            base.empresa = empNuv;
+            base.atualizadoEm = new Date().toISOString();
+            if (!base.clientes) base.clientes = [];
+            if (!base.produtos) base.produtos = [];
+            if (!base.orcamentos) base.orcamentos = [];
+            if (!base.caixa) base.caixa = [];
+            if (!base.caixaBanco) base.caixaBanco = [];
+            if (!base.pendentes) base.pendentes = [];
+            if (!base.caixaConfig) base.caixaConfig = { inicialBalcao: 0, inicialBanco: 0 };
+            await fsMod.setDoc(fsMod.doc(dbFs, 'hm_automotivo_base', 'principal'), base);
+            return true;
+        }
+
+        async function puxarConfigEmpresaNuvemSilencioso() {
+            try {
+                if (!_fbSessao || !_fbSessao.auth || !_fbSessao.auth.currentUser) return false;
+                var baseNuv = await baixarBaseNuvemSilencioso();
+                if (!baseNuv || !baseNuv.empresa) {
+                    /* Nada na nuvem ainda: sobe o que estiver no PC */
+                    var local = carregarMain().empresa;
+                    if (local && !empresaEstaPadrao(local)) {
+                        await enviarEmpresaNuvem(local);
+                        return true;
+                    }
+                    return false;
+                }
+                var db = carregarMain();
+                var empAntes = db.empresa;
+                var tL = new Date((empAntes && empAntes.atualizadoEm) || 0).getTime();
+                var tN = new Date((baseNuv.empresa && baseNuv.empresa.atualizadoEm) || baseNuv.atualizadoEm || 0).getTime();
+                var mesclada = mesclarEmpresa(db.empresa, baseNuv.empresa, baseNuv.atualizadoEm);
+                mesclada = await hidratarLogoEmpresa(mesclada);
+                db.empresa = mesclada;
+                salvarMain(db);
+                aplicarIdentidadeVisual();
+                preencherFormEmpresa();
+                if (tL > tN && !empresaEstaPadrao(empAntes)) {
+                    await enviarEmpresaNuvem(mesclada);
+                }
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
         async function enviarBaseNuvem(db) {
             var sessao = await obterSessaoFirebase();
             var fsMod = sessao.fsMod;
             var dbFs = sessao.dbFs;
+            var empLocal = Object.assign(empresaPadrao(), db.empresa || empresaPadrao());
+            await enviarLogoEmpresaNuvem(empLocal.logo);
             var base = {
-                empresa: db.empresa || empresaPadrao(),
+                empresa: empresaParaBaseNuvem(empLocal),
                 clientes: db.clientes || [],
                 produtos: db.produtos || [],
                 orcamentos: db.orcamentos || [],
@@ -3359,18 +3509,11 @@
             var db = carregar();
             var ok = 0, falha = 0;
 
-            /* 1) Baixa e mescla base (clientes, estoque, caixa…) */
+            /* 1) Baixa e mescla base (empresa, clientes, estoque, caixa…) */
             var baseNuv = await baixarBaseNuvem();
             if (baseNuv) {
-                if (baseNuv.empresa && (!db.empresa || !db.empresa.nome || db.empresa.nome === 'HM Centro Automotivo')) {
-                    db.empresa = baseNuv.empresa;
-                } else if (baseNuv.empresa && baseNuv.atualizadoEm && db.empresa) {
-                    var tEmpN = new Date(baseNuv.atualizadoEm || 0).getTime();
-                    var tEmpL = new Date(db.empresa.atualizadoEm || 0).getTime();
-                    if (tEmpN >= tEmpL) db.empresa = baseNuv.empresa;
-                } else if (baseNuv.empresa && !db.empresa) {
-                    db.empresa = baseNuv.empresa;
-                }
+                db.empresa = mesclarEmpresa(db.empresa, baseNuv.empresa, baseNuv.atualizadoEm);
+                db.empresa = await hidratarLogoEmpresa(db.empresa);
                 db.clientes = mesclarListaPorId(db.clientes, baseNuv.clientes);
                 db.produtos = mesclarListaPorId(db.produtos, baseNuv.produtos);
                 db.orcamentos = mesclarListaPorId(db.orcamentos, baseNuv.orcamentos);
@@ -3378,6 +3521,8 @@
                 db.caixaBanco = mesclarListaPorId(db.caixaBanco, baseNuv.caixaBanco);
                 db.pendentes = mesclarListaPorId(db.pendentes, baseNuv.pendentes);
                 if (baseNuv.caixaConfig) db.caixaConfig = baseNuv.caixaConfig;
+            } else {
+                db.empresa = await hidratarLogoEmpresa(db.empresa);
             }
 
             /* 2) Baixa e mescla OS + fotos */
@@ -3415,6 +3560,7 @@
             toast('Nuvem OK: ' + ok + ' OS · ' + (db.clientes || []).length + ' cliente(s)' +
                 (falha ? ' · ' + falha + ' falha(s)' : '') + '. Abra no outro aparelho e sincronize também.');
             atualizarStatusNuvemUI();
+            preencherFormEmpresa();
             renderTudo();
         }
 
@@ -3432,6 +3578,9 @@
             document.getElementById('telaLogin').classList.add('oculto');
             document.getElementById('loginErro').style.display = 'none';
             atualizarStatusNuvemUI();
+            puxarConfigEmpresaNuvemSilencioso().then(function (ok) {
+                if (ok) renderTudo();
+            });
         }
 
         function bloquearApp() {
@@ -5308,7 +5457,10 @@
             e.preventDefault();
             var emp = lerEmpresaDoForm();
             salvarEmpresaObj(emp);
-            toast('Dados da empresa salvos.');
+            var logado = _fbSessao && _fbSessao.auth && _fbSessao.auth.currentUser;
+            toast(logado
+                ? 'Dados salvos — enviando à nuvem…'
+                : 'Dados da empresa salvos neste aparelho.');
         });
 
         document.getElementById('btnEmpPadrao').addEventListener('click', function () {
@@ -5331,7 +5483,7 @@
             this.value = v;
         });
 
-        document.getElementById('empLogoUpload').addEventListener('change', function () {
+        document.getElementById('empLogoUpload').addEventListener('change', async function () {
             var file = this.files && this.files[0];
             if (!file) return;
             if (file.size > 2.5 * 1024 * 1024) {
@@ -5339,14 +5491,17 @@
                 this.value = '';
                 return;
             }
-            var reader = new FileReader();
-            reader.onload = function () {
-                var emp = lerEmpresaDoForm(reader.result);
+            try {
+                toast('Comprimindo logo…');
+                var data = await comprimirImagemArquivo(file);
+                var emp = lerEmpresaDoForm(data);
                 salvarEmpresaObj(emp);
                 document.getElementById('empLogoUrl').value = '';
-                toast('Logo atualizada pelo arquivo.');
-            };
-            reader.readAsDataURL(file);
+                var logado = _fbSessao && _fbSessao.auth && _fbSessao.auth.currentUser;
+                toast(logado ? 'Logo salva — enviando à nuvem…' : 'Logo atualizada pelo arquivo.');
+            } catch (err) {
+                toast('Não foi possível ler a imagem.');
+            }
             this.value = '';
         });
 
