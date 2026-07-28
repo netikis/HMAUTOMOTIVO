@@ -901,17 +901,72 @@
             overflow: visible;
         }
         #modalNota .modal-box {
-            overflow-x: auto;
+            overflow-x: visible;
+            width: min(960px, 100%);
         }
         #modalNotaCorpo {
             overflow: visible;
+            max-width: 100%;
         }
         #modalNotaCorpo .nota-espelho {
             min-width: 0;
             max-width: 100%;
+            box-sizing: border-box;
         }
         .modal-box h3 { margin-bottom: 12px; font-size: 1.15rem; }
         .modal-acoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+        .modal-acoes .btn { flex: 1 1 auto; min-width: 120px; }
+
+        /* Viewer PDF mobile / compartilhar */
+        #viewerPdfNota {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 120;
+            background: #0b121b;
+            flex-direction: column;
+        }
+        #viewerPdfNota.aberto { display: flex; }
+        #viewerPdfBarra {
+            flex: 0 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px 12px;
+            padding-top: calc(10px + env(safe-area-inset-top, 0px));
+            background: #162233;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+            z-index: 2;
+        }
+        #viewerPdfBarra .btn { flex: 1 1 30%; min-height: 44px; font-size: 0.9rem; }
+        #viewerPdfScroll {
+            flex: 1 1 auto;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            background: #c5cdd6;
+            padding: 10px;
+        }
+        #viewerPdfCorpo {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+        }
+        #viewerPdfCorpo .nota-espelho {
+            border-radius: 0;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        #printFrame {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            width: 0;
+            height: 0;
+            border: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
         .modal-link-input {
             width: 100%;
             margin: 10px 0;
@@ -1426,6 +1481,12 @@
                 width: 45mm !important;
                 height: 34mm !important;
             }
+
+            #viewerPdfNota,
+            #viewerPdfBarra,
+            #printFrame {
+                display: none !important;
+            }
         }
 
         /* Tablet */
@@ -1505,6 +1566,82 @@
                 width: calc(100% - 16px);
                 max-height: calc(100dvh - 24px);
                 margin: 8px auto;
+            }
+
+            #modalNota.modal-overlay {
+                padding: 0;
+                align-items: stretch;
+            }
+            #modalNota .modal-box {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: 100dvh;
+                max-height: none;
+                margin: 0;
+                border-radius: 0;
+                padding: 10px 10px calc(12px + env(safe-area-inset-bottom, 0px));
+                display: flex;
+                flex-direction: column;
+                box-sizing: border-box;
+            }
+            #modalNota .modal-box h3 {
+                flex: 0 0 auto;
+                font-size: 1rem;
+                margin-bottom: 8px;
+            }
+            #modalNotaCorpo {
+                flex: 1 1 auto;
+                overflow: auto;
+                -webkit-overflow-scrolling: touch;
+                max-width: 100%;
+            }
+            #modalNota .modal-acoes {
+                flex: 0 0 auto;
+                position: sticky;
+                bottom: 0;
+                background: #162233;
+                padding-top: 10px;
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+                z-index: 3;
+            }
+            #modalNota .modal-acoes .btn {
+                flex: 1 1 45%;
+                min-height: 44px;
+            }
+
+            /* Cabeçalho empilhado no celular — sem cortar CEP/CNPJ */
+            .nota-espelho {
+                padding: 10px !important;
+            }
+            .nota-espelho .nota-topo-linha,
+            .nota-espelho .nota-topo-linha tbody,
+            .nota-espelho .nota-topo-linha tr {
+                display: block !important;
+                width: 100% !important;
+            }
+            .nota-espelho .nota-topo-logo,
+            .nota-espelho .nota-topo-dados {
+                display: block !important;
+                width: 100% !important;
+                padding: 0 !important;
+            }
+            .nota-espelho .nota-topo-logo {
+                margin-bottom: 8px;
+            }
+            .nota-espelho .nota-topo-logo img {
+                max-height: 88px !important;
+                width: auto !important;
+                max-width: 100% !important;
+            }
+            .nota-espelho .nota-topo-dados .linha {
+                white-space: normal !important;
+                overflow-wrap: anywhere !important;
+                word-break: break-word !important;
+                font-size: 11px !important;
+                line-height: 1.35 !important;
+            }
+            .nota-espelho .nota-titulo-espelho {
+                font-size: 1.05rem !important;
             }
 
             .toast {
@@ -2668,12 +2805,26 @@
             <div id="modalNotaCorpo"></div>
             <div class="modal-acoes">
                 <button type="button" class="btn btn-pdf" id="btnNotaPdf">Salvar / Imprimir PDF</button>
+                <button type="button" class="btn btn-primary" id="btnNotaEncaminhar">📤 Encaminhar</button>
                 <button type="button" class="btn btn-assinar" id="btnNotaLink">Enviar nota ao cliente</button>
                 <button type="button" class="btn btn-secondary" id="btnNotaExportFotos">Exportar fotos</button>
                 <button type="button" class="btn btn-secondary" id="btnNotaFechar">Fechar</button>
             </div>
         </div>
     </div>
+
+    <!-- Viewer PDF em tela cheia (celular) -->
+    <div id="viewerPdfNota" aria-hidden="true">
+        <div id="viewerPdfBarra">
+            <button type="button" class="btn btn-secondary" id="btnViewerFechar">✕ Fechar</button>
+            <button type="button" class="btn btn-primary" id="btnViewerEncaminhar">📤 Encaminhar</button>
+            <button type="button" class="btn btn-pdf" id="btnViewerImprimir">📄 Imprimir / PDF</button>
+        </div>
+        <div id="viewerPdfScroll">
+            <div id="viewerPdfCorpo"></div>
+        </div>
+    </div>
+    <iframe id="printFrame" title="Impressão"></iframe>
 
     <div class="modal-overlay" id="modalFotosCliente">
         <div class="modal-box" style="width:min(480px,100%)">
@@ -2945,9 +3096,9 @@
         function htmlDadosEmpresaCabecalho(emp) {
             var e = emp || getEmpresa();
             var linhas = [];
-            var stLinha = 'display:block;white-space:nowrap;overflow:visible;line-height:1.3;color:#222;';
+            var stLinha = 'display:block;overflow:visible;line-height:1.3;color:#222;';
 
-            /* 1) Endereço completo em UMA linha */
+            /* 1) Endereço completo em UMA linha (no desktop; no celular quebra via CSS) */
             var endParts = [];
             var ruaNum = [e.rua, e.numero].filter(Boolean).join(', ');
             if (e.complemento) ruaNum += (ruaNum ? ' — ' : '') + e.complemento;
@@ -3134,8 +3285,68 @@
             toast._t = setTimeout(function () { el.classList.remove('show'); }, 2600);
         }
 
-        /* Impressão limpa: evita desfoque da tela (visibility/blur) e restaura UI ao fechar o PDF */
+        /* Impressão limpa via iframe (evita tela branca no Android / iOS) */
         var _printCleanupTimer = null;
+        var _htmlNotaImpressaoAtual = '';
+        var _tituloNotaImpressao = 'Espelho de Atendimento';
+
+        function ehCelular() {
+            try {
+                if (window.matchMedia && window.matchMedia('(max-width: 900px)').matches) return true;
+            } catch (e) { /* ignore */ }
+            return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+        }
+
+        function cssDocumentoImpressao() {
+            return 'html,body{margin:0;padding:0;background:#fff;color:#000;}' +
+                'body{padding:10mm;font-family:Arial,Helvetica,sans-serif;font-size:10pt;line-height:1.25;}' +
+                '.nota-espelho{background:#fff;color:#111;}' +
+                '.nota-topo{text-align:center;border-bottom:2px solid #0d3d6e;padding-bottom:8pt;margin-bottom:10pt;}' +
+                '.nota-topo-linha{width:100%;border-collapse:collapse;table-layout:fixed;}' +
+                '.nota-topo-logo{width:42%;vertical-align:middle;padding:0 8pt 0 0;}' +
+                '.nota-topo-logo img{display:block;width:100%;max-width:100%;max-height:32mm;height:auto;object-fit:contain;object-position:left center;}' +
+                '.nota-topo-dados{width:58%;vertical-align:middle;text-align:left;font-size:9.5pt;line-height:1.3;color:#000;}' +
+                '.nota-topo-dados .linha{display:block;white-space:nowrap;overflow:visible;color:#000;}' +
+                '.nota-topo-dados .linha-end{font-size:9pt;}' +
+                '.nota-topo-dados .linha-tel{font-weight:600;}' +
+                '.nota-titulo-espelho{margin-top:8pt;margin-bottom:0;font-size:12pt;font-weight:800;color:#0d3d6e;letter-spacing:.04em;text-align:center;}' +
+                '.nota-registro{margin-top:4pt;text-align:center;font-size:9pt;}' +
+                '.nota-bloco{margin-bottom:8pt;border:1px solid #ccc;border-radius:4px;overflow:visible;page-break-inside:avoid;}' +
+                '.nota-bloco .tit{padding:4pt 6pt;font-size:9pt;font-weight:800;text-transform:uppercase;color:#000;background:#fff;border-bottom:1.5pt solid #000;}' +
+                '.nota-grid{display:grid;grid-template-columns:1fr 1fr;gap:4pt 8pt;padding:6pt;}' +
+                '.nota-campo.full{grid-column:1/-1;}' +
+                '.nota-grid-compacta{gap:2pt 8pt;padding:4pt 6pt;}' +
+                '.nota-grid-compacta .nota-campo{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 4pt;min-width:0;}' +
+                '.nota-grid-compacta .nota-label{display:inline;font-size:7.5pt;font-weight:800;text-transform:uppercase;margin:0;}' +
+                '.nota-grid-compacta .nota-label::after{content:":";}' +
+                '.nota-grid-compacta .nota-valor{display:inline;font-size:9pt;margin:0;overflow-wrap:anywhere;word-break:break-word;min-width:0;flex:1 1 auto;}' +
+                '.nota-chassi{font-family:Consolas,Courier New,monospace;word-break:break-all;}' +
+                '.nota-itens{width:100%;border-collapse:collapse;font-size:9pt;}' +
+                '.nota-itens th,.nota-itens td{border-bottom:1px solid #ddd;padding:3pt;text-align:left;}' +
+                '.nota-itens th{font-weight:800;}' +
+                '.nota-valores-pad{padding:6pt;}' +
+                '.nota-subtotais{margin-top:4pt;font-size:9pt;}' +
+                '.nota-total{text-align:right;font-size:11pt;font-weight:800;margin-top:4pt;}' +
+                '.nota-sigs{display:grid;grid-template-columns:1fr 1fr;gap:16pt;margin-top:14pt;}' +
+                '.nota-sig{text-align:center;font-size:9pt;}' +
+                '.nota-sig-espaco{min-height:18mm;border-bottom:1px solid #000;}' +
+                '.nota-sig-base{padding-top:4pt;font-weight:700;}' +
+                '.nota-sig img{max-height:18mm;max-width:100%;}' +
+                '.nota-fotos{display:flex;flex-wrap:wrap;gap:6pt;padding:6pt;}' +
+                '.nota-fotos img{width:45mm;height:34mm;object-fit:cover;}' +
+                '@page{size:A4;margin:10mm;}' +
+                '@media print{body{padding:0;}}';
+        }
+
+        function montarHtmlDocumentoImpressao(htmlCorpo) {
+            return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">' +
+                '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+                '<title>' + esc(_tituloNotaImpressao || 'Espelho de Atendimento') + '</title>' +
+                '<style>' + cssDocumentoImpressao() + '</style></head><body>' +
+                (htmlCorpo || '') +
+                '</body></html>';
+        }
+
         function limparAposImpressao() {
             document.body.classList.remove('imprimindo');
             var el = document.getElementById('printNota');
@@ -3145,42 +3356,166 @@
                 _printCleanupTimer = null;
             }
         }
-        function executarImpressaoHtml(html) {
-            var el = document.getElementById('printNota');
-            if (!el) return;
-            el.innerHTML = html || '';
-            document.querySelectorAll('.modal-overlay.aberto').forEach(function (m) {
-                m.classList.remove('aberto');
+
+        function aguardarImagensDoc(doc, cb) {
+            var imgs = doc.images ? Array.prototype.slice.call(doc.images) : [];
+            if (!imgs.length) {
+                setTimeout(cb, 120);
+                return;
+            }
+            var faltam = imgs.length;
+            var feito = false;
+            function tick() {
+                faltam--;
+                if (faltam <= 0 && !feito) {
+                    feito = true;
+                    setTimeout(cb, 180);
+                }
+            }
+            imgs.forEach(function (img) {
+                if (img.complete) tick();
+                else {
+                    img.onload = tick;
+                    img.onerror = tick;
+                }
             });
-            var overlay = document.getElementById('sidebarOverlay');
-            if (overlay) overlay.classList.remove('aberto');
-            document.body.classList.remove('menu-aberto');
-            document.body.classList.add('imprimindo');
-            window.removeEventListener('afterprint', limparAposImpressao);
-            window.addEventListener('afterprint', limparAposImpressao);
-            if (_printCleanupTimer) clearTimeout(_printCleanupTimer);
-            /* Só limpa se afterprint não disparar (alguns celulares) — não limpar cedo demais */
-            _printCleanupTimer = setTimeout(limparAposImpressao, 120000);
             setTimeout(function () {
+                if (!feito) {
+                    feito = true;
+                    cb();
+                }
+            }, 4000);
+        }
+
+        function executarImpressaoHtml(html) {
+            _htmlNotaImpressaoAtual = html || '';
+            var docHtml = montarHtmlDocumentoImpressao(html);
+
+            /* Celular: nova aba/janela evita tela branca no Android/iOS */
+            if (ehCelular()) {
+                var w = window.open('', '_blank');
+                if (!w) {
+                    toast('Permita pop-ups para gerar o PDF.');
+                    return;
+                }
+                w.document.open();
+                w.document.write(docHtml);
+                w.document.close();
+                aguardarImagensDoc(w.document, function () {
+                    try {
+                        w.focus();
+                        w.print();
+                    } catch (e) {
+                        toast('Toque em Compartilhar / Imprimir na barra do navegador.');
+                    }
+                });
+                return;
+            }
+
+            var iframe = document.getElementById('printFrame');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'printFrame';
+                iframe.title = 'Impressão';
+                document.body.appendChild(iframe);
+            }
+            /* Precisa ter tamanho real — iframe 0×0 gera PDF em branco no Chrome */
+            iframe.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;border:0;z-index:-1;opacity:0;pointer-events:none;';
+
+            var idoc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+            if (!idoc) {
+                var w2 = window.open('', '_blank');
+                if (!w2) {
+                    toast('Permita pop-ups para gerar o PDF.');
+                    return;
+                }
+                w2.document.open();
+                w2.document.write(docHtml);
+                w2.document.close();
+                aguardarImagensDoc(w2.document, function () {
+                    try { w2.focus(); w2.print(); } catch (e) { /* ignore */ }
+                });
+                return;
+            }
+
+            idoc.open();
+            idoc.write(docHtml);
+            idoc.close();
+
+            aguardarImagensDoc(idoc, function () {
                 try {
-                    window.print();
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
                 } catch (e) {
-                    limparAposImpressao();
+                    toast('Não foi possível abrir a impressão. Tente novamente.');
                 }
-            }, 80);
-            /* Quando o modo print do navegador sai, restaura a tela nítida */
+            });
+        }
+
+        function abrirViewerPdf(html, titulo) {
+            _htmlNotaImpressaoAtual = html || '';
+            _tituloNotaImpressao = titulo || 'Espelho de Atendimento';
+            var corpo = document.getElementById('viewerPdfCorpo');
+            if (corpo) corpo.innerHTML = html || '';
+            var viewer = document.getElementById('viewerPdfNota');
+            if (viewer) {
+                viewer.classList.add('aberto');
+                viewer.setAttribute('aria-hidden', 'false');
+            }
+            document.body.style.overflow = 'hidden';
+        }
+
+        function fecharViewerPdf() {
+            var viewer = document.getElementById('viewerPdfNota');
+            if (viewer) {
+                viewer.classList.remove('aberto');
+                viewer.setAttribute('aria-hidden', 'true');
+            }
+            var corpo = document.getElementById('viewerPdfCorpo');
+            if (corpo) corpo.innerHTML = '';
+            document.body.style.overflow = '';
+        }
+
+        async function encaminharNotaAtual() {
+            var html = _htmlNotaImpressaoAtual;
+            if (!html) {
+                var noModal = document.querySelector('#modalNotaCorpo .nota-espelho');
+                var noViewer = document.querySelector('#viewerPdfCorpo .nota-espelho');
+                if (noViewer) html = noViewer.outerHTML;
+                else if (noModal) html = noModal.outerHTML;
+            }
+            if (!html) {
+                toast('Abra a nota antes de encaminhar.');
+                return;
+            }
+            _htmlNotaImpressaoAtual = html;
+            var titulo = _tituloNotaImpressao || 'Espelho de Atendimento HM';
+            var texto = titulo + '\n\nDocumento da ' + (getEmpresa().nome || 'HM Centro Automotivo') +
+                '.\n\nNo celular: use Imprimir / PDF → Salvar como PDF e depois compartilhe no WhatsApp.';
+
+            var docHtml = montarHtmlDocumentoImpressao(html);
+            var arquivo = null;
             try {
-                var mql = window.matchMedia('print');
-                if (mql && mql.addEventListener) {
-                    var onChange = function (ev) {
-                        if (!ev.matches) {
-                            limparAposImpressao();
-                            mql.removeEventListener('change', onChange);
-                        }
-                    };
-                    mql.addEventListener('change', onChange);
+                arquivo = new File([docHtml], 'espelho-hm.html', { type: 'text/html' });
+            } catch (e) { arquivo = null; }
+
+            if (navigator.share) {
+                try {
+                    if (arquivo && navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+                        await navigator.share({ title: titulo, text: texto, files: [arquivo] });
+                        return;
+                    }
+                    await navigator.share({ title: titulo, text: texto });
+                    return;
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return;
                 }
-            } catch (e2) { /* ignore */ }
+            }
+
+            /* Fallback WhatsApp */
+            var url = 'https://wa.me/?text=' + encodeURIComponent(texto);
+            window.open(url, '_blank');
+            toast('Abra Imprimir / PDF para salvar o arquivo e anexar no WhatsApp.');
         }
 
         function moeda(n) {
@@ -5095,18 +5430,28 @@
             var a = db.atendimentos.find(function (x) { return x.id === id; });
             if (!a) { toast('Atendimento não encontrado.'); return; }
             atendimentoNotaAtual = a;
-            document.getElementById('modalNotaTitulo').textContent =
-                'Nota — ' + (a.placa || '').toUpperCase() + ' · ' + nomeAtendimento(db, a);
-            document.getElementById('modalNotaCorpo').innerHTML = htmlNotaEspelho(db, a, { incluirFotos: true }) +
+            var titulo = 'Nota — ' + (a.placa || '').toUpperCase() + ' · ' + nomeAtendimento(db, a);
+            var html = htmlNotaEspelho(db, a, { incluirFotos: true }) +
                 (atendimentoTemFotos(a)
                     ? '<p class="hint" style="margin-top:10px;color:#0d3d6e">Fotos acima são internas. Em <strong>Enviar nota ao cliente</strong> você escolhe COM FOTOS ou SEM FOTOS.</p>'
                     : '');
+            _htmlNotaImpressaoAtual = htmlNotaEspelho(db, a, { incluirFotos: true });
+            _tituloNotaImpressao = titulo;
+
+            if (ehCelular()) {
+                abrirViewerPdf(_htmlNotaImpressaoAtual, titulo);
+                return;
+            }
+
+            document.getElementById('modalNotaTitulo').textContent = titulo;
+            document.getElementById('modalNotaCorpo').innerHTML = html;
             document.getElementById('btnNotaExportFotos').style.display = atendimentoTemFotos(a) ? '' : 'none';
             document.getElementById('modalNota').classList.add('aberto');
         }
 
         function fecharNota() {
             document.getElementById('modalNota').classList.remove('aberto');
+            fecharViewerPdf();
         }
 
         async function imprimirNotaPdf(id) {
@@ -5114,6 +5459,7 @@
             var db = carregar();
             var a = id ? db.atendimentos.find(function (x) { return x.id === id; }) : atendimentoNotaAtual;
             if (!a) { toast('Selecione um atendimento.'); return; }
+            atendimentoNotaAtual = a;
             var comFotos = await perguntarEnviarComFotos(a, { forcarPergunta: true });
             if (comFotos === null) return;
             if (comFotos) {
@@ -5124,7 +5470,18 @@
                     comFotos = false;
                 }
             }
-            executarImpressaoHtml(htmlNotaEspelho(db, a, { incluirFotos: !!comFotos }));
+            var html = htmlNotaEspelho(db, a, { incluirFotos: !!comFotos });
+            var titulo = 'Espelho — ' + (a.placa || '').toUpperCase() + ' · ' + nomeAtendimento(db, a);
+            _htmlNotaImpressaoAtual = html;
+            _tituloNotaImpressao = titulo;
+
+            if (ehCelular()) {
+                /* No celular: abre viewer legível; usuário escolhe Imprimir / Encaminhar / Fechar */
+                fecharNota();
+                abrirViewerPdf(html, titulo);
+                return;
+            }
+            executarImpressaoHtml(html);
         }
 
         function documentoAssinatura(db, a, incluirFotos) {
@@ -5525,6 +5882,17 @@
         });
         document.getElementById('btnNotaPdf').addEventListener('click', function () {
             if (atendimentoNotaAtual) imprimirNotaPdf(atendimentoNotaAtual.id);
+        });
+        document.getElementById('btnNotaEncaminhar').addEventListener('click', function () {
+            encaminharNotaAtual();
+        });
+        document.getElementById('btnViewerFechar').addEventListener('click', fecharViewerPdf);
+        document.getElementById('btnViewerEncaminhar').addEventListener('click', function () {
+            encaminharNotaAtual();
+        });
+        document.getElementById('btnViewerImprimir').addEventListener('click', function () {
+            if (_htmlNotaImpressaoAtual) executarImpressaoHtml(_htmlNotaImpressaoAtual);
+            else toast('Documento não encontrado.');
         });
         document.getElementById('btnNotaLink').addEventListener('click', function () {
             if (atendimentoNotaAtual) abrirLinkAssinatura(atendimentoNotaAtual.id);
