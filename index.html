@@ -888,7 +888,7 @@
             color: #0d3d6e;
             letter-spacing: 0.04em;
         }
-        .nota-espelho .nota-sub { color: #444; font-size: 1rem; }
+        .nota-espelho .nota-sub { color: #111; font-size: 1rem; }
         .nota-espelho .nota-sub-end {
             margin-top: 0;
             margin-bottom: 0;
@@ -912,18 +912,24 @@
         .nota-bloco .tit {
             padding: 8px 12px;
             font-size: 0.95rem;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
-            color: #fff;
+            color: #000;
+            background: #fff;
+            border-bottom: 2px solid #000;
+            letter-spacing: 0.03em;
         }
-        .nota-bloco .tit.azul { background: #1a6fc4; }
-        .nota-bloco .tit.vermelho { background: #b03a2e; }
-        .nota-bloco .tit.escuro { background: #2c3e50; }
-        .nota-bloco .tit.verde { background: #1e8449; }
+        .nota-bloco .tit.azul,
+        .nota-bloco .tit.vermelho,
+        .nota-bloco .tit.escuro,
+        .nota-bloco .tit.verde {
+            background: #fff;
+            color: #000;
+        }
         .nota-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
         .nota-campo.full { grid-column: 1 / -1; }
-        .nota-label { display: block; font-size: 0.8rem; color: #666; text-transform: uppercase; font-weight: 700; }
-        .nota-valor { display: block; font-size: 1.05rem; margin-top: 2px; white-space: pre-wrap; }
+        .nota-label { display: block; font-size: 0.8rem; color: #000; text-transform: uppercase; font-weight: 700; }
+        .nota-valor { display: block; font-size: 1.05rem; margin-top: 2px; white-space: pre-wrap; color: #000; }
 
         /* Cliente & Oficina: mais compacto (label + valor na mesma linha) */
         .nota-grid-compacta {
@@ -951,13 +957,14 @@
         }
         .nota-bloco.compacto { margin-bottom: 8px; }
         .nota-bloco.compacto .tit { padding: 5px 10px; font-size: 0.82rem; }
-        .nota-itens { width: 100%; border-collapse: collapse; font-size: 1rem; }
-        .nota-itens th, .nota-itens td { border-bottom: 1px solid #ddd; padding: 8px 4px; text-align: left; }
+        .nota-itens { width: 100%; border-collapse: collapse; font-size: 1rem; color: #000; }
+        .nota-itens th, .nota-itens td { border-bottom: 1px solid #ddd; padding: 8px 4px; text-align: left; color: #000; }
+        .nota-itens th { font-weight: 800; color: #000; }
         .nota-itens.compacta { font-size: 0.88rem; }
         .nota-itens.compacta th, .nota-itens.compacta td { padding: 4px 3px; }
-        .nota-subtotais { margin-top: 8px; font-size: 1rem; color: #444; }
+        .nota-subtotais { margin-top: 8px; font-size: 1rem; color: #000; }
         .nota-subtotais.compacto { margin-top: 4px; font-size: 0.88rem; }
-        .nota-total { text-align: right; font-size: 1.35rem; font-weight: 700; margin-top: 8px; color: #0d3d6e; }
+        .nota-total { text-align: right; font-size: 1.35rem; font-weight: 800; margin-top: 8px; color: #000; }
         .nota-total.compacto { font-size: 1.1rem; margin-top: 4px; }
         .nota-valores-pad { padding: 10px; }
         .nota-valores-pad.compacto { padding: 6px 8px; }
@@ -968,11 +975,11 @@
             padding-top: 0;
             text-align: center;
             font-size: 0.95rem;
-            color: #444;
+            color: #000;
         }
         .nota-sig-espaco {
             min-height: 88px;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #000;
             display: flex;
             align-items: flex-end;
             justify-content: center;
@@ -981,7 +988,8 @@
         .nota-sig-base {
             padding-top: 6px;
             font-size: 0.85rem;
-            color: #444;
+            color: #000;
+            font-weight: 700;
         }
         .nota-sigs.compacto {
             gap: 18px;
@@ -1056,9 +1064,32 @@
             .mirror-print-section .nota-bloco .tit {
                 font-size: 22px !important;
                 padding: 10px 12px !important;
+                color: #000 !important;
+                font-weight: 800 !important;
+                background: #fff !important;
+                border-bottom: 2px solid #000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .mirror-print-section .nota-label,
+            .mirror-print-section .nota-valor,
+            .mirror-print-section .nota-sub,
+            .mirror-print-section .nota-registro,
+            .mirror-print-section .nota-subtotais,
+            .mirror-print-section .nota-total,
+            .mirror-print-section .nota-sig,
+            .mirror-print-section .nota-sig-base,
+            .mirror-print-section .nota-itens,
+            .mirror-print-section .nota-itens th,
+            .mirror-print-section .nota-itens td {
+                color: #000 !important;
+            }
+            .mirror-print-section .nota-itens th {
+                font-weight: 800 !important;
             }
             .mirror-print-section .nota-label {
                 font-size: 20px !important;
+                font-weight: 800 !important;
             }
             .mirror-print-section .nota-valor {
                 font-size: 24px !important;
@@ -1070,6 +1101,10 @@
             .mirror-print-section .nota-bloco.compacto .tit {
                 font-size: 16px !important;
                 padding: 5px 8px !important;
+                color: #000 !important;
+                font-weight: 800 !important;
+                background: #fff !important;
+                border-bottom: 2px solid #000 !important;
             }
             .mirror-print-section .nota-grid-compacta {
                 gap: 1px 12px !important;
@@ -4158,7 +4193,7 @@
 
         function htmlItensNota(itens) {
             var lista = itens || [];
-            if (!lista.length) return '<p style="color:#666;font-size:0.85rem;">Sem itens lançados.</p>';
+            if (!lista.length) return '<p style="color:#000;font-size:0.85rem;">Sem itens lançados.</p>';
             var rows = lista.map(function (it) {
                 var tipo = (it.tipo === 'mao') ? 'Mão de obra' : 'Peça';
                 return '<tr><td>' + esc(tipo) + '</td><td>' + esc(it.desc || '') + '</td><td style="text-align:right">' + moeda(it.valor) + '</td></tr>';
@@ -4223,7 +4258,7 @@
                 '</div></div>' +
                 '<div class="nota-bloco compacto"><div class="tit escuro">Chegada &amp; Serviços</div><div class="nota-grid nota-grid-compacta">' +
                 '<div class="nota-campo full"><span class="nota-label">Estado de chegada</span><span class="nota-valor">' + esc(a.estado || 'Sem observações.') + '</span></div>' +
-                '<div class="nota-campo full"><span class="nota-label">Serviços</span><span class="nota-valor" style="color:#0d3d6e;font-weight:700">' + esc(a.servicos || '—') + '</span></div>' +
+                '<div class="nota-campo full"><span class="nota-label">Serviços</span><span class="nota-valor" style="color:#000;font-weight:800">' + esc(a.servicos || '—') + '</span></div>' +
                 '</div></div>' +
                 blocoFotos +
                 '<div class="nota-bloco compacto"><div class="tit verde">Valores</div><div class="nota-valores-pad compacto">' + htmlItensNota(a.itens) + '</div></div>' +
