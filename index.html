@@ -1006,6 +1006,11 @@
         .mirror-print-section { display: none; }
 
         @media print {
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+
             body * { visibility: hidden !important; }
             .mirror-print-section, .mirror-print-section * { visibility: visible !important; }
             .mirror-print-section {
@@ -1013,68 +1018,83 @@
                 position: absolute;
                 left: 0; top: 0;
                 width: 100%;
-                padding: 10mm;
+                max-width: 190mm;
+                padding: 0 !important;
+                margin: 0 !important;
                 background: #fff;
-                color: #111;
+                color: #000;
+                -webkit-text-size-adjust: 100%;
+                text-size-adjust: 100%;
             }
             .sidebar, .main, .toast, .modal-overlay, .sidebar-overlay, .install-banner, .btn-menu, .tela-login { display: none !important; }
 
-            /* Impressão: logo maior + letras ampliadas (+2 tamanhos) */
+            /* Tamanhos fixos em pt — iguais no PC e no celular */
             .mirror-print-section .nota-espelho {
-                font-size: 24px;
-                padding: 0;
+                font-size: 10pt !important;
+                line-height: 1.25 !important;
+                padding: 0 !important;
+                color: #000 !important;
             }
             .mirror-print-section .nota-topo-linha {
                 align-items: center !important;
-                gap: 12px !important;
+                gap: 8pt !important;
             }
             .mirror-print-section .nota-topo img {
-                max-width: 340px !important;
-                max-height: 110px !important;
+                max-width: 55mm !important;
+                max-height: 22mm !important;
+                width: auto !important;
+                height: auto !important;
             }
             .mirror-print-section .nota-topo-dados,
-            .mirror-print-section .nota-topo-dados.nota-sub {
-                max-height: 110px !important;
-                font-size: 11px !important;
-                line-height: 1.18 !important;
-            }
-            .mirror-print-section .nota-espelho h1 {
-                font-size: 32px !important;
-                margin: 10px 0 4px !important;
-            }
-            .mirror-print-section .nota-sub {
-                font-size: 22px !important;
-                line-height: 1.35;
-            }
             .mirror-print-section .nota-topo-dados.nota-sub,
             .mirror-print-section .nota-topo-dados .linha {
-                font-size: 11px !important;
-                line-height: 1.18 !important;
+                max-height: 22mm !important;
+                font-size: 7.5pt !important;
+                line-height: 1.15 !important;
+                color: #000 !important;
+            }
+            .mirror-print-section .nota-espelho h1 {
+                font-size: 13pt !important;
+                margin: 4pt 0 2pt !important;
+            }
+            .mirror-print-section .nota-sub,
+            .mirror-print-section .nota-registro {
+                font-size: 9pt !important;
+                line-height: 1.25 !important;
+                color: #000 !important;
             }
             .mirror-print-section .nota-sub-end {
                 margin-top: 0 !important;
             }
             .mirror-print-section .nota-titulo-espelho {
-                margin-top: 18px !important;
+                margin-top: 8pt !important;
                 margin-bottom: 0 !important;
+                font-size: 11pt !important;
+                font-weight: 800 !important;
+                color: #000 !important;
             }
             .mirror-print-section .nota-registro {
-                margin-top: 14px !important;
+                margin-top: 4pt !important;
             }
-            .mirror-print-section .nota-bloco .tit {
-                font-size: 22px !important;
-                padding: 10px 12px !important;
+            .mirror-print-section .nota-bloco {
+                margin-bottom: 6pt !important;
+            }
+            .mirror-print-section .nota-bloco .tit,
+            .mirror-print-section .nota-bloco.compacto .tit {
+                font-size: 9pt !important;
+                padding: 3pt 6pt !important;
                 color: #000 !important;
                 font-weight: 800 !important;
                 background: #fff !important;
-                border-bottom: 2px solid #000 !important;
+                border-bottom: 1.5pt solid #000 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
+            .mirror-print-section .nota-bloco.compacto {
+                margin-bottom: 5pt !important;
+            }
             .mirror-print-section .nota-label,
             .mirror-print-section .nota-valor,
-            .mirror-print-section .nota-sub,
-            .mirror-print-section .nota-registro,
             .mirror-print-section .nota-subtotais,
             .mirror-print-section .nota-total,
             .mirror-print-section .nota-sig,
@@ -1084,86 +1104,65 @@
             .mirror-print-section .nota-itens td {
                 color: #000 !important;
             }
-            .mirror-print-section .nota-itens th {
-                font-weight: 800 !important;
-            }
-            .mirror-print-section .nota-label {
-                font-size: 20px !important;
-                font-weight: 800 !important;
-            }
-            .mirror-print-section .nota-valor {
-                font-size: 24px !important;
-                margin-top: 4px !important;
-            }
-            .mirror-print-section .nota-bloco.compacto {
-                margin-bottom: 8px !important;
-            }
-            .mirror-print-section .nota-bloco.compacto .tit {
-                font-size: 16px !important;
-                padding: 5px 8px !important;
-                color: #000 !important;
-                font-weight: 800 !important;
-                background: #fff !important;
-                border-bottom: 2px solid #000 !important;
-            }
             .mirror-print-section .nota-grid-compacta {
-                gap: 1px 12px !important;
-                padding: 4px 8px !important;
+                gap: 1pt 8pt !important;
+                padding: 3pt 5pt !important;
             }
-            .mirror-print-section .nota-grid-compacta .nota-label {
-                font-size: 14px !important;
+            .mirror-print-section .nota-grid-compacta .nota-label,
+            .mirror-print-section .nota-label {
+                font-size: 7.5pt !important;
+                font-weight: 800 !important;
             }
-            .mirror-print-section .nota-grid-compacta .nota-valor {
-                font-size: 16px !important;
+            .mirror-print-section .nota-grid-compacta .nota-valor,
+            .mirror-print-section .nota-valor {
+                font-size: 9pt !important;
                 margin-top: 0 !important;
                 line-height: 1.2 !important;
             }
-            .mirror-print-section .nota-itens {
-                font-size: 18px !important;
+            .mirror-print-section .nota-itens,
+            .mirror-print-section .nota-itens.compacta {
+                font-size: 9pt !important;
+            }
+            .mirror-print-section .nota-itens th {
+                font-weight: 800 !important;
             }
             .mirror-print-section .nota-itens th,
-            .mirror-print-section .nota-itens td {
-                padding: 4px 4px !important;
-            }
-            .mirror-print-section .nota-itens.compacta {
-                font-size: 16px !important;
-            }
+            .mirror-print-section .nota-itens td,
             .mirror-print-section .nota-itens.compacta th,
             .mirror-print-section .nota-itens.compacta td {
-                padding: 3px 3px !important;
+                padding: 2pt 3pt !important;
             }
             .mirror-print-section .nota-valores-pad.compacto {
-                padding: 4px 6px !important;
+                padding: 3pt 5pt !important;
             }
-            .mirror-print-section .nota-subtotais {
-                font-size: 18px !important;
-            }
+            .mirror-print-section .nota-subtotais,
             .mirror-print-section .nota-subtotais.compacto {
-                font-size: 16px !important;
-                margin-top: 4px !important;
+                font-size: 9pt !important;
+                margin-top: 3pt !important;
             }
-            .mirror-print-section .nota-total {
-                font-size: 22px !important;
-            }
+            .mirror-print-section .nota-total,
             .mirror-print-section .nota-total.compacto {
-                font-size: 20px !important;
-                margin-top: 4px !important;
+                font-size: 11pt !important;
+                font-weight: 800 !important;
+                margin-top: 3pt !important;
             }
             .mirror-print-section .nota-sigs.compacto {
-                gap: 18px !important;
-                margin-top: 18px !important;
+                gap: 12pt !important;
+                margin-top: 10pt !important;
                 page-break-inside: avoid;
             }
             .mirror-print-section .nota-sigs.compacto .nota-sig-espaco {
-                min-height: 95px !important;
+                min-height: 18mm !important;
             }
             .mirror-print-section .nota-sigs.compacto .nota-sig-base {
-                font-size: 15px !important;
-                padding-top: 6px !important;
+                font-size: 8pt !important;
+                padding-top: 3pt !important;
+                color: #000 !important;
+                font-weight: 700 !important;
             }
             .mirror-print-section .nota-fotos img {
-                width: 180px !important;
-                height: 135px !important;
+                width: 45mm !important;
+                height: 34mm !important;
             }
         }
 
