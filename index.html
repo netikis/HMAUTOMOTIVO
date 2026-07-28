@@ -968,6 +968,22 @@
             opacity: 0;
             pointer-events: none;
         }
+        #hmPdfRenderTemp {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: min(794px, 100vw) !important;
+            max-height: 100vh;
+            overflow: hidden;
+            background: #fff !important;
+            padding: 12px !important;
+            box-sizing: border-box !important;
+            z-index: 200 !important;
+            opacity: 0.01 !important;
+            pointer-events: none !important;
+        }
+        #modalNomePdf.modal-overlay { z-index: 140; }
+        #modalNomePdf .modal-box { width: min(420px, 100%); }
         .modal-link-input {
             width: 100%;
             margin: 10px 0;
@@ -2829,6 +2845,19 @@
     </div>
     <iframe id="printFrame" title="Impressão"></iframe>
 
+    <div class="modal-overlay" id="modalNomePdf">
+        <div class="modal-box">
+            <h3>Nome do PDF</h3>
+            <p class="hint">Pode alterar antes de salvar ou encaminhar.</p>
+            <label for="inputNomePdf">Nome do arquivo</label>
+            <input id="inputNomePdf" type="text" maxlength="80" placeholder="ORÇAMENTO STRADA ICILEGEL" style="width:100%;margin-top:6px">
+            <div class="modal-acoes" style="margin-top:14px">
+                <button type="button" class="btn btn-primary" id="btnNomePdfOk" style="flex:1">Continuar</button>
+                <button type="button" class="btn btn-secondary" id="btnNomePdfCancelar" style="flex:1">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modalFotosCliente">
         <div class="modal-box" style="width:min(480px,100%)">
             <h3>Enviar nota ao cliente</h3>
@@ -3486,20 +3515,20 @@
                 return;
             }
             _htmlNotaImpressaoAtual = html;
-            var nomeArq = perguntarNomeArquivoPdf();
+            var nomeArq = await perguntarNomeArquivoPdfAsync();
             if (!nomeArq) return;
             var titulo = nomeArq.replace(/\.pdf$/i, '');
             toast('Gerando PDF…');
 
             try {
                 var blob = await gerarPdfBlobDaNota(html, nomeArq);
+                if (!blob || blob.size < 800) throw new Error('PDF vazio');
                 var arquivo = new File([blob], nomeArq, { type: 'application/pdf' });
-                var texto = titulo;
 
-                if (navigator.share) {
+                if (navigator.share && navigator.canShare) {
                     try {
-                        if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
-                            await navigator.share({ title: titulo, text: texto, files: [arquivo] });
+                        if (navigator.canShare({ files: [arquivo] })) {
+                            await navigator.share({ title: titulo, text: titulo, files: [arquivo] });
                             toast('PDF encaminhado: ' + nomeArq);
                             return;
                         }
@@ -3508,11 +3537,26 @@
                     }
                 }
 
-                baixarBlobComoArquivo(blob, nomeArq);
-                toast('PDF salvo como ' + nomeArq + '. Anexe no WhatsApp.');
+                /* iOS: não abrir blob em aba (fica branca). Tenta share sem canShare. */
+                if (ehCelular() && navigator.share) {
+                    try {
+                        await navigator.share({ title: titulo, text: titulo, files: [arquivo] });
+                        toast('PDF encaminhado: ' + nomeArq);
+                        return;
+                    } catch (e2) {
+                        if (e2 && e2.name === 'AbortError') return;
+                    }
+                }
+
+                if (!ehCelular()) {
+                    baixarBlobComoArquivo(blob, nomeArq);
+                    toast('PDF salvo como ' + nomeArq);
+                    return;
+                }
+                toast('Use Salvar PDF e depois anexe no WhatsApp.');
             } catch (err) {
                 console.error(err);
-                toast('Falha ao gerar PDF. Tente Salvar PDF ou Imprimir.');
+                toast('Falha ao gerar PDF. Tente de novo.');
             }
         }
 
@@ -3523,11 +3567,25 @@
                 return;
             }
             _htmlNotaImpressaoAtual = html;
-            var nomeArq = perguntarNomeArquivoPdf();
+            var nomeArq = await perguntarNomeArquivoPdfAsync();
             if (!nomeArq) return;
             toast('Gerando PDF…');
             try {
                 var blob = await gerarPdfBlobDaNota(html, nomeArq);
+                if (!blob || blob.size < 800) throw new Error('PDF vazio');
+                var arquivo = new File([blob], nomeArq, { type: 'application/pdf' });
+
+                /* No celular, share = Salvar em Arquivos / Apps (evita tela branca) */
+                if (ehCelular() && navigator.share) {
+                    try {
+                        await navigator.share({ title: nomeArq, files: [arquivo] });
+                        toast('PDF pronto: ' + nomeArq);
+                        return;
+                    } catch (errShare) {
+                        if (errShare && errShare.name === 'AbortError') return;
+                    }
+                }
+
                 baixarBlobComoArquivo(blob, nomeArq);
                 toast('PDF salvo: ' + nomeArq);
             } catch (err) {
@@ -3537,12 +3595,11 @@
         }
 
         function obterHtmlNotaAtual() {
-            if (_htmlNotaImpressaoAtual) return _htmlNotaImpressaoAtual;
             var noViewer = document.querySelector('#viewerPdfCorpo .nota-espelho');
-            var noModal = document.querySelector('#modalNotaCorpo .nota-espelho');
             if (noViewer) return noViewer.outerHTML;
+            var noModal = document.querySelector('#modalNotaCorpo .nota-espelho');
             if (noModal) return noModal.outerHTML;
-            return '';
+            return _htmlNotaImpressaoAtual || '';
         }
 
         function nomeCurtoVeiculo(carro) {
@@ -3577,11 +3634,33 @@
             return n;
         }
 
-        function perguntarNomeArquivoPdf() {
-            var padrao = nomeArquivoOrcamentoPdfPadrao();
-            var edit = prompt('Nome do PDF (pode alterar antes de salvar/enviar):', padrao);
-            if (edit === null) return null;
-            return limparNomeArquivoPdf(edit);
+        var _nomePdfResolver = null;
+        function perguntarNomeArquivoPdfAsync() {
+            return new Promise(function (resolve) {
+                var input = document.getElementById('inputNomePdf');
+                var modal = document.getElementById('modalNomePdf');
+                if (!input || !modal) {
+                    resolve(limparNomeArquivoPdf(nomeArquivoOrcamentoPdfPadrao()));
+                    return;
+                }
+                _nomePdfResolver = resolve;
+                input.value = nomeArquivoOrcamentoPdfPadrao();
+                modal.classList.add('aberto');
+                setTimeout(function () {
+                    try {
+                        input.focus();
+                        input.select();
+                    } catch (e) { /* ignore */ }
+                }, 80);
+            });
+        }
+
+        function fecharModalNomePdf(valor) {
+            var modal = document.getElementById('modalNomePdf');
+            if (modal) modal.classList.remove('aberto');
+            var resolver = _nomePdfResolver;
+            _nomePdfResolver = null;
+            if (resolver) resolver(valor);
         }
 
         function nomeArquivoOrcamentoPdf(atendimento) {
@@ -3603,10 +3682,15 @@
         }
 
         function baixarBlobComoArquivo(blob, nomeArq) {
+            /* Evita abrir aba em branco no iPhone */
+            if (ehCelular()) {
+                toast('No celular use Encaminhar PDF / compartilhar.');
+                return;
+            }
             var url = URL.createObjectURL(blob);
             var a = document.createElement('a');
             a.href = url;
-            a.download = nomeArq || 'Orcamento.pdf';
+            a.download = nomeArq || 'ORCAMENTO.pdf';
             a.rel = 'noopener';
             document.body.appendChild(a);
             a.click();
@@ -3616,31 +3700,82 @@
             }, 1500);
         }
 
+        function aguardarImagensElemento(el) {
+            return new Promise(function (resolve) {
+                if (!el) {
+                    resolve();
+                    return;
+                }
+                var imgs = el.querySelectorAll ? el.querySelectorAll('img') : [];
+                imgs = Array.prototype.slice.call(imgs);
+                if (!imgs.length) {
+                    setTimeout(resolve, 60);
+                    return;
+                }
+                var faltam = imgs.length;
+                var done = false;
+                function tick() {
+                    faltam--;
+                    if (faltam <= 0 && !done) {
+                        done = true;
+                        setTimeout(resolve, 100);
+                    }
+                }
+                imgs.forEach(function (img) {
+                    if (img.complete) tick();
+                    else {
+                        img.onload = tick;
+                        img.onerror = tick;
+                    }
+                });
+                setTimeout(function () {
+                    if (!done) {
+                        done = true;
+                        resolve();
+                    }
+                }, 3500);
+            });
+        }
+
         async function gerarPdfBlobDaNota(html, nomeArq) {
             await carregarHtml2Pdf();
-            var wrap = document.createElement('div');
-            wrap.setAttribute('id', 'hmPdfRenderTemp');
-            wrap.style.cssText = 'position:fixed;left:-12000px;top:0;width:794px;background:#fff;padding:24px;box-sizing:border-box;';
-            wrap.innerHTML = html;
-            document.body.appendChild(wrap);
+
+            /* Usa o documento já visível no viewer (melhor no iPhone) */
+            var alvo = document.querySelector('#viewerPdfCorpo .nota-espelho') ||
+                document.querySelector('#modalNotaCorpo .nota-espelho');
+            var wrap = null;
+
+            if (!alvo) {
+                wrap = document.createElement('div');
+                wrap.id = 'hmPdfRenderTemp';
+                wrap.innerHTML = html || '';
+                document.body.appendChild(wrap);
+                alvo = wrap.querySelector('.nota-espelho') || wrap;
+            }
+
+            await aguardarImagensElemento(alvo);
 
             var opt = {
                 margin: [8, 8, 8, 8],
-                filename: nomeArq || 'Orcamento.pdf',
-                image: { type: 'jpeg', quality: 0.96 },
+                filename: nomeArq || 'ORCAMENTO.pdf',
+                image: { type: 'jpeg', quality: 0.95 },
                 html2canvas: {
-                    scale: 2,
+                    scale: Math.min(2, window.devicePixelRatio || 1.5),
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: '#ffffff',
-                    logging: false
+                    logging: false,
+                    scrollX: 0,
+                    scrollY: -window.scrollY,
+                    windowWidth: Math.max(alvo.scrollWidth, 600)
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                pagebreak: { mode: ['css', 'legacy'] },
+                enableLinks: false
             };
 
             try {
-                var blob = await html2pdf().set(opt).from(wrap).outputPdf('blob');
+                var blob = await html2pdf().set(opt).from(alvo).outputPdf('blob');
                 return blob;
             } finally {
                 if (wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap);
@@ -6028,6 +6163,22 @@
         document.getElementById('btnViewerImprimir').addEventListener('click', function () {
             if (_htmlNotaImpressaoAtual) executarImpressaoHtml(_htmlNotaImpressaoAtual);
             else toast('Documento não encontrado.');
+        });
+        document.getElementById('btnNomePdfOk').addEventListener('click', function () {
+            var v = document.getElementById('inputNomePdf').value;
+            fecharModalNomePdf(limparNomeArquivoPdf(v));
+        });
+        document.getElementById('btnNomePdfCancelar').addEventListener('click', function () {
+            fecharModalNomePdf(null);
+        });
+        document.getElementById('modalNomePdf').addEventListener('click', function (e) {
+            if (e.target.id === 'modalNomePdf') fecharModalNomePdf(null);
+        });
+        document.getElementById('inputNomePdf').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('btnNomePdfOk').click();
+            }
         });
         document.getElementById('btnNotaLink').addEventListener('click', function () {
             if (atendimentoNotaAtual) abrirLinkAssinatura(atendimentoNotaAtual.id);
