@@ -851,11 +851,32 @@
             padding-bottom: 10px;
             margin-bottom: 12px;
         }
-        .nota-espelho .nota-topo img {
-            max-width: 360px;
-            max-height: 110px;
-            object-fit: contain;
+        .nota-espelho .nota-topo-linha {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 16px;
+            text-align: left;
+            width: 100%;
         }
+        .nota-espelho .nota-topo img {
+            max-width: 280px;
+            max-height: 100px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+        .nota-espelho .nota-topo-dados {
+            flex: 1;
+            min-width: 0;
+            color: #222;
+            font-size: 0.92rem;
+            line-height: 1.4;
+            text-align: left;
+        }
+        .nota-espelho .nota-topo-dados .linha { display: block; }
+        .nota-espelho .nota-topo-dados .linha-tel { margin-top: 4px; font-weight: 600; }
+        .nota-espelho .nota-topo-dados .linha-email { word-break: break-word; }
         .nota-espelho h1 {
             font-size: 1.4rem;
             margin: 8px 0 2px;
@@ -864,20 +885,23 @@
         }
         .nota-espelho .nota-sub { color: #444; font-size: 1rem; }
         .nota-espelho .nota-sub-end {
-            margin-top: 10px;
+            margin-top: 0;
             margin-bottom: 0;
             line-height: 1.35;
         }
         .nota-espelho .nota-titulo-espelho {
-            margin-top: 18px;
+            margin-top: 14px;
             margin-bottom: 0;
             font-weight: 700;
             color: #0d3d6e;
             letter-spacing: 0.04em;
+            text-align: center;
+            width: 100%;
         }
         .nota-espelho .nota-registro {
-            margin-top: 18px;
+            margin-top: 10px;
             margin-bottom: 0;
+            text-align: center;
         }
         .nota-bloco { margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; }
         .nota-bloco .tit {
@@ -987,9 +1011,17 @@
                 font-size: 24px;
                 padding: 0;
             }
+            .mirror-print-section .nota-topo-linha {
+                align-items: center !important;
+                gap: 18px !important;
+            }
             .mirror-print-section .nota-topo img {
-                max-width: 520px !important;
-                max-height: 180px !important;
+                max-width: 340px !important;
+                max-height: 130px !important;
+            }
+            .mirror-print-section .nota-topo-dados {
+                font-size: 18px !important;
+                line-height: 1.35 !important;
             }
             .mirror-print-section .nota-espelho h1 {
                 font-size: 32px !important;
@@ -1000,14 +1032,14 @@
                 line-height: 1.35;
             }
             .mirror-print-section .nota-sub-end {
-                margin-top: 12px !important;
+                margin-top: 0 !important;
             }
             .mirror-print-section .nota-titulo-espelho {
-                margin-top: 22px !important;
+                margin-top: 18px !important;
                 margin-bottom: 0 !important;
             }
             .mirror-print-section .nota-registro {
-                margin-top: 22px !important;
+                margin-top: 14px !important;
             }
             .mirror-print-section .nota-bloco .tit {
                 font-size: 22px !important;
@@ -2230,6 +2262,35 @@
             if (cid) partes.push(cid);
             if (e.cep) partes.push('CEP ' + e.cep);
             return partes.join(' · ') || '';
+        }
+
+        function htmlDadosEmpresaCabecalho(emp) {
+            var e = emp || getEmpresa();
+            var linhas = [];
+            var linha1 = [e.rua, e.numero].filter(Boolean).join(', ');
+            if (e.complemento) linha1 += (linha1 ? ' — ' : '') + e.complemento;
+            if (linha1) linhas.push('<span class="linha">' + esc(linha1) + '</span>');
+            var linha2 = [];
+            if (e.bairro) linha2.push(e.bairro);
+            var cid = [e.cidade, e.estado].filter(Boolean).join('/');
+            if (cid) linha2.push(cid);
+            if (e.cep) linha2.push('CEP ' + e.cep);
+            if (linha2.length) linhas.push('<span class="linha">' + esc(linha2.join(' · ')) + '</span>');
+            if (e.cnpj) linhas.push('<span class="linha">CNPJ: ' + esc(e.cnpj) + '</span>');
+            if (e.telefone) linhas.push('<span class="linha linha-tel">Tel: ' + esc(e.telefone) + '</span>');
+            if (e.email) linhas.push('<span class="linha linha-email">' + esc(e.email) + '</span>');
+            return linhas.join('');
+        }
+
+        function htmlCabecalhoNotaEmpresa(emp, extrasHtml) {
+            var dados = htmlDadosEmpresaCabecalho(emp);
+            return '<div class="nota-topo">' +
+                '<div class="nota-topo-linha">' +
+                '<img src="' + esc(logoSrc(emp)) + '" alt="' + esc((emp && emp.nome) || 'HM Centro Automotivo') + '">' +
+                (dados ? '<div class="nota-topo-dados nota-sub nota-sub-end">' + dados + '</div>' : '') +
+                '</div>' +
+                (extrasHtml || '') +
+                '</div>';
         }
 
         function aplicarIdentidadeVisual() {
@@ -4008,11 +4069,6 @@
             var emp = getEmpresa(db);
             var cad = dadosClienteDoAtendimento(db, a);
             var nome = cad.nome || nomeAtendimento(db, a);
-            var end = enderecoCompleto(emp);
-            var contatos = [];
-            if (emp.cnpj) contatos.push('CNPJ: ' + emp.cnpj);
-            if (emp.telefone) contatos.push('Tel: ' + emp.telefone);
-            if (emp.email) contatos.push(emp.email);
             var sigEspaco = '';
             var sigBase = 'Assinatura do Cliente';
             if (a.assinaturaCliente) {
@@ -4031,17 +4087,11 @@
                     '</div></div>';
             }
             return '<div class="nota-espelho" id="notaEspelhoHtml">' +
-                '<div class="nota-topo">' +
-                '<img src="' + esc(logoSrc(emp)) + '" alt="' + esc(emp.nome || 'HM Centro Automotivo') + '">' +
-                '<div class="nota-sub nota-sub-end">' +
-                (end ? esc(end) : '') +
-                (end && contatos.length ? '<br>' : '') +
-                (contatos.length ? esc(contatos.join(' · ')) : '') +
-                '</div>' +
-                '<div class="nota-sub nota-titulo-espelho">ESPELHO DE ATENDIMENTO</div>' +
-                '<div class="nota-sub nota-registro">Registro ' + esc(fmtData(a.entrada || a.criadoEm)) +
-                (a.id ? ' · ID ' + esc(String(a.id).slice(-6)) : '') + '</div>' +
-                '</div>' +
+                htmlCabecalhoNotaEmpresa(emp,
+                    '<div class="nota-sub nota-titulo-espelho">ESPELHO DE ATENDIMENTO</div>' +
+                    '<div class="nota-sub nota-registro">Registro ' + esc(fmtData(a.entrada || a.criadoEm)) +
+                    (a.id ? ' · ID ' + esc(String(a.id).slice(-6)) : '') + '</div>'
+                ) +
                 '<div class="nota-bloco compacto"><div class="tit azul">Cliente &amp; Oficina</div><div class="nota-grid nota-grid-compacta">' +
                 '<div class="nota-campo full"><span class="nota-label">Cliente</span><span class="nota-valor">' + esc(nome) + (cad.avulso || a.clienteAvulso ? ' (avulso)' : '') + '</span></div>' +
                 (cad.cpf ? '<div class="nota-campo"><span class="nota-label">CPF</span><span class="nota-valor">' + esc(cad.cpf) + '</span></div>' : '') +
@@ -5559,8 +5609,9 @@
             var emp = getEmpresa(db);
             document.getElementById('printNota').innerHTML =
                 '<div class="nota-espelho">' +
-                '<div class="nota-topo"><img src="' + esc(logoSrc(emp)) + '" alt="">' +
-                '<div class="nota-sub">Relatório de Caixa · ' + esc(fmtData(hojeISO())) + '</div></div>' +
+                htmlCabecalhoNotaEmpresa(emp,
+                    '<div class="nota-sub nota-titulo-espelho">Relatório de Caixa · ' + esc(fmtData(hojeISO())) + '</div>'
+                ) +
                 document.getElementById('relCxConteudo').innerHTML +
                 '<div style="margin-top:12px">Balcão: <strong>' + document.getElementById('relCxBalcao').textContent +
                 '</strong> · Banco: <strong>' + document.getElementById('relCxBanco').textContent +
