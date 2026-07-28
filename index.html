@@ -972,15 +972,54 @@
             position: fixed !important;
             left: 0 !important;
             top: 0 !important;
-            width: min(794px, 100vw) !important;
-            max-height: 100vh;
-            overflow: hidden;
+            width: 794px !important;
+            max-width: 100vw;
+            max-height: none;
+            overflow: visible;
             background: #fff !important;
-            padding: 12px !important;
+            padding: 16px !important;
             box-sizing: border-box !important;
             z-index: 200 !important;
-            opacity: 0.01 !important;
+            opacity: 0.02 !important;
             pointer-events: none !important;
+        }
+        /* Força cabeçalho lado a lado na exportação PDF */
+        #hmPdfRenderTemp .nota-topo-linha {
+            display: table !important;
+            width: 100% !important;
+            table-layout: fixed !important;
+            border-collapse: collapse !important;
+        }
+        #hmPdfRenderTemp .nota-topo-linha tr {
+            display: table-row !important;
+        }
+        #hmPdfRenderTemp .nota-topo-logo {
+            display: table-cell !important;
+            width: 42% !important;
+            vertical-align: middle !important;
+            padding: 0 10px 0 0 !important;
+        }
+        #hmPdfRenderTemp .nota-topo-dados {
+            display: table-cell !important;
+            width: 58% !important;
+            vertical-align: middle !important;
+            padding: 0 !important;
+            font-size: 9.5pt !important;
+            line-height: 1.3 !important;
+        }
+        #hmPdfRenderTemp .nota-topo-logo img {
+            display: block !important;
+            width: 100% !important;
+            max-height: 110px !important;
+            object-fit: contain !important;
+            object-position: left center !important;
+        }
+        #hmPdfRenderTemp .nota-topo-dados .linha {
+            display: block !important;
+            white-space: nowrap !important;
+            font-size: 9pt !important;
+            line-height: 1.3 !important;
+            overflow: visible !important;
         }
         #modalNomePdf.modal-overlay { z-index: 140; }
         #modalNomePdf .modal-box { width: min(420px, 100%); }
@@ -1626,36 +1665,53 @@
                 min-height: 44px;
             }
 
-            /* Cabeçalho empilhado no celular — sem cortar CEP/CNPJ */
+            /* Cabeçalho no celular: logo + endereço LADO A LADO (não empilhar) */
             .nota-espelho {
                 padding: 10px !important;
             }
-            .nota-espelho .nota-topo-linha,
+            .nota-espelho .nota-topo-linha {
+                display: table !important;
+                width: 100% !important;
+                table-layout: fixed !important;
+                border-collapse: collapse !important;
+            }
             .nota-espelho .nota-topo-linha tbody,
             .nota-espelho .nota-topo-linha tr {
-                display: block !important;
-                width: 100% !important;
+                display: table-row-group !important;
+                width: auto !important;
             }
-            .nota-espelho .nota-topo-logo,
-            .nota-espelho .nota-topo-dados {
-                display: block !important;
-                width: 100% !important;
-                padding: 0 !important;
+            .nota-espelho .nota-topo-linha tr {
+                display: table-row !important;
             }
             .nota-espelho .nota-topo-logo {
-                margin-bottom: 8px;
+                display: table-cell !important;
+                width: 40% !important;
+                vertical-align: middle !important;
+                padding: 0 6px 0 0 !important;
+                margin: 0 !important;
+            }
+            .nota-espelho .nota-topo-dados {
+                display: table-cell !important;
+                width: 60% !important;
+                vertical-align: middle !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
             .nota-espelho .nota-topo-logo img {
-                max-height: 88px !important;
-                width: auto !important;
+                display: block !important;
+                width: 100% !important;
                 max-width: 100% !important;
+                max-height: 72px !important;
+                height: auto !important;
+                object-fit: contain !important;
+                object-position: left center !important;
             }
             .nota-espelho .nota-topo-dados .linha {
                 white-space: normal !important;
                 overflow-wrap: anywhere !important;
                 word-break: break-word !important;
-                font-size: 11px !important;
-                line-height: 1.35 !important;
+                font-size: 9.5px !important;
+                line-height: 1.3 !important;
             }
             .nota-espelho .nota-titulo-espelho {
                 font-size: 1.05rem !important;
@@ -3740,17 +3796,30 @@
         async function gerarPdfBlobDaNota(html, nomeArq) {
             await carregarHtml2Pdf();
 
-            /* Usa o documento já visível no viewer (melhor no iPhone) */
-            var alvo = document.querySelector('#viewerPdfCorpo .nota-espelho') ||
-                document.querySelector('#modalNotaCorpo .nota-espelho');
-            var wrap = null;
+            /* Sempre renderiza cópia com cabeçalho lado a lado (não usa layout empilhado do celular) */
+            var htmlFonte = html || obterHtmlNotaAtual();
+            var wrap = document.createElement('div');
+            wrap.id = 'hmPdfRenderTemp';
+            wrap.innerHTML = htmlFonte;
+            document.body.appendChild(wrap);
+            var alvo = wrap.querySelector('.nota-espelho') || wrap;
 
-            if (!alvo) {
-                wrap = document.createElement('div');
-                wrap.id = 'hmPdfRenderTemp';
-                wrap.innerHTML = html || '';
-                document.body.appendChild(wrap);
-                alvo = wrap.querySelector('.nota-espelho') || wrap;
+            /* Reforça tabela do topo */
+            var tabela = wrap.querySelector('.nota-topo-linha');
+            if (tabela) {
+                tabela.style.cssText = 'width:100%;border-collapse:collapse;table-layout:fixed;display:table;';
+                var logoTd = wrap.querySelector('.nota-topo-logo');
+                var dadosTd = wrap.querySelector('.nota-topo-dados');
+                if (logoTd) logoTd.style.cssText = 'width:42%;vertical-align:middle;padding:0 10px 0 0;display:table-cell;';
+                if (dadosTd) dadosTd.style.cssText = 'width:58%;vertical-align:middle;padding:0;display:table-cell;text-align:left;font-size:9.5pt;line-height:1.3;color:#222;';
+                var img = wrap.querySelector('.nota-topo-logo img');
+                if (img) img.style.cssText = 'display:block;width:100%;max-height:110px;height:auto;object-fit:contain;object-position:left center;';
+                wrap.querySelectorAll('.nota-topo-dados .linha').forEach(function (ln) {
+                    ln.style.whiteSpace = 'nowrap';
+                    ln.style.display = 'block';
+                    ln.style.fontSize = '9pt';
+                    ln.style.lineHeight = '1.3';
+                });
             }
 
             await aguardarImagensElemento(alvo);
@@ -3766,8 +3835,8 @@
                     backgroundColor: '#ffffff',
                     logging: false,
                     scrollX: 0,
-                    scrollY: -window.scrollY,
-                    windowWidth: Math.max(alvo.scrollWidth, 600)
+                    scrollY: 0,
+                    windowWidth: 794
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['css', 'legacy'] },
