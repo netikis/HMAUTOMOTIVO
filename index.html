@@ -898,6 +898,17 @@
             padding: 18px;
             color: var(--text);
             margin: auto;
+            overflow: visible;
+        }
+        #modalNota .modal-box {
+            overflow-x: auto;
+        }
+        #modalNotaCorpo {
+            overflow: visible;
+        }
+        #modalNotaCorpo .nota-espelho {
+            min-width: 0;
+            max-width: 100%;
         }
         .modal-box h3 { margin-bottom: 12px; font-size: 1.15rem; }
         .modal-acoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
@@ -969,44 +980,57 @@
             border-radius: 8px;
             padding: 16px;
             font-family: Arial, Helvetica, sans-serif;
+            overflow: visible;
         }
         .nota-espelho .nota-topo {
             text-align: center;
             border-bottom: 2px solid #0d3d6e;
             padding-bottom: 10px;
             margin-bottom: 12px;
+            overflow: visible;
         }
         .nota-espelho .nota-topo-linha {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 16px;
-            text-align: left;
             width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin: 0;
+            padding: 0;
         }
-        .nota-espelho .nota-topo img {
-            max-width: 280px;
-            max-height: 100px;
+        .nota-espelho .nota-topo-logo {
+            width: 42%;
+            vertical-align: middle;
+            padding: 0 10px 0 0;
+        }
+        .nota-espelho .nota-topo-logo img {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            max-height: 120px;
+            height: auto;
             object-fit: contain;
-            flex-shrink: 0;
+            object-position: left center;
         }
         .nota-espelho .nota-topo-dados {
-            flex: 1;
-            min-width: 0;
-            max-height: 100px;
+            width: 58%;
+            vertical-align: middle;
             color: #222;
-            font-size: 0.72rem;
-            line-height: 1.2;
+            font-size: 9.5pt;
+            line-height: 1.3;
             text-align: left;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            overflow: hidden;
+            overflow: visible;
+            padding: 0;
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
         }
-        .nota-espelho .nota-topo-dados .linha { display: block; }
-        .nota-espelho .nota-topo-dados .linha-tel { margin-top: 2px; font-weight: 600; }
-        .nota-espelho .nota-topo-dados .linha-email { word-break: break-word; }
+        .nota-espelho .nota-topo-dados .linha {
+            display: block;
+            white-space: nowrap;
+            overflow: visible;
+            text-overflow: clip;
+        }
+        .nota-espelho .nota-topo-dados .linha-end { font-size: 9pt; }
+        .nota-espelho .nota-topo-dados .linha-tel { font-weight: 600; }
+        .nota-espelho .nota-topo-dados .linha-email { word-break: normal; }
         .nota-espelho h1 {
             font-size: 1.4rem;
             margin: 8px 0 2px;
@@ -1033,7 +1057,7 @@
             margin-bottom: 0;
             text-align: center;
         }
-        .nota-bloco { margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; }
+        .nota-bloco { margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; overflow: visible; }
         .nota-bloco .tit {
             padding: 8px 12px;
             font-size: 0.95rem;
@@ -1068,17 +1092,41 @@
             gap: 0 6px;
             line-height: 1.2;
             padding: 1px 0;
+            min-width: 0;
+            overflow: visible;
         }
         .nota-grid-compacta .nota-label {
             display: inline;
             font-size: 0.68rem;
             margin: 0;
+            flex: 0 0 auto;
         }
         .nota-grid-compacta .nota-label::after { content: ':'; }
         .nota-grid-compacta .nota-valor {
             display: inline;
             margin-top: 0;
             font-size: 0.92rem;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            min-width: 0;
+            flex: 1 1 auto;
+            max-width: 100%;
+        }
+        .nota-grid-compacta .nota-campo.full {
+            display: flex;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .nota-grid-compacta .nota-campo.full .nota-valor {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        .nota-chassi {
+            font-family: Consolas, 'Courier New', monospace;
+            letter-spacing: 0.04em;
+            word-break: break-all !important;
+            overflow-wrap: anywhere !important;
+            white-space: normal !important;
         }
         .nota-bloco.compacto { margin-bottom: 8px; }
         .nota-bloco.compacto .tit { padding: 5px 10px; font-size: 0.82rem; }
@@ -1151,7 +1199,7 @@
             display: block !important;
             position: static !important;
             width: 100%;
-            max-width: 190mm;
+            max-width: none;
             margin: 0 auto;
             padding: 12px;
             background: #fff;
@@ -1201,7 +1249,7 @@
                 left: auto !important;
                 top: auto !important;
                 width: 100% !important;
-                max-width: 190mm !important;
+                max-width: none !important;
                 padding: 0 !important;
                 margin: 0 !important;
                 background: #fff !important;
@@ -1214,7 +1262,7 @@
                 visibility: visible !important;
             }
 
-            /* Tamanhos fixos em pt — iguais no PC e no celular */
+            /* Cabeçalho idêntico ao Ver PDF (tabela + estilos inline) */
             .mirror-print-section .nota-espelho {
                 font-size: 10pt !important;
                 line-height: 1.25 !important;
@@ -1222,42 +1270,60 @@
                 color: #000 !important;
             }
             .mirror-print-section .nota-topo-linha {
-                align-items: center !important;
-                gap: 8pt !important;
+                width: 100% !important;
+                border-collapse: collapse !important;
+                table-layout: fixed !important;
             }
+            .mirror-print-section .nota-topo-logo {
+                width: 42% !important;
+                vertical-align: middle !important;
+                padding: 0 10px 0 0 !important;
+            }
+            .mirror-print-section .nota-topo-logo img,
             .mirror-print-section .nota-topo img {
-                max-width: 55mm !important;
-                max-height: 22mm !important;
-                width: auto !important;
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                max-height: 32mm !important;
                 height: auto !important;
+                object-fit: contain !important;
+                object-position: left center !important;
             }
-            .mirror-print-section .nota-topo-dados,
-            .mirror-print-section .nota-topo-dados.nota-sub,
-            .mirror-print-section .nota-topo-dados .linha {
-                max-height: 22mm !important;
-                font-size: 7.5pt !important;
-                line-height: 1.15 !important;
+            .mirror-print-section .nota-topo-dados {
+                width: 58% !important;
+                vertical-align: middle !important;
+                overflow: visible !important;
+                font-size: 9.5pt !important;
+                line-height: 1.3 !important;
                 color: #000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .mirror-print-section .nota-topo-dados .linha {
+                display: block !important;
+                white-space: nowrap !important;
+                overflow: visible !important;
+                color: #000 !important;
+                line-height: 1.3 !important;
+            }
+            .mirror-print-section .nota-topo-dados .linha-end {
+                font-size: 9pt !important;
             }
             .mirror-print-section .nota-espelho h1 {
                 font-size: 13pt !important;
                 margin: 4pt 0 2pt !important;
             }
-            .mirror-print-section .nota-sub,
             .mirror-print-section .nota-registro {
                 font-size: 9pt !important;
                 line-height: 1.25 !important;
                 color: #000 !important;
-            }
-            .mirror-print-section .nota-sub-end {
-                margin-top: 0 !important;
             }
             .mirror-print-section .nota-titulo-espelho {
                 margin-top: 8pt !important;
                 margin-bottom: 0 !important;
                 font-size: 11pt !important;
                 font-weight: 800 !important;
-                color: #000 !important;
+                color: #0d3d6e !important;
             }
             .mirror-print-section .nota-registro {
                 margin-top: 4pt !important;
@@ -1304,6 +1370,16 @@
                 font-size: 9pt !important;
                 margin-top: 0 !important;
                 line-height: 1.2 !important;
+                overflow-wrap: anywhere !important;
+                word-break: break-word !important;
+            }
+            .mirror-print-section .nota-chassi {
+                font-size: 8.5pt !important;
+                word-break: break-all !important;
+                letter-spacing: 0.03em !important;
+            }
+            .mirror-print-section .nota-bloco {
+                overflow: visible !important;
             }
             .mirror-print-section .nota-itens,
             .mirror-print-section .nota-itens.compacta {
@@ -1584,6 +1660,7 @@
             <button type="button" class="menu-grupo-btn" data-toggle-grupo="interno">🔒 Modo interno</button>
             <div class="submenu-lateral">
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelDespesasOs" data-canal="interno">🧾 Despesas por OS</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelPagFuncionarios" data-canal="interno">👷 Pagamento funcionários</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelProdutos" data-canal="interno">🏷️ Cadastro de Produtos</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamento" data-canal="interno">🧾 Venda / Orçamento</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixa" data-canal="interno">💰 Caixa / Balcão</button>
@@ -1724,6 +1801,8 @@
                     </div>
                     <div class="row" style="margin-top:10px">
                         <div class="col"><label>Cor</label><input id="atCor"></div>
+                        <div class="col"><label>Ano de fabricação</label><input id="atAnoFabricacao" inputmode="numeric" maxlength="4" placeholder="Ex: 2018"></div>
+                        <div class="col"><label>Ano do modelo</label><input id="atAnoModelo" inputmode="numeric" maxlength="4" placeholder="Ex: 2019"></div>
                         <div class="col"><label>Chassi</label><input id="atChassi"></div>
                         <div class="col"><label>Km</label><input id="atKm" type="number" min="0"></div>
                     </div>
@@ -2349,6 +2428,92 @@
             </div>
         </section>
 
+        <!-- PAGAMENTO FUNCIONÁRIOS (só Modo Interno — sem impressão) -->
+        <section id="painelPagFuncionarios" class="panel">
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card"><div class="k">Funcionários</div><div class="v" id="pfQtdFunc">0</div></div>
+                <div class="card" style="background:#e67e22"><div class="k">Pago nesta semana</div><div class="v" id="pfSemana">R$ 0</div></div>
+                <div class="card" style="background:#e74c3c"><div class="k">Pago no mês</div><div class="v" id="pfMes">R$ 0</div></div>
+                <div class="card" style="background:#2980b9"><div class="k">Total lançado</div><div class="v" id="pfTotal">R$ 0</div></div>
+            </div>
+
+            <div class="box">
+                <h2>👷 Pagamento de funcionários (interno)</h2>
+                <p class="hint">Controle semanal dos meninos — fica só no sistema interno, <strong>sem impressão</strong>. Cada pagamento também registra saída no caixa interno (Dinheiro → Balcão; PIX/Cartão → Banco).</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="box">
+                    <h2>Cadastrar funcionário</h2>
+                    <form id="formFuncionario">
+                        <div class="row">
+                            <div class="col" style="flex:2"><label>Nome</label><input id="pfNomeFunc" required placeholder="Ex: João, Pedro..."></div>
+                            <div class="col" style="align-self:end;flex:0.7"><button type="submit" class="btn btn-primary" style="width:100%">+ Incluir</button></div>
+                        </div>
+                    </form>
+                    <table style="margin-top:14px">
+                        <thead><tr><th>Nome</th><th>Ações</th></tr></thead>
+                        <tbody id="tabelaFuncionarios"></tbody>
+                    </table>
+                    <div id="listaFuncionariosVazia" class="empty" style="display:none;margin-top:10px">Nenhum funcionário cadastrado.</div>
+                </div>
+
+                <div class="box" style="border-color:rgba(230,126,34,0.4)">
+                    <h2>Lançar pagamento da semana</h2>
+                    <form id="formPagFuncionario">
+                        <div class="row">
+                            <div class="col"><label>Funcionário</label>
+                                <select id="pfFuncId" required>
+                                    <option value="">Selecione...</option>
+                                </select>
+                            </div>
+                            <div class="col"><label>Data do pagamento</label><input type="date" id="pfData" required></div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col"><label>Valor (R$)</label><input id="pfValor" inputmode="decimal" required placeholder="0,00"></div>
+                            <div class="col"><label>Forma</label>
+                                <select id="pfForma">
+                                    <option>Dinheiro</option>
+                                    <option>PIX</option>
+                                    <option>Cartão</option>
+                                    <option>Transferência</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col"><label>Observação (opcional)</label><input id="pfObs" placeholder="Ex: semana cheia, adiantamento..."></div>
+                        </div>
+                        <div class="row" style="margin-top:14px">
+                            <button type="submit" class="btn btn-primary">Registrar pagamento</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="box">
+                <h2>Histórico de pagamentos</h2>
+                <div class="toolbar">
+                    <input type="search" id="buscaPagFunc" class="search" placeholder="Buscar por nome ou observação...">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarPagFunc">🔄 Atualizar</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Semana</th>
+                            <th>Funcionário</th>
+                            <th>Forma</th>
+                            <th>Obs.</th>
+                            <th>Valor</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaPagFuncionarios"></tbody>
+                </table>
+                <div id="listaPagFuncVazia" class="empty" style="display:none;margin-top:12px">Nenhum pagamento registrado.</div>
+            </div>
+        </section>
+
         <!-- CONFIG -->
         <section id="painelConfig" class="panel">
             <div class="box">
@@ -2358,7 +2523,7 @@
                     <div class="row">
                         <div class="col" style="flex:2"><label>Nome da Empresa (Razão ou Fantasia)</label><input id="empNome" required placeholder="Ex: HM Centro Automotivo"></div>
                         <div class="col"><label>CNPJ</label><input id="empCnpj" maxlength="18" placeholder="00.000.000/0000-00"></div>
-                        <div class="col"><label>Inscrição Estadual</label><input id="empIe" placeholder="Opcional"></div>
+                        <div class="col"><label>Inscrição Estadual</label><input id="empIe" placeholder="Obrigatório no espelho/PDF se preenchida"></div>
                     </div>
                     <div class="row" style="margin-top:10px">
                         <div class="col"><label>Telefone / WhatsApp</label><input id="empTelefone" placeholder="(00) 00000-0000"></div>
@@ -2498,7 +2663,7 @@
     </div>
 
     <div class="modal-overlay" id="modalNota">
-        <div class="modal-box" style="width:min(820px,100%)">
+        <div class="modal-box" style="width:min(960px,100%)">
             <h3 id="modalNotaTitulo">Nota do atendimento</h3>
             <div id="modalNotaCorpo"></div>
             <div class="modal-acoes">
@@ -2576,6 +2741,7 @@
             painelPendentes: ['Contas a Receber', 'Pastas mensais · a receber'],
             painelRelatorioCaixa: ['Relatório Caixa', 'Pastas mensais · entradas · saídas · relatório geral'],
             painelDespesasOs: ['Despesas por OS', 'Pastas mensais · bruto · despesas · lucro'],
+            painelPagFuncionarios: ['Pagamento funcionários', 'Controle semanal interno · sem impressão'],
             painelConfig: ['Config / Empresa', 'Empresa, logo, endereço e backup']
         };
 
@@ -2721,7 +2887,9 @@
                 caixa: [],
                 caixaBanco: [],
                 pendentes: [],
-                caixaConfig: { inicialBalcao: 0, inicialBanco: 0 }
+                caixaConfig: { inicialBalcao: 0, inicialBanco: 0 },
+                funcionarios: [],
+                pagamentosFuncionarios: []
             };
         }
 
@@ -2777,28 +2945,56 @@
         function htmlDadosEmpresaCabecalho(emp) {
             var e = emp || getEmpresa();
             var linhas = [];
-            var linha1 = [e.rua, e.numero].filter(Boolean).join(', ');
-            if (e.complemento) linha1 += (linha1 ? ' — ' : '') + e.complemento;
-            if (linha1) linhas.push('<span class="linha">' + esc(linha1) + '</span>');
-            var linha2 = [];
-            if (e.bairro) linha2.push(e.bairro);
-            var cid = [e.cidade, e.estado].filter(Boolean).join('/');
-            if (cid) linha2.push(cid);
-            if (e.cep) linha2.push('CEP ' + e.cep);
-            if (linha2.length) linhas.push('<span class="linha">' + esc(linha2.join(' · ')) + '</span>');
-            if (e.cnpj) linhas.push('<span class="linha">CNPJ: ' + esc(e.cnpj) + '</span>');
-            if (e.telefone) linhas.push('<span class="linha linha-tel">Tel: ' + esc(e.telefone) + '</span>');
-            if (e.email) linhas.push('<span class="linha linha-email">' + esc(e.email) + '</span>');
+            var stLinha = 'display:block;white-space:nowrap;overflow:visible;line-height:1.3;color:#222;';
+
+            /* 1) Endereço completo em UMA linha */
+            var endParts = [];
+            var ruaNum = [e.rua, e.numero].filter(Boolean).join(', ');
+            if (e.complemento) ruaNum += (ruaNum ? ' — ' : '') + e.complemento;
+            if (ruaNum) endParts.push(ruaNum);
+            if (e.bairro) endParts.push(e.bairro);
+            var cidUf = [e.cidade, e.estado].filter(Boolean).join('/');
+            if (cidUf) endParts.push(cidUf);
+            if (e.cep) endParts.push('CEP ' + e.cep);
+            if (endParts.length) {
+                linhas.push('<span class="linha linha-end" style="' + stLinha + 'font-size:9pt;">' + esc(endParts.join(' - ')) + '</span>');
+            }
+
+            /* 2) CNPJ + Inscrição Estadual na mesma linha */
+            var docs = [];
+            if (e.cnpj) docs.push('CNPJ: ' + e.cnpj);
+            if (e.ie) docs.push('Inscrição Estadual: ' + e.ie);
+            if (docs.length) {
+                linhas.push('<span class="linha linha-docs" style="' + stLinha + 'font-size:9.5pt;">' + esc(docs.join(' / ')) + '</span>');
+            }
+
+            /* 3) Telefone */
+            if (e.telefone) {
+                linhas.push('<span class="linha linha-tel" style="' + stLinha + 'font-size:9.5pt;font-weight:600;">Tel: ' + esc(e.telefone) + '</span>');
+            }
+
+            /* 4) E-mail */
+            if (e.email) {
+                linhas.push('<span class="linha linha-email" style="' + stLinha + 'font-size:9.5pt;">' + esc(e.email) + '</span>');
+            }
+
             return linhas.join('');
         }
 
         function htmlCabecalhoNotaEmpresa(emp, extrasHtml) {
             var dados = htmlDadosEmpresaCabecalho(emp);
             return '<div class="nota-topo">' +
-                '<div class="nota-topo-linha">' +
-                '<img src="' + esc(logoSrc(emp)) + '" alt="' + esc((emp && emp.nome) || 'HM Centro Automotivo') + '">' +
-                (dados ? '<div class="nota-topo-dados nota-sub nota-sub-end">' + dados + '</div>' : '') +
-                '</div>' +
+                '<table class="nota-topo-linha" style="width:100%;border-collapse:collapse;table-layout:fixed;margin:0;padding:0;">' +
+                '<tr>' +
+                '<td class="nota-topo-logo" style="width:42%;vertical-align:middle;padding:0 10px 0 0;">' +
+                '<img src="' + esc(logoSrc(emp)) + '" alt="' + esc((emp && emp.nome) || 'HM Centro Automotivo') + '" ' +
+                'style="display:block;width:100%;max-width:100%;max-height:120px;height:auto;object-fit:contain;object-position:left center;">' +
+                '</td>' +
+                '<td class="nota-topo-dados" style="width:58%;vertical-align:middle;padding:0;margin:0;text-align:left;' +
+                'font-family:Arial,Helvetica,sans-serif;color:#222;font-size:9.5pt;line-height:1.3;">' +
+                (dados || '') +
+                '</td>' +
+                '</tr></table>' +
                 (extrasHtml || '') +
                 '</div>';
         }
@@ -2896,7 +3092,9 @@
                 caixa: int.caixa || [],
                 caixaBanco: int.caixaBanco || [],
                 pendentes: int.pendentes || [],
-                caixaConfig: int.caixaConfig || { inicialBalcao: 0, inicialBanco: 0 }
+                caixaConfig: int.caixaConfig || { inicialBalcao: 0, inicialBanco: 0 },
+                funcionarios: int.funcionarios || [],
+                pagamentosFuncionarios: int.pagamentosFuncionarios || []
             });
         }
 
@@ -2905,13 +3103,16 @@
                 salvarMain(db);
                 return;
             }
+            var intAtual = carregarInternoRaw();
             salvarInternoRaw({
                 produtos: db.produtos || [],
                 orcamentos: db.orcamentos || [],
                 caixa: db.caixa || [],
                 caixaBanco: db.caixaBanco || [],
                 pendentes: db.pendentes || [],
-                caixaConfig: db.caixaConfig || { inicialBalcao: 0, inicialBanco: 0 }
+                caixaConfig: db.caixaConfig || { inicialBalcao: 0, inicialBanco: 0 },
+                funcionarios: db.funcionarios != null ? db.funcionarios : (intAtual.funcionarios || []),
+                pagamentosFuncionarios: db.pagamentosFuncionarios != null ? db.pagamentosFuncionarios : (intAtual.pagamentosFuncionarios || [])
             });
             var main = carregarMain();
             main.empresa = db.empresa || main.empresa;
@@ -3237,6 +3438,13 @@
                 fecharBoxDespesaOs();
                 renderDespesasOs();
             }
+            if (id === 'painelPagFuncionarios') {
+                canalVendas = 'interno';
+                atualizarBadgeCanal();
+                var pfData = document.getElementById('pfData');
+                if (pfData && !pfData.value) pfData.value = hojeISO();
+                renderPagFuncionarios();
+            }
             if (id === 'painelConfig') {
                 preencherFormEmpresa();
                 atualizarStatusNuvemUI();
@@ -3247,6 +3455,7 @@
 
         var PAINEIS_CANAL = {
             painelDespesasOs: true,
+            painelPagFuncionarios: true,
             painelProdutos: true,
             painelOrcamento: true,
             painelCaixa: true,
@@ -4448,6 +4657,8 @@
                 placa: (document.getElementById('atPlaca').value || '').toUpperCase().trim(),
                 cidadePlaca: document.getElementById('atCidadePlaca').value.trim(),
                 cor: document.getElementById('atCor').value.trim(),
+                anoFabricacao: document.getElementById('atAnoFabricacao').value.trim(),
+                anoModelo: document.getElementById('atAnoModelo').value.trim(),
                 chassi: document.getElementById('atChassi').value.trim(),
                 km: document.getElementById('atKm').value,
                 entrada: document.getElementById('atEntrada').value,
@@ -4540,6 +4751,8 @@
             document.getElementById('atPlaca').value = a.placa || '';
             document.getElementById('atCidadePlaca').value = a.cidadePlaca || '';
             document.getElementById('atCor').value = a.cor || '';
+            document.getElementById('atAnoFabricacao').value = a.anoFabricacao || '';
+            document.getElementById('atAnoModelo').value = a.anoModelo || '';
             document.getElementById('atChassi').value = a.chassi || '';
             document.getElementById('atKm').value = a.km || '';
             document.getElementById('atEntrada').value = a.entrada || '';
@@ -4690,7 +4903,7 @@
                 (cad.cpf ? '<div class="nota-campo"><span class="nota-label">CPF</span><span class="nota-valor">' + esc(cad.cpf) + '</span></div>' : '') +
                 (cad.cnpj ? '<div class="nota-campo"><span class="nota-label">CNPJ</span><span class="nota-valor">' + esc(cad.cnpj) + '</span></div>' : '') +
                 (cad.telefone ? '<div class="nota-campo"><span class="nota-label">Telefone</span><span class="nota-valor">' + esc(cad.telefone) + '</span></div>' : '') +
-                (cad.email ? '<div class="nota-campo"><span class="nota-label">E-mail</span><span class="nota-valor">' + esc(cad.email) + '</span></div>' : '') +
+                (cad.email ? '<div class="nota-campo full"><span class="nota-label">E-mail</span><span class="nota-valor">' + esc(cad.email) + '</span></div>' : '') +
                 (endCli ? '<div class="nota-campo full"><span class="nota-label">Endereço</span><span class="nota-valor">' + esc(endCli) + (cad.cidade ? ' — ' + esc(cad.cidade) : '') + '</span></div>' : '') +
                 '</div></div>' +
                 '<div class="nota-bloco compacto"><div class="tit vermelho">Veículo</div><div class="nota-grid nota-grid-compacta">' +
@@ -4699,7 +4912,9 @@
                 '<div class="nota-campo"><span class="nota-label">Cidade / UF</span><span class="nota-valor">' + esc(a.cidadePlaca || '—') + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Km</span><span class="nota-valor">' + esc(a.km ? a.km + ' Km' : '—') + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Cor</span><span class="nota-valor">' + esc(a.cor || '—') + '</span></div>' +
-                '<div class="nota-campo"><span class="nota-label">Chassi</span><span class="nota-valor">' + esc(a.chassi || '—') + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Ano fab.</span><span class="nota-valor">' + esc(a.anoFabricacao || '—') + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Ano modelo</span><span class="nota-valor">' + esc(a.anoModelo || '—') + '</span></div>' +
+                '<div class="nota-campo full"><span class="nota-label">Chassi</span><span class="nota-valor nota-chassi">' + esc((a.chassi || '—').toUpperCase()) + '</span></div>' +
                 '</div></div>' +
                 '<div class="nota-bloco compacto"><div class="tit escuro">Oficina, Chegada &amp; Serviços</div><div class="nota-grid nota-grid-compacta">' +
                 '<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' + esc(a.responsavel || '—') + '</span></div>' +
@@ -4929,6 +5144,8 @@
                 placa: a.placa || '',
                 cidadePlaca: a.cidadePlaca || '',
                 cor: a.cor || '',
+                anoFabricacao: a.anoFabricacao || '',
+                anoModelo: a.anoModelo || '',
                 chassi: a.chassi || '',
                 km: a.km || '',
                 entrada: a.entrada || '',
@@ -4942,6 +5159,7 @@
                 empresaEndereco: enderecoCompleto(emp),
                 empresaTelefone: emp.telefone || '',
                 empresaCnpj: emp.cnpj || '',
+                empresaIe: emp.ie || '',
                 empresaLogo: logoSrc(emp)
             };
             if (incluirFotos && a.fotos && a.fotos.length) {
@@ -6308,6 +6526,253 @@
         document.getElementById('btnArquivarMesDosPc').addEventListener('click', function () {
             if (typeof arquivarMesDespesasOsPastaPC === 'function') arquivarMesDespesasOsPastaPC();
         });
+
+        /* ---------- Pagamento funcionários (Modo Interno) ---------- */
+        function inicioFimSemana(isoDate) {
+            var d = new Date((isoDate || hojeISO()) + 'T12:00:00');
+            if (isNaN(d.getTime())) d = new Date();
+            var dia = d.getDay(); /* 0=dom */
+            var diffSeg = dia === 0 ? -6 : 1 - dia;
+            var seg = new Date(d);
+            seg.setDate(d.getDate() + diffSeg);
+            var dom = new Date(seg);
+            dom.setDate(seg.getDate() + 6);
+            function ymd(x) {
+                return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+            }
+            return { inicio: ymd(seg), fim: ymd(dom) };
+        }
+
+        function rotuloSemana(isoDate) {
+            var s = inicioFimSemana(isoDate);
+            function ddmm(iso) {
+                var p = String(iso).split('-');
+                return (p[2] || '') + '/' + (p[1] || '');
+            }
+            return ddmm(s.inicio) + ' a ' + ddmm(s.fim);
+        }
+
+        function comCanalInterno(fn) {
+            var antes = canalVendas;
+            canalVendas = 'interno';
+            atualizarBadgeCanal();
+            try {
+                return fn();
+            } finally {
+                canalVendas = antes;
+                atualizarBadgeCanal();
+            }
+        }
+
+        function renderPagFuncionarios() {
+            var panel = document.getElementById('painelPagFuncionarios');
+            if (!panel) return;
+            comCanalInterno(function () {
+                var db = carregar();
+                var funcs = (db.funcionarios || []).slice().sort(function (a, b) {
+                    return String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR');
+                });
+                var pags = (db.pagamentosFuncionarios || []).slice().sort(function (a, b) {
+                    return String(b.data || b.criadoEm || '').localeCompare(String(a.data || a.criadoEm || ''));
+                });
+
+                var sem = inicioFimSemana(hojeISO());
+                var mesAtual = hojeISO().slice(0, 7);
+                var totSemana = 0;
+                var totMes = 0;
+                var totGeral = 0;
+                pags.forEach(function (p) {
+                    var v = Number(p.valor) || 0;
+                    totGeral += v;
+                    var d = (p.data || '').slice(0, 10);
+                    if (d >= sem.inicio && d <= sem.fim) totSemana += v;
+                    if (d.slice(0, 7) === mesAtual) totMes += v;
+                });
+
+                document.getElementById('pfQtdFunc').textContent = String(funcs.length);
+                document.getElementById('pfSemana').textContent = moeda(totSemana);
+                document.getElementById('pfMes').textContent = moeda(totMes);
+                document.getElementById('pfTotal').textContent = moeda(totGeral);
+
+                var sel = document.getElementById('pfFuncId');
+                var selVal = sel.value;
+                sel.innerHTML = '<option value="">Selecione...</option>' + funcs.map(function (f) {
+                    return '<option value="' + esc(f.id) + '">' + esc(f.nome) + '</option>';
+                }).join('');
+                if (selVal && funcs.some(function (f) { return f.id === selVal; })) sel.value = selVal;
+
+                var tbF = document.getElementById('tabelaFuncionarios');
+                var vazF = document.getElementById('listaFuncionariosVazia');
+                if (!funcs.length) {
+                    tbF.innerHTML = '';
+                    vazF.style.display = 'block';
+                } else {
+                    vazF.style.display = 'none';
+                    tbF.innerHTML = funcs.map(function (f) {
+                        return '<tr><td>' + esc(f.nome) + '</td><td>' +
+                            '<button type="button" class="btn btn-secondary" data-excluir-func="' + esc(f.id) + '" style="padding:4px 8px;font-size:0.8rem">Excluir</button></td></tr>';
+                    }).join('');
+                }
+
+                var q = (document.getElementById('buscaPagFunc').value || '').trim().toLowerCase();
+                var filtrados = pags.filter(function (p) {
+                    if (!q) return true;
+                    var nome = String(p.funcionarioNome || '').toLowerCase();
+                    var obs = String(p.obs || '').toLowerCase();
+                    return nome.indexOf(q) >= 0 || obs.indexOf(q) >= 0;
+                });
+                var tbP = document.getElementById('tabelaPagFuncionarios');
+                var vazP = document.getElementById('listaPagFuncVazia');
+                if (!filtrados.length) {
+                    tbP.innerHTML = '';
+                    vazP.style.display = 'block';
+                } else {
+                    vazP.style.display = 'none';
+                    tbP.innerHTML = filtrados.map(function (p) {
+                        return '<tr>' +
+                            '<td>' + esc(fmtData(p.data || p.criadoEm)) + '</td>' +
+                            '<td>' + esc(rotuloSemana(p.data || hojeISO())) + '</td>' +
+                            '<td>' + esc(p.funcionarioNome || '—') + '</td>' +
+                            '<td>' + esc(p.forma || '—') + '</td>' +
+                            '<td>' + esc(p.obs || '—') + '</td>' +
+                            '<td>' + moeda(p.valor) + '</td>' +
+                            '<td><button type="button" class="btn btn-secondary" data-excluir-pag-func="' + esc(p.id) + '" style="padding:4px 8px;font-size:0.8rem">Excluir</button></td>' +
+                            '</tr>';
+                    }).join('');
+                }
+
+                var pfData = document.getElementById('pfData');
+                if (pfData && !pfData.value) pfData.value = hojeISO();
+            });
+        }
+
+        document.getElementById('formFuncionario').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var nome = document.getElementById('pfNomeFunc').value.trim();
+            if (!nome) { toast('Informe o nome do funcionário.'); return; }
+            comCanalInterno(function () {
+                var db = carregar();
+                if (!db.funcionarios) db.funcionarios = [];
+                var existe = db.funcionarios.some(function (f) {
+                    return String(f.nome || '').toLowerCase() === nome.toLowerCase();
+                });
+                if (existe) { toast('Esse funcionário já está cadastrado.'); return; }
+                db.funcionarios.push({ id: uid(), nome: nome, criadoEm: new Date().toISOString() });
+                salvar(db);
+                document.getElementById('formFuncionario').reset();
+                toast('Funcionário incluído.');
+            });
+            renderPagFuncionarios();
+        });
+
+        document.getElementById('formPagFuncionario').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var funcId = document.getElementById('pfFuncId').value;
+            var data = document.getElementById('pfData').value || hojeISO();
+            var valor = parseMoeda(document.getElementById('pfValor').value);
+            var forma = document.getElementById('pfForma').value;
+            var obs = document.getElementById('pfObs').value.trim();
+            if (!funcId) { toast('Selecione o funcionário.'); return; }
+            if (!(valor > 0)) { toast('Informe um valor válido.'); return; }
+
+            comCanalInterno(function () {
+                var db = carregar();
+                var func = (db.funcionarios || []).find(function (f) { return f.id === funcId; });
+                if (!func) { toast('Funcionário não encontrado.'); return; }
+                if (!db.pagamentosFuncionarios) db.pagamentosFuncionarios = [];
+                if (!db.caixa) db.caixa = [];
+                if (!db.caixaBanco) db.caixaBanco = [];
+
+                var pagId = uid();
+                var caixaId = uid();
+                var desc = 'Pag. funcionário: ' + func.nome + ' · semana ' + rotuloSemana(data) + (obs ? ' — ' + obs : '');
+                var ehDinheiro = String(forma).toLowerCase() === 'dinheiro';
+                var lanc = {
+                    id: caixaId,
+                    tipo: 'saida',
+                    descricao: desc,
+                    valor: valor,
+                    forma: forma,
+                    conta: ehDinheiro ? 'balcao' : 'banco',
+                    funcionarioId: func.id,
+                    pagamentoFuncionarioId: pagId,
+                    criadoEm: new Date(data + 'T12:00:00').toISOString()
+                };
+                if (ehDinheiro) db.caixa.push(lanc);
+                else db.caixaBanco.push(lanc);
+
+                db.pagamentosFuncionarios.push({
+                    id: pagId,
+                    funcionarioId: func.id,
+                    funcionarioNome: func.nome,
+                    data: data,
+                    valor: valor,
+                    forma: forma,
+                    obs: obs,
+                    caixaId: caixaId,
+                    conta: ehDinheiro ? 'balcao' : 'banco',
+                    criadoEm: new Date().toISOString()
+                });
+                salvar(db);
+                document.getElementById('formPagFuncionario').reset();
+                document.getElementById('pfData').value = hojeISO();
+                toast('Pagamento de ' + func.nome + ' registrado.');
+            });
+            renderPagFuncionarios();
+            renderCaixa();
+            renderCaixaBanco();
+            renderRelatorioCaixa();
+        });
+
+        document.getElementById('tabelaFuncionarios').addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-excluir-func]');
+            if (!btn) return;
+            var id = btn.getAttribute('data-excluir-func');
+            if (!confirm('Excluir este funcionário? O histórico de pagamentos permanece.')) return;
+            comCanalInterno(function () {
+                var db = carregar();
+                db.funcionarios = (db.funcionarios || []).filter(function (f) { return f.id !== id; });
+                salvar(db);
+                toast('Funcionário removido.');
+            });
+            renderPagFuncionarios();
+        });
+
+        document.getElementById('tabelaPagFuncionarios').addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-excluir-pag-func]');
+            if (!btn) return;
+            var id = btn.getAttribute('data-excluir-pag-func');
+            if (!confirm('Excluir este pagamento e a saída no caixa interno?')) return;
+            comCanalInterno(function () {
+                var db = carregar();
+                var pag = (db.pagamentosFuncionarios || []).find(function (p) { return p.id === id; });
+                db.pagamentosFuncionarios = (db.pagamentosFuncionarios || []).filter(function (p) { return p.id !== id; });
+                if (pag) {
+                    var cid = pag.caixaId;
+                    if (pag.conta === 'banco') {
+                        db.caixaBanco = (db.caixaBanco || []).filter(function (x) {
+                            return x.id !== cid && x.pagamentoFuncionarioId !== id;
+                        });
+                    } else {
+                        db.caixa = (db.caixa || []).filter(function (x) {
+                            return x.id !== cid && x.pagamentoFuncionarioId !== id;
+                        });
+                    }
+                }
+                salvar(db);
+                toast('Pagamento excluído.');
+            });
+            renderPagFuncionarios();
+            renderCaixa();
+            renderCaixaBanco();
+            renderRelatorioCaixa();
+        });
+
+        document.getElementById('btnAtualizarPagFunc').addEventListener('click', function () {
+            renderPagFuncionarios();
+            toast('Lista atualizada.');
+        });
+        document.getElementById('buscaPagFunc').addEventListener('input', renderPagFuncionarios);
 
         /* ---------- Caixa / Relatórios (modelo FH Control) ---------- */
         function getCaixaConfig(db) {
@@ -7831,6 +8296,10 @@
             if (document.getElementById('painelDespesasOs') &&
                 document.getElementById('painelDespesasOs').classList.contains('active')) {
                 renderDespesasOs();
+            }
+            if (document.getElementById('painelPagFuncionarios') &&
+                document.getElementById('painelPagFuncionarios').classList.contains('active')) {
+                renderPagFuncionarios();
             }
             aplicarIdentidadeVisual();
         }
