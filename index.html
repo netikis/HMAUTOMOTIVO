@@ -1050,6 +1050,61 @@
             color: #2ecc71;
             border: 1px solid rgba(39, 174, 96, 0.45);
         }
+        .badge-agendado {
+            display: inline-block;
+            margin-top: 4px;
+            margin-right: 6px;
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            background: rgba(241, 196, 15, 0.22);
+            color: #f1c40f;
+            border: 1px solid rgba(241, 196, 15, 0.55);
+            letter-spacing: 0.02em;
+        }
+        tr.linha-agendada {
+            background: rgba(241, 196, 15, 0.08) !important;
+            box-shadow: inset 3px 0 0 #f1c40f;
+        }
+        tr.linha-agendada td {
+            vertical-align: middle;
+        }
+        .status-at-select.status-agendado {
+            border-color: #f1c40f !important;
+            color: #f1c40f;
+            font-weight: 800;
+        }
+        .box-agendados-destaque {
+            border-color: rgba(241, 196, 15, 0.45);
+            background: rgba(241, 196, 15, 0.06);
+            margin-bottom: 14px;
+        }
+        .box-agendados-destaque h2 {
+            color: #f1c40f;
+            font-size: 1rem;
+        }
+        .lista-agendados-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .chip-agendado {
+            display: inline-flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(16, 26, 39, 0.9);
+            border: 1px solid rgba(241, 196, 15, 0.4);
+            cursor: pointer;
+            min-width: 140px;
+        }
+        .chip-agendado:hover { border-color: #f1c40f; }
+        .chip-agendado .chip-data { font-weight: 800; color: #f1c40f; font-size: 0.85rem; }
+        .chip-agendado .chip-info { font-size: 0.78rem; color: var(--text); }
+        .chip-agendado .chip-cli { font-size: 0.72rem; color: var(--muted); }
         .receber-passo-btns {
             display: flex;
             flex-direction: column;
@@ -2021,13 +2076,19 @@
                         <div class="col"><label>Data saída</label><input id="atSaida" type="date"></div>
                         <div class="col"><label>Status</label>
                             <select id="atStatus">
-                                <option value="Em andamento">Em andamento</option>
+                                <option value="Agendado">📅 Agendado</option>
+                                <option value="Em andamento" selected>Em andamento</option>
                                 <option value="Aguardando peça">Aguardando peça</option>
                                 <option value="Pronto">Pronto</option>
                                 <option value="Entregue">Entregue</option>
                             </select>
                         </div>
+                        <div class="col" id="wrapAgendadoPara">
+                            <label>Data agendada</label>
+                            <input id="atAgendadoPara" type="date">
+                        </div>
                     </div>
+                    <p class="hint" id="hintAgendado" style="margin-top:8px;display:none">Serviço agendado: aparece em destaque no histórico até o dia marcado (ex.: trazer o carro na segunda).</p>
                 </div>
 
                 <div class="grid-2">
@@ -2093,10 +2154,15 @@
         </section>
 
         <section id="painelHistorico" class="panel">
+            <div class="box box-agendados-destaque" id="boxAgendadosDestaque" style="display:none">
+                <h2>📅 Serviços agendados</h2>
+                <p class="hint" style="margin:0">Aparecem em destaque — próximos primeiros. Toque para editar.</p>
+                <div class="lista-agendados-chips" id="listaAgendadosChips"></div>
+            </div>
             <div class="box">
                 <h2>Histórico de Atendimentos</h2>
                 <div class="toolbar">
-                    <input type="search" id="buscaAtend" class="search" placeholder="Buscar placa, cliente, carro...">
+                    <input type="search" id="buscaAtend" class="search" placeholder="Buscar placa, cliente, carro, agendado...">
                 </div>
                 <table>
                     <thead>
@@ -5293,15 +5359,19 @@
             document.getElementById('atClienteId').value = '';
             document.getElementById('atClienteBusca').value = '';
             document.getElementById('atEntrada').value = hojeISO();
+            document.getElementById('atStatus').value = 'Em andamento';
+            document.getElementById('atAgendadoPara').value = '';
             itensTemp = [];
             fotosAtuais = [];
             renderItens();
             renderGaleriaFotos();
             atualizarPlaca();
             atualizarStatusClienteAt();
+            atualizarCampoAgendamentoUI();
         }
 
         document.getElementById('btnLimparAt').addEventListener('click', limparAtendimento);
+        document.getElementById('atStatus').addEventListener('change', atualizarCampoAgendamentoUI);
 
         document.getElementById('atClienteBusca').addEventListener('input', atualizarStatusClienteAt);
         document.getElementById('atClienteBusca').addEventListener('change', atualizarStatusClienteAt);
@@ -5311,6 +5381,13 @@
             var db = carregar();
             var resolvido = resolverClienteAtendimento(db, document.getElementById('atClienteBusca').value);
             if (!resolvido.ok) { toast('Informe o nome do cliente (cadastrado ou avulso).'); return; }
+            var st = document.getElementById('atStatus').value;
+            var agData = document.getElementById('atAgendadoPara').value;
+            if (st === 'Agendado' && !agData) {
+                toast('Informe a data agendada (ex.: segunda-feira).');
+                document.getElementById('atAgendadoPara').focus();
+                return;
+            }
             var id = document.getElementById('atId').value;
             var pecas = somaPorTipo('peca');
             var mao = somaPorTipo('mao');
@@ -5332,6 +5409,7 @@
                 entrada: document.getElementById('atEntrada').value,
                 saida: document.getElementById('atSaida').value,
                 status: document.getElementById('atStatus').value,
+                agendadoPara: document.getElementById('atAgendadoPara').value || '',
                 estado: document.getElementById('atEstado').value.trim(),
                 servicos: document.getElementById('atServicos').value.trim(),
                 itens: itensTemp.slice(),
@@ -5426,6 +5504,8 @@
             document.getElementById('atEntrada').value = a.entrada || '';
             document.getElementById('atSaida').value = a.saida || '';
             document.getElementById('atStatus').value = a.status || 'Em andamento';
+            document.getElementById('atAgendadoPara').value = a.agendadoPara || '';
+            atualizarCampoAgendamentoUI();
             document.getElementById('atEstado').value = a.estado || '';
             document.getElementById('atServicos').value = a.servicos || '';
             itensTemp = (a.itens || []).map(function (it) {
@@ -5457,20 +5537,51 @@
         }
 
         function opcoesStatusAt(atual) {
-            var opts = ['Em andamento', 'Aguardando peça', 'Pronto', 'Entregue'];
+            var opts = ['Agendado', 'Em andamento', 'Aguardando peça', 'Pronto', 'Entregue'];
             return opts.map(function (s) {
-                return '<option value="' + s + '"' + (s === atual ? ' selected' : '') + '>' + s + '</option>';
+                var label = s === 'Agendado' ? '📅 Agendado' : s;
+                return '<option value="' + s + '"' + (s === atual ? ' selected' : '') + '>' + label + '</option>';
             }).join('');
+        }
+
+        function atualizarCampoAgendamentoUI() {
+            var st = document.getElementById('atStatus');
+            var wrap = document.getElementById('wrapAgendadoPara');
+            var hint = document.getElementById('hintAgendado');
+            var ag = document.getElementById('atAgendadoPara');
+            if (!st || !wrap) return;
+            var ehAg = st.value === 'Agendado';
+            wrap.style.display = '';
+            if (hint) hint.style.display = ehAg ? '' : 'none';
+            if (ehAg && ag && !ag.value) ag.value = hojeISO();
         }
 
         function alterarStatusAtendimento(id, novoStatus) {
             var db = carregar();
             var i = db.atendimentos.findIndex(function (a) { return a.id === id; });
             if (i < 0) return;
-            db.atendimentos[i].status = novoStatus;
-            db.atendimentos[i].atualizadoEm = new Date().toISOString();
+            var a = db.atendimentos[i];
+            if (novoStatus === 'Agendado') {
+                var sugestao = a.agendadoPara || hojeISO();
+                var d = prompt('Data do agendamento (ex.: segunda-feira).\nDigite no formato AAAA-MM-DD:', sugestao);
+                if (d === null) {
+                    renderHistorico();
+                    return;
+                }
+                d = String(d || '').trim();
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+                    toast('Data inválida. Use AAAA-MM-DD (ex.: 2026-08-03).');
+                    renderHistorico();
+                    return;
+                }
+                a.agendadoPara = d;
+            }
+            a.status = novoStatus;
+            a.atualizadoEm = new Date().toISOString();
             salvar(db);
-            toast('Status: ' + novoStatus);
+            toast(novoStatus === 'Agendado'
+                ? 'Agendado para ' + fmtData(a.agendadoPara)
+                : 'Status: ' + novoStatus);
             renderHistorico();
         }
 
@@ -5586,9 +5697,11 @@
                 '</div></div>' +
                 '<div class="nota-bloco compacto"><div class="tit escuro">Oficina, Chegada &amp; Serviços</div><div class="nota-grid nota-grid-compacta">' +
                 '<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' + esc(a.responsavel || '—') + '</span></div>' +
-                '<div class="nota-campo"><span class="nota-label">Status</span><span class="nota-valor">' + esc(a.status || '—') + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Status</span><span class="nota-valor">' + esc(a.status || '—') +
+                (a.status === 'Agendado' && a.agendadoPara ? ' · ' + esc(fmtData(a.agendadoPara)) : '') + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Entrada</span><span class="nota-valor">' + esc(fmtData(a.entrada)) + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Saída</span><span class="nota-valor">' + esc(fmtData(a.saida)) + '</span></div>' +
+                (a.agendadoPara ? '<div class="nota-campo full"><span class="nota-label">Agendado para</span><span class="nota-valor">' + esc(fmtData(a.agendadoPara)) + '</span></div>' : '') +
                 '<div class="nota-campo full"><span class="nota-label">Estado de chegada</span><span class="nota-valor">' + esc(a.estado || 'Sem observações.') + '</span></div>' +
                 '<div class="nota-campo full"><span class="nota-label">Serviços</span><span class="nota-valor" style="color:#000;font-weight:800">' + esc(a.servicos || '—') + '</span></div>' +
                 '</div></div>' +
@@ -5841,6 +5954,7 @@
                 entrada: a.entrada || '',
                 saida: a.saida || '',
                 status: a.status || '',
+                agendadoPara: a.agendadoPara || '',
                 estado: a.estado || '',
                 servicos: a.servicos || '',
                 itens: a.itens || [],
@@ -5968,13 +6082,46 @@
             sincronizarAssinaturasNoDb();
             var db = carregar();
             var q = (document.getElementById('buscaAtend').value || '').toLowerCase().trim();
-            var lista = db.atendimentos.slice().sort(function (a, b) {
-                return String(b.entrada || b.criadoEm || '').localeCompare(String(a.entrada || a.criadoEm || ''));
-            }).filter(function (a) {
+            var lista = db.atendimentos.slice().filter(function (a) {
                 if (!q) return true;
                 var nome = nomeAtendimento(db, a);
-                return [nome, a.carro, a.placa, a.status, a.servicos].join(' ').toLowerCase().indexOf(q) > -1;
+                return [nome, a.carro, a.placa, a.status, a.servicos, a.agendadoPara, fmtData(a.agendadoPara)]
+                    .join(' ').toLowerCase().indexOf(q) > -1;
+            }).sort(function (a, b) {
+                var aAg = (a.status || '') === 'Agendado' ? 0 : 1;
+                var bAg = (b.status || '') === 'Agendado' ? 0 : 1;
+                if (aAg !== bAg) return aAg - bAg;
+                if (aAg === 0) {
+                    return String(a.agendadoPara || '9999').localeCompare(String(b.agendadoPara || '9999'));
+                }
+                return String(b.entrada || b.criadoEm || '').localeCompare(String(a.entrada || a.criadoEm || ''));
             });
+
+            /* Destaque no topo: chips dos agendados */
+            var boxAg = document.getElementById('boxAgendadosDestaque');
+            var chips = document.getElementById('listaAgendadosChips');
+            var agendados = lista.filter(function (a) { return (a.status || '') === 'Agendado'; });
+            if (boxAg && chips) {
+                if (!agendados.length) {
+                    boxAg.style.display = 'none';
+                    chips.innerHTML = '';
+                } else {
+                    boxAg.style.display = '';
+                    chips.innerHTML = agendados.map(function (a) {
+                        var nome = nomeAtendimento(db, a);
+                        return '<button type="button" class="chip-agendado" data-ed-ag="' + esc(a.id) + '">' +
+                            '<span class="chip-data">📅 ' + esc(fmtData(a.agendadoPara) || 'Sem data') + '</span>' +
+                            '<span class="chip-info">' + esc((a.placa || '—').toUpperCase()) + ' · ' + esc(a.carro || '—') + '</span>' +
+                            '<span class="chip-cli">' + esc(nome) + '</span>' +
+                            '</button>';
+                    }).join('');
+                    chips.querySelectorAll('[data-ed-ag]').forEach(function (b) {
+                        b.addEventListener('click', function () {
+                            editarAtendimento(b.getAttribute('data-ed-ag'));
+                        });
+                    });
+                }
+            }
 
             var tb = document.getElementById('tabelaAtend');
             var vazio = document.getElementById('listaAtendVazia');
@@ -5987,6 +6134,11 @@
                     ? ' <span style="font-size:0.68rem;font-weight:700;color:#8fe0b8">AVULSO</span>'
                     : '';
                 var statusAtual = a.status || 'Em andamento';
+                var ehAgendado = statusAtual === 'Agendado';
+                var badgeAg = ehAgendado
+                    ? '<div class="badge-agendado">📅 Agendado' +
+                        (a.agendadoPara ? ' · ' + esc(fmtData(a.agendadoPara)) : '') + '</div>'
+                    : '';
                 var jaPago = String(a.statusPagamento || '').toUpperCase() === 'PAGO';
                 var badgePago = jaPago
                     ? '<div class="badge-pago-os">PAGO · ' + esc(a.formaPagamento || '—') +
@@ -5996,14 +6148,18 @@
                     ? ''
                     : '<button type="button" class="btn btn-receber" data-rec="' + a.id + '">💰 Receber</button>';
                 var tr = document.createElement('tr');
+                if (ehAgendado) tr.className = 'linha-agendada';
                 tr.innerHTML =
-                    '<td>' + esc(fmtData(a.entrada || a.criadoEm)) + '</td>' +
-                    '<td>' + esc(nome) + tagAvulso + badgeAssinatura(a) + badgePago + '</td>' +
+                    '<td>' + esc(fmtData(ehAgendado && a.agendadoPara ? a.agendadoPara : (a.entrada || a.criadoEm))) +
+                    (ehAgendado ? '<div style="font-size:0.68rem;color:#f1c40f;font-weight:700">agendado</div>' : '') +
+                    '</td>' +
+                    '<td>' + badgeAg + esc(nome) + tagAvulso + badgeAssinatura(a) + badgePago + '</td>' +
                     '<td>' + esc(a.carro || '—') + '</td>' +
                     '<td>' + esc(a.placa || '—') + '</td>' +
                     '<td>' + moeda(a.total) + '</td>' +
                     '<td class="actions">' +
-                    '<select class="status-at-select" data-st="' + a.id + '" title="Alterar status" style="min-width:140px;padding:6px 8px;font-size:0.75rem;font-weight:700">' +
+                    '<select class="status-at-select' + (ehAgendado ? ' status-agendado' : '') +
+                    '" data-st="' + a.id + '" title="Alterar status" style="min-width:150px;padding:6px 8px;font-size:0.75rem;font-weight:700">' +
                     opcoesStatusAt(statusAtual) +
                     '</select>' +
                     btnReceber +
@@ -9029,6 +9185,7 @@
 
         /* boot */
         document.getElementById('atEntrada').value = hojeISO();
+        atualizarCampoAgendamentoUI();
         renderItens();
         atualizarPlaca();
         prepararVendaForm();
