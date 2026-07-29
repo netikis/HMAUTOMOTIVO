@@ -2827,7 +2827,7 @@
             <div class="box">
                 <h2>☁ Sincronizar — PC ↔ Celular</h2>
                 <p class="config-status aviso" id="nuvemStatusTexto"><strong>Nuvem:</strong> verificando…</p>
-                <p class="hint" style="margin-top:8px">Dados da empresa sobem ao salvar. Use <strong>Sincronizar agora</strong> no PC e no celular para OS, clientes, estoque e caixa.</p>
+                <p class="hint" style="margin-top:8px">Com login, a sincronização é <strong>automática</strong> (ao salvar, ao abrir o app e a cada minuto). O botão abaixo força na hora, se quiser.</p>
                 <div class="row" style="margin-top:12px">
                     <button type="button" class="btn btn-primary" id="btnSyncNuvem">☁ Sincronizar agora</button>
                     <button type="button" class="btn btn-secondary" id="btnAppSair">Sair da conta</button>
@@ -3058,6 +3058,7 @@
         var PASTA_IDB = 'hm_automotivo_pasta_v1';
         var NUVEM_KEY = 'hm_automotivo_nuvem';
         var LOGIN_EMAIL_KEY = 'hm_automotivo_login_email';
+        var SYNC_ULTIMA_KEY = 'hm_automotivo_sync_ultima';
         var FOTOS_MAX = 12;
 
         function empresaPadrao() {
@@ -3406,25 +3407,26 @@
         function salvar(db) {
             if (canalVendas !== 'interno') {
                 salvarMain(db);
-                return;
+            } else {
+                var intAtual = carregarInternoRaw();
+                salvarInternoRaw({
+                    produtos: db.produtos || [],
+                    orcamentos: db.orcamentos || [],
+                    caixa: db.caixa || [],
+                    caixaBanco: db.caixaBanco || [],
+                    pendentes: db.pendentes || [],
+                    caixaConfig: db.caixaConfig || { inicialBalcao: 0, inicialBanco: 0 },
+                    funcionarios: db.funcionarios != null ? db.funcionarios : (intAtual.funcionarios || []),
+                    pagamentosFuncionarios: db.pagamentosFuncionarios != null ? db.pagamentosFuncionarios : (intAtual.pagamentosFuncionarios || [])
+                });
+                var main = carregarMain();
+                main.empresa = db.empresa || main.empresa;
+                main.clientes = db.clientes || main.clientes;
+                main.atendimentos = db.atendimentos || main.atendimentos;
+                if (db.excluidos) main.excluidos = garantirExcluidos(db);
+                salvarMain(main);
             }
-            var intAtual = carregarInternoRaw();
-            salvarInternoRaw({
-                produtos: db.produtos || [],
-                orcamentos: db.orcamentos || [],
-                caixa: db.caixa || [],
-                caixaBanco: db.caixaBanco || [],
-                pendentes: db.pendentes || [],
-                caixaConfig: db.caixaConfig || { inicialBalcao: 0, inicialBanco: 0 },
-                funcionarios: db.funcionarios != null ? db.funcionarios : (intAtual.funcionarios || []),
-                pagamentosFuncionarios: db.pagamentosFuncionarios != null ? db.pagamentosFuncionarios : (intAtual.pagamentosFuncionarios || [])
-            });
-            var main = carregarMain();
-            main.empresa = db.empresa || main.empresa;
-            main.clientes = db.clientes || main.clientes;
-            main.atendimentos = db.atendimentos || main.atendimentos;
-            if (db.excluidos) main.excluidos = garantirExcluidos(db);
-            salvarMain(main);
+            agendarSyncAutomatico('salvar');
         }
 
         function uid() {
@@ -4727,8 +4729,12 @@
             }
             if (user) {
                 el.className = 'config-status';
+                var syncTxt = _syncUltimaOkEm
+                    ? ' · última sync ' + esc(fmtHoraSync(_syncUltimaOkEm))
+                    : '';
                 el.innerHTML = '<strong>Nuvem:</strong> conectado como ' + esc(user.email || 'usuário') +
-                    '. Empresa sincroniza ao salvar; use <em>Sincronizar agora</em> para o restante.';
+                    ' · sync automática ligada' + syncTxt +
+                    (_syncEmAndamento ? ' · sincronizando…' : '') + '.';
             } else {
                 el.className = 'config-status aviso';
                 el.innerHTML = '<strong>Nuvem:</strong> entre com o e-mail/senha do Firebase para sincronizar.';
@@ -4737,6 +4743,74 @@
 
         var _fbSessao = null;
         var _fbMods = null;
+        var _syncEmAndamento = false;
+        var _syncDebounceTimer = null;
+        var _syncIntervalId = null;
+        var _syncUltimaOkEm = 0;
+        try {
+            var _ultSyncRaw = localStorage.getItem('hm_automotivo_sync_ultima');
+            if (_ultSyncRaw) _syncUltimaOkEm = Number(_ultSyncRaw) || 0;
+        } catch (eUlt0) { /* ok */ }
+        var _syncListenersLigados = false;
+
+        function fmtHoraSync(ts) {
+            try {
+                var d = new Date(ts);
+                return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+            } catch (e) {
+                return '';
+            }
+        }
+
+        function usuarioNuvemLogado() {
+            return !!(!_fbSessao || !_fbSessao.auth ? false : _fbSessao.auth.currentUser);
+        }
+
+        function agendarSyncAutomatico(motivo) {
+            if (_syncEmAndamento) return;
+            if (!usuarioNuvemLogado()) return;
+            var cfg = carregarConfigNuvem();
+            if (!cfg || !cfg.apiKey || !cfg.projectId) return;
+            /* Ao salvar, agenda mesmo com aba em segundo plano (envia o que acabou de mudar) */
+            if (motivo !== 'salvar' && document.hidden) return;
+            clearTimeout(_syncDebounceTimer);
+            _syncDebounceTimer = setTimeout(function () {
+                if (_syncEmAndamento || !usuarioNuvemLogado()) return;
+                if (motivo !== 'salvar' && document.hidden) return;
+                sincronizarTodosNuvem({ silencioso: true, motivo: motivo || 'auto' }).catch(function () { /* offline */ });
+            }, motivo === 'salvar' ? 2800 : 800);
+        }
+
+        function iniciarSyncAutomatico() {
+            if (_syncIntervalId) return;
+            /* A cada 60s, se a aba estiver aberta */
+            _syncIntervalId = setInterval(function () {
+                if (document.hidden) return;
+                if (!usuarioNuvemLogado()) return;
+                sincronizarTodosNuvem({ silencioso: true, motivo: 'intervalo' }).catch(function () { /* offline */ });
+            }, 60000);
+
+            if (_syncListenersLigados) return;
+            _syncListenersLigados = true;
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) agendarSyncAutomatico('visivel');
+            });
+            window.addEventListener('focus', function () {
+                agendarSyncAutomatico('foco');
+            });
+            window.addEventListener('online', function () {
+                agendarSyncAutomatico('online');
+            });
+        }
+
+        function pararSyncAutomatico() {
+            if (_syncIntervalId) {
+                clearInterval(_syncIntervalId);
+                _syncIntervalId = null;
+            }
+            clearTimeout(_syncDebounceTimer);
+            _syncDebounceTimer = null;
+        }
 
         async function initFirebaseApp() {
             var cfg = carregarConfigNuvem();
@@ -5085,96 +5159,123 @@
             return snap.data() || null;
         }
 
-        async function sincronizarTodosNuvem() {
-            var cfg = carregarConfigNuvem();
-            if (!cfg || !cfg.apiKey || !cfg.projectId) {
-                toast('Nuvem sem chaves no firebase-env.js.');
+        async function sincronizarTodosNuvem(opts) {
+            opts = opts || {};
+            var silencioso = !!opts.silencioso;
+            var mostrarToast = opts.mostrarToast != null ? !!opts.mostrarToast : !silencioso;
+            if (_syncEmAndamento) {
+                if (!silencioso) toast('Sincronização já em andamento…');
                 return;
             }
-            toast('Entrando na nuvem e sincronizando…');
-            await obterSessaoFirebase();
-
-            var canalAntes = canalVendas;
-            canalVendas = 'normal';
-            var db = carregar();
-            var ok = 0, falha = 0;
-
-            /* 1) Baixa e mescla base (empresa, clientes, estoque, caixa…) */
-            var baseNuv = await baixarBaseNuvem();
-            if (baseNuv) {
-                db.excluidos = mesclarExcluidos(db.excluidos, baseNuv.excluidos);
-                var ex = garantirExcluidos(db);
-                db.empresa = mesclarEmpresa(db.empresa, baseNuv.empresa, baseNuv.atualizadoEm);
-                db.empresa = await hidratarLogoEmpresa(db.empresa);
-                db.clientes = mesclarListaPorId(db.clientes, baseNuv.clientes, ex.clientes);
-                db.produtos = mesclarListaPorId(db.produtos, baseNuv.produtos, ex.produtos);
-                db.orcamentos = mesclarListaPorId(db.orcamentos, baseNuv.orcamentos, ex.orcamentos);
-                db.caixa = mesclarListaPorId(db.caixa, baseNuv.caixa, ex.caixa);
-                db.caixaBanco = mesclarListaPorId(db.caixaBanco, baseNuv.caixaBanco, ex.caixaBanco);
-                db.pendentes = mesclarListaPorId(db.pendentes, baseNuv.pendentes, ex.pendentes);
-                if (baseNuv.caixaConfig) db.caixaConfig = baseNuv.caixaConfig;
-            } else {
-                db.excluidos = garantirExcluidos(db);
-                db.empresa = await hidratarLogoEmpresa(db.empresa);
+            var cfg = carregarConfigNuvem();
+            if (!cfg || !cfg.apiKey || !cfg.projectId) {
+                if (!silencioso) toast('Nuvem sem chaves no firebase-env.js.');
+                return;
+            }
+            if (!usuarioNuvemLogado()) {
+                if (!silencioso) toast('Faça login para sincronizar.');
+                return;
             }
 
-            /* 2) Baixa e mescla OS + fotos (respeitando exclusões) */
-            var nuvemLista = await baixarAtendimentosNuvem();
-            var exAt = garantirExcluidos(db).atendimentos;
-            db.atendimentos = mesclarAtendimentosComExcluidos(db.atendimentos, nuvemLista, exAt);
-
-            /* 2b) Apaga na nuvem OS que foram excluídas */
-            try {
-                var sessaoDel = await obterSessaoFirebase();
-                var idsEx = Object.keys(exAt || {});
-                for (var di = 0; di < idsEx.length; di++) {
-                    try {
-                        await sessaoDel.fsMod.deleteDoc(
-                            sessaoDel.fsMod.doc(sessaoDel.dbFs, 'hm_automotivo_atendimentos', idsEx[di])
-                        );
-                    } catch (delErr) { /* ok */ }
-                }
-            } catch (eDel) { /* ok */ }
-
-            /* 3) Envia o resultado mesclado de volta */
-            await enviarBaseNuvem(db);
-            for (var i = 0; i < (db.atendimentos || []).length; i++) {
-                var r = await enviarAtendimentoNuvem(db.atendimentos[i]);
-                if (r.ok) {
-                    ok++;
-                    if (r.atendimento) {
-                        var locais = db.atendimentos[i].fotos || [];
-                        var nuvFotos = r.atendimento.fotos || [];
-                        db.atendimentos[i].syncNuvemEm = new Date().toISOString();
-                        db.atendimentos[i].fotos = nuvFotos.map(function (fn, idx) {
-                            var fl = locais.find(function (x) { return x && fn && x.id === fn.id; }) || locais[idx] || {};
-                            return {
-                                id: (fn && fn.id) || fl.id || uid(),
-                                data: fl.data || null,
-                                url: fl.url || (fn && fn.url) || null
-                            };
-                        });
-                        if (!db.atendimentos[i].fotos.length && locais.length) {
-                            db.atendimentos[i].fotos = locais;
-                        }
-                    }
-                } else falha++;
-            }
-
-            salvar(db);
-            canalVendas = canalAntes;
-
-            toast('Nuvem OK: ' + ok + ' OS · ' + (db.clientes || []).length + ' cliente(s)' +
-                (falha ? ' · ' + falha + ' falha(s)' : '') + '. Abra no outro aparelho e sincronize também.');
+            _syncEmAndamento = true;
             atualizarStatusNuvemUI();
-            preencherFormEmpresa();
-            renderTudo();
+            if (!silencioso) toast('Entrando na nuvem e sincronizando…');
+
+            try {
+                await obterSessaoFirebase();
+
+                var canalAntes = canalVendas;
+                canalVendas = 'normal';
+                var db = carregar();
+                var ok = 0, falha = 0;
+
+                /* 1) Baixa e mescla base (empresa, clientes, estoque, caixa…) */
+                var baseNuv = await baixarBaseNuvem();
+                if (baseNuv) {
+                    db.excluidos = mesclarExcluidos(db.excluidos, baseNuv.excluidos);
+                    var ex = garantirExcluidos(db);
+                    db.empresa = mesclarEmpresa(db.empresa, baseNuv.empresa, baseNuv.atualizadoEm);
+                    db.empresa = await hidratarLogoEmpresa(db.empresa);
+                    db.clientes = mesclarListaPorId(db.clientes, baseNuv.clientes, ex.clientes);
+                    db.produtos = mesclarListaPorId(db.produtos, baseNuv.produtos, ex.produtos);
+                    db.orcamentos = mesclarListaPorId(db.orcamentos, baseNuv.orcamentos, ex.orcamentos);
+                    db.caixa = mesclarListaPorId(db.caixa, baseNuv.caixa, ex.caixa);
+                    db.caixaBanco = mesclarListaPorId(db.caixaBanco, baseNuv.caixaBanco, ex.caixaBanco);
+                    db.pendentes = mesclarListaPorId(db.pendentes, baseNuv.pendentes, ex.pendentes);
+                    if (baseNuv.caixaConfig) db.caixaConfig = baseNuv.caixaConfig;
+                } else {
+                    db.excluidos = garantirExcluidos(db);
+                    db.empresa = await hidratarLogoEmpresa(db.empresa);
+                }
+
+                /* 2) Baixa e mescla OS + fotos (respeitando exclusões) */
+                var nuvemLista = await baixarAtendimentosNuvem();
+                var exAt = garantirExcluidos(db).atendimentos;
+                db.atendimentos = mesclarAtendimentosComExcluidos(db.atendimentos, nuvemLista, exAt);
+
+                /* 2b) Apaga na nuvem OS que foram excluídas */
+                try {
+                    var sessaoDel = await obterSessaoFirebase();
+                    var idsEx = Object.keys(exAt || {});
+                    for (var di = 0; di < idsEx.length; di++) {
+                        try {
+                            await sessaoDel.fsMod.deleteDoc(
+                                sessaoDel.fsMod.doc(sessaoDel.dbFs, 'hm_automotivo_atendimentos', idsEx[di])
+                            );
+                        } catch (delErr) { /* ok */ }
+                    }
+                } catch (eDel) { /* ok */ }
+
+                /* 3) Envia o resultado mesclado de volta */
+                await enviarBaseNuvem(db);
+                for (var i = 0; i < (db.atendimentos || []).length; i++) {
+                    var r = await enviarAtendimentoNuvem(db.atendimentos[i]);
+                    if (r.ok) {
+                        ok++;
+                        if (r.atendimento) {
+                            var locais = db.atendimentos[i].fotos || [];
+                            var nuvFotos = r.atendimento.fotos || [];
+                            db.atendimentos[i].syncNuvemEm = new Date().toISOString();
+                            db.atendimentos[i].fotos = nuvFotos.map(function (fn, idx) {
+                                var fl = locais.find(function (x) { return x && fn && x.id === fn.id; }) || locais[idx] || {};
+                                return {
+                                    id: (fn && fn.id) || fl.id || uid(),
+                                    data: fl.data || null,
+                                    url: fl.url || (fn && fn.url) || null
+                                };
+                            });
+                            if (!db.atendimentos[i].fotos.length && locais.length) {
+                                db.atendimentos[i].fotos = locais;
+                            }
+                        }
+                    } else falha++;
+                }
+
+                salvar(db);
+                canalVendas = canalAntes;
+                _syncUltimaOkEm = Date.now();
+                try { localStorage.setItem(SYNC_ULTIMA_KEY, String(_syncUltimaOkEm)); } catch (eUlt) { /* ok */ }
+
+                if (mostrarToast) {
+                    if (silencioso) {
+                        toast('Sincronizado na nuvem.');
+                    } else {
+                        toast('Nuvem OK: ' + ok + ' OS · ' + (db.clientes || []).length + ' cliente(s)' +
+                            (falha ? ' · ' + falha + ' falha(s)' : '') + '.');
+                    }
+                }
+                preencherFormEmpresa();
+                renderTudo();
+            } finally {
+                _syncEmAndamento = false;
+                atualizarStatusNuvemUI();
+            }
         }
 
         document.getElementById('btnConfigPasta').addEventListener('click', configurarPastaRaiz);
         document.getElementById('btnAtualizarPasta').addEventListener('click', atualizarStatusPastaUI);
         document.getElementById('btnSyncNuvem').addEventListener('click', function () {
-            sincronizarTodosNuvem().catch(function (err) {
+            sincronizarTodosNuvem({ silencioso: false, mostrarToast: true }).catch(function (err) {
                 toast('Erro na nuvem: ' + (err.message || err.code || 'verifique login e regras'));
             });
         });
@@ -5185,8 +5286,12 @@
             document.getElementById('telaLogin').classList.add('oculto');
             document.getElementById('loginErro').style.display = 'none';
             atualizarStatusNuvemUI();
-            puxarConfigEmpresaNuvemSilencioso().then(function (ok) {
-                if (ok) renderTudo();
+            iniciarSyncAutomatico();
+            /* Sync completa ao entrar: traz o que foi feito no celular / outro PC */
+            sincronizarTodosNuvem({ silencioso: true, mostrarToast: true }).catch(function () {
+                puxarConfigEmpresaNuvemSilencioso().then(function (ok) {
+                    if (ok) renderTudo();
+                });
             });
         }
 
@@ -5194,6 +5299,7 @@
             document.body.classList.add('aguardando-login');
             document.getElementById('telaLogin').classList.remove('oculto');
             prepararTelaLogin();
+            pararSyncAutomatico();
             atualizarStatusNuvemUI();
         }
 
