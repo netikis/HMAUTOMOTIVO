@@ -4983,6 +4983,12 @@
             return aplicarExcluidosNaLista(mesclarAtendimentosLocalNuvem(localLista, nuvemLista), mapaEx);
         }
 
+        function tempoRegistro(item, seSemData) {
+            var t = new Date((item && (item.atualizadoEm || item.criadoEm)) || 0).getTime();
+            if (t) return t;
+            return seSemData != null ? seSemData : 0;
+        }
+
         function mesclarListaPorId(localLista, nuvemLista, mapaEx) {
             var map = {};
             (localLista || []).forEach(function (x) {
@@ -4995,9 +5001,11 @@
                     map[n.id] = n;
                     return;
                 }
-                var tL = new Date(L.atualizadoEm || L.criadoEm || 0).getTime();
-                var tN = new Date(n.atualizadoEm || n.criadoEm || 0).getTime();
-                map[n.id] = tN >= tL ? Object.assign({}, L, n) : L;
+                /* Local sem data = edição recente (evita nuvem antiga zerar preço/estoque).
+                   Empate: local vence. Só nuvem mais nova sobrescreve. */
+                var tL = tempoRegistro(L, Date.now());
+                var tN = tempoRegistro(n, 0);
+                map[n.id] = tN > tL ? Object.assign({}, L, n) : Object.assign({}, n, L);
             });
             return aplicarExcluidosNaLista(Object.keys(map).map(function (k) { return map[k]; }), mapaEx);
         }
@@ -5070,18 +5078,11 @@
             var empLocal = Object.assign(empresaPadrao(), emp || getEmpresa());
             await enviarLogoEmpresaNuvem(empLocal.logo);
             var empNuv = empresaParaBaseNuvem(empLocal);
-            var snap = await fsMod.getDoc(fsMod.doc(dbFs, 'hm_automotivo_base', 'principal'));
-            var base = snap.exists() ? (snap.data() || {}) : {};
-            base.empresa = empNuv;
-            base.atualizadoEm = new Date().toISOString();
-            if (!base.clientes) base.clientes = [];
-            if (!base.produtos) base.produtos = [];
-            if (!base.orcamentos) base.orcamentos = [];
-            if (!base.caixa) base.caixa = [];
-            if (!base.caixaBanco) base.caixaBanco = [];
-            if (!base.pendentes) base.pendentes = [];
-            if (!base.caixaConfig) base.caixaConfig = { inicialBalcao: 0, inicialBanco: 0 };
-            await fsMod.setDoc(fsMod.doc(dbFs, 'hm_automotivo_base', 'principal'), base);
+            /* merge:true — só atualiza empresa; NÃO regrava produtos/clientes antigos */
+            await fsMod.setDoc(fsMod.doc(dbFs, 'hm_automotivo_base', 'principal'), {
+                empresa: empNuv,
+                atualizadoEm: new Date().toISOString()
+            }, { merge: true });
             return true;
         }
 
@@ -6654,6 +6655,7 @@
                     return;
                 }
             }
+            var agora = new Date().toISOString();
             var payload = {
                 id: id || uid(),
                 nome: document.getElementById('prodNome').value.trim(),
@@ -6662,12 +6664,20 @@
                 custo: Number(document.getElementById('prodCusto').value) || 0,
                 venda: Number(document.getElementById('prodVenda').value) || 0,
                 qtd: Number(document.getElementById('prodQtd').value) || 0,
-                unidade: document.getElementById('prodUn').value
+                unidade: document.getElementById('prodUn').value,
+                atualizadoEm: agora
             };
             if (id) {
                 var i = db.produtos.findIndex(function (p) { return p.id === id; });
-                if (i >= 0) db.produtos[i] = Object.assign({}, db.produtos[i], payload);
+                if (i >= 0) {
+                    payload.criadoEm = db.produtos[i].criadoEm || agora;
+                    db.produtos[i] = Object.assign({}, db.produtos[i], payload);
+                } else {
+                    payload.criadoEm = agora;
+                    db.produtos.push(payload);
+                }
             } else {
+                payload.criadoEm = agora;
                 db.produtos.push(payload);
             }
             if (canalVendas !== 'interno') limparExcluido(db, 'produtos', payload.id);
@@ -7146,6 +7156,7 @@
                         return;
                     }
                     db.produtos[pi].qtd = Math.round(novo * 1000) / 1000;
+                    db.produtos[pi].atualizadoEm = new Date().toISOString();
                 }
             }
 
