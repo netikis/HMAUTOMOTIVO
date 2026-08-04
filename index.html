@@ -1954,7 +1954,7 @@
             </div>
             <span class="badge-db" id="badgeDb">DB isolado · hm_automotivo_v1</span>
         </div>
-        <div class="banner-canal" id="bannerCanal">🔒 MODO INTERNO — estoque, vendas e caixa separados do balcão oficial (só para uso interno).</div>
+        <div class="banner-canal" id="bannerCanal">🔒 MODO INTERNO — vendas e caixa separados do balcão oficial. Estoque de produtos é o mesmo nos dois modos.</div>
 
         <!-- INÍCIO -->
         <section id="painelInicio" class="panel active">
@@ -2178,7 +2178,7 @@
         <section id="painelProdutos" class="panel">
             <div class="box">
                 <h2 id="tituloFormProd">Cadastro de Produto / Serviço</h2>
-                <p class="hint">Use leitor de código de barras USB: clique em <strong>Cód. Barras</strong>, bipar o produto e o leitor preenche sozinho (e dá Enter). Se o código já existir, abre o produto para edição.</p>
+                <p class="hint">Estoque <strong>unificado</strong>: o que cadastrar aqui aparece no balcão oficial e no modo interno. Use leitor USB em <strong>Cód. Barras</strong> (bipar + Enter). Se o código já existir, abre para edição.</p>
                 <form id="formProduto">
                     <input type="hidden" id="prodId">
                     <div class="row">
@@ -3387,13 +3387,13 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
         }
 
-        /* carregar/salvar: no modo interno, estoque/venda/caixa vêm do banco interno */
+        /* carregar/salvar: no modo interno, vendas/caixa ficam no banco interno.
+           Produtos/estoque são UNIFICADOS (sempre no banco oficial). */
         function carregar() {
             var main = carregarMain();
             if (canalVendas !== 'interno') return main;
             var int = carregarInternoRaw();
             return Object.assign({}, main, {
-                produtos: int.produtos || [],
                 orcamentos: int.orcamentos || [],
                 caixa: int.caixa || [],
                 caixaBanco: int.caixaBanco || [],
@@ -3410,7 +3410,7 @@
             } else {
                 var intAtual = carregarInternoRaw();
                 salvarInternoRaw({
-                    produtos: db.produtos || [],
+                    produtos: [], /* estoque unificado no oficial */
                     orcamentos: db.orcamentos || [],
                     caixa: db.caixa || [],
                     caixaBanco: db.caixaBanco || [],
@@ -3423,10 +3423,77 @@
                 main.empresa = db.empresa || main.empresa;
                 main.clientes = db.clientes || main.clientes;
                 main.atendimentos = db.atendimentos || main.atendimentos;
+                main.produtos = db.produtos || [];
                 if (db.excluidos) main.excluidos = garantirExcluidos(db);
                 salvarMain(main);
             }
             agendarSyncAutomatico('salvar');
+        }
+
+        /* Migra produtos que estavam só no interno para o estoque oficial (uma vez) */
+        function migrarProdutosInternoParaEstoqueUnificado() {
+            var int = carregarInternoRaw();
+            var listaInt = int.produtos || [];
+            if (!listaInt.length) return 0;
+            var main = carregarMain();
+            var map = {};
+            var porCodigo = {};
+
+            function normCod(c) {
+                return String(c || '').replace(/\D/g, '').toLowerCase();
+            }
+            function tempo(p) {
+                return new Date((p && (p.atualizadoEm || p.criadoEm)) || 0).getTime() || 0;
+            }
+            function preferirNumero(a, b) {
+                var na = Number(a) || 0;
+                var nb = Number(b) || 0;
+                return nb > na ? nb : na;
+            }
+            function registrar(p) {
+                if (!p || !p.id) return;
+                map[p.id] = p;
+                var cod = normCod(p.codigo);
+                if (cod) porCodigo[cod] = p.id;
+            }
+
+            (main.produtos || []).forEach(registrar);
+
+            listaInt.forEach(function (n) {
+                if (!n) return;
+                var cod = normCod(n.codigo);
+                var idAlvo = (n.id && map[n.id]) ? n.id : (cod && porCodigo[cod] ? porCodigo[cod] : null);
+                if (!idAlvo) {
+                    if (!n.id) n.id = 'hm_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+                    if (!n.criadoEm) n.criadoEm = new Date().toISOString();
+                    if (!n.atualizadoEm) n.atualizadoEm = n.criadoEm;
+                    registrar(n);
+                    return;
+                }
+                var L = map[idAlvo];
+                var usarN = tempo(n) > tempo(L);
+                var m = usarN ? Object.assign({}, L, n, { id: idAlvo }) : Object.assign({}, n, L, { id: idAlvo });
+                /* preço: não ficar com zero se o outro lado tem valor */
+                m.venda = preferirNumero(L.venda, n.venda);
+                m.custo = preferirNumero(L.custo, n.custo);
+                /* estoque: prioriza o mais recente; se ambos sem data, usa o maior */
+                if (tempo(n) || tempo(L)) {
+                    m.qtd = usarN ? (Number(n.qtd) || 0) : (Number(L.qtd) || 0);
+                } else {
+                    m.qtd = preferirNumero(L.qtd, n.qtd);
+                }
+                if (!m.nome) m.nome = L.nome || n.nome || '';
+                if (!m.codigo) m.codigo = L.codigo || n.codigo || '';
+                if (!m.unidade) m.unidade = L.unidade || n.unidade || 'un';
+                m.atualizadoEm = new Date().toISOString();
+                registrar(m);
+            });
+
+            main.produtos = Object.keys(map).map(function (k) { return map[k]; });
+            salvarMain(main);
+            int.produtos = [];
+            salvarInternoRaw(int);
+            return listaInt.length;
         }
 
         function uid() {
@@ -4157,7 +4224,7 @@
             var sufixo = canalVendas === 'interno' ? ' · INTERNO' : '';
             document.getElementById('tituloPainel').textContent = t[0] + (PAINEIS_CANAL[id] ? sufixo : '');
             document.getElementById('subtituloPainel').textContent = canalVendas === 'interno' && PAINEIS_CANAL[id]
-                ? 'Uso interno — banco separado (hm_automotivo_interno_v1)'
+                ? 'Uso interno — vendas/caixa separados · estoque de produtos unificado'
                 : t[1];
             renderTudo();
             if (id === 'painelProdutos') {
@@ -6680,10 +6747,10 @@
                 payload.criadoEm = agora;
                 db.produtos.push(payload);
             }
-            if (canalVendas !== 'interno') limparExcluido(db, 'produtos', payload.id);
+            limparExcluido(db, 'produtos', payload.id);
             salvar(db);
             limparProd();
-            toast('Produto salvo.');
+            toast('Produto salvo (estoque unificado — vale nos dois modos).');
             renderProdutos();
             atualizarKPIs(db);
             focarLeitor(); /* pronto para o próximo bip */
@@ -6710,12 +6777,12 @@
         }
 
         function excluirProd(id) {
-            if (!confirm('Excluir produto?')) return;
+            if (!confirm('Excluir produto? (some nos dois modos — estoque unificado)')) return;
             var db = carregar();
-            if (canalVendas !== 'interno') marcarExcluido(db, 'produtos', id);
+            marcarExcluido(db, 'produtos', id);
             db.produtos = db.produtos.filter(function (p) { return p.id !== id; });
             salvar(db);
-            toast('Produto excluído.');
+            toast('Produto excluído dos dois modos.');
             renderProdutos();
             atualizarKPIs(db);
         }
@@ -9301,6 +9368,7 @@
         }
 
         /* boot */
+        migrarProdutosInternoParaEstoqueUnificado();
         document.getElementById('atEntrada').value = hojeISO();
         atualizarCampoAgendamentoUI();
         renderItens();
