@@ -1925,9 +1925,10 @@
             <button type="button" class="menu-grupo-btn" data-toggle-grupo="interno">🔒 Modo interno</button>
             <div class="submenu-lateral">
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelDespesasOs" data-canal="interno">🧾 Despesas por OS</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelPagFuncionarios" data-canal="interno">👷 Pagamento funcionários</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelFuncionarios" data-canal="interno">👷 Cadastro de Funcionários</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelPagFuncionarios" data-canal="interno">💰 Pagamento funcionários</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelProdutos" data-canal="interno">🏷️ Cadastro de Produtos</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamento" data-canal="interno">🧾 Venda / Orçamento</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamento" data-canal="interno">🧾 Venda p/ Funcionário</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixa" data-canal="interno">💰 Caixa / Balcão</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixaBanco" data-canal="interno">🏦 Caixa do Banco (PIX / Cartões)</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelPendentes" data-canal="interno">⏳ Contas a Receber</button>
@@ -2270,13 +2271,23 @@
                             <div class="col"><label>Data vencimento</label><input id="vdVenc" type="date"></div>
                         </div>
 
-                        <div class="row" style="margin-top:12px">
+                        <div class="row" style="margin-top:12px" id="wrapVdClienteNormal">
                             <div class="col" style="flex:2">
                                 <label>1. Buscar cliente (ou digite nome avulso)</label>
                                 <input id="vdCliente" list="listaClientesVenda" placeholder="Cliente registrado ou avulso..." autocomplete="off">
                                 <datalist id="listaClientesVenda"></datalist>
                             </div>
                             <div class="col"><label>Placa (opcional)</label><input id="vdPlaca" maxlength="7" style="text-transform:uppercase"></div>
+                        </div>
+                        <div class="row" style="margin-top:12px;display:none" id="wrapVdClienteInterno">
+                            <div class="col" style="flex:2">
+                                <label>1. Funcionário (venda interna)</label>
+                                <select id="vdFuncionarioId">
+                                    <option value="">Selecione o funcionário...</option>
+                                </select>
+                                <p class="hint" style="margin-top:6px">Só vende para funcionário cadastrado. <button type="button" class="btn btn-secondary" id="btnVdIrFuncionarios" style="padding:2px 8px;font-size:0.72rem;margin-left:4px">Cadastrar funcionário</button></p>
+                            </div>
+                            <div class="col"><label>Placa (opcional)</label><input id="vdPlacaInterno" maxlength="7" style="text-transform:uppercase"></div>
                         </div>
                     </div>
 
@@ -2704,6 +2715,53 @@
             </div>
         </section>
 
+        <!-- CADASTRO DE FUNCIONÁRIOS (Modo Interno — vendas internas) -->
+        <section id="painelFuncionarios" class="panel">
+            <div class="box">
+                <h2>👷 Cadastro de Funcionários (interno)</h2>
+                <p class="hint">Cadastre aqui quem pode comprar no <strong>modo interno</strong>. A venda interna só libera para funcionário desta lista.</p>
+                <form id="formFuncionario">
+                    <input type="hidden" id="pfFuncEditId">
+                    <div class="row">
+                        <div class="col" style="flex:2"><label>Nome</label><input id="pfNomeFunc" required placeholder="Ex: João, Pedro..."></div>
+                        <div class="col"><label>Telefone / WhatsApp</label><input id="pfTelFunc" placeholder="(00) 00000-0000"></div>
+                        <div class="col"><label>Cargo / função</label><input id="pfCargoFunc" placeholder="Funileiro, pintor..."></div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col" style="flex:2"><label>Observação</label><input id="pfObsFunc" placeholder="Opcional"></div>
+                        <div class="col" style="flex:0.9;align-self:end">
+                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0 0 8px">
+                                <input type="checkbox" id="pfAtivoFunc" checked style="width:auto"> Ativo (pode comprar)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:14px">
+                        <button type="submit" class="btn btn-primary" id="btnSalvarFunc">Salvar funcionário</button>
+                        <button type="button" class="btn btn-secondary" id="btnCancelarFunc" style="display:none">Cancelar edição</button>
+                    </div>
+                </form>
+            </div>
+            <div class="box">
+                <h2>Funcionários cadastrados</h2>
+                <div class="toolbar">
+                    <input type="search" id="buscaFuncionario" class="search" placeholder="Buscar nome, telefone ou cargo...">
+                </div>
+                <table style="margin-top:10px">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>Cargo</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaFuncionarios"></tbody>
+                </table>
+                <div id="listaFuncionariosVazia" class="empty" style="display:none;margin-top:12px">Nenhum funcionário cadastrado.</div>
+            </div>
+        </section>
+
         <!-- PAGAMENTO FUNCIONÁRIOS (só Modo Interno — sem impressão) -->
         <section id="painelPagFuncionarios" class="panel">
             <div class="cards" style="margin-bottom:14px">
@@ -2714,24 +2772,22 @@
             </div>
 
             <div class="box">
-                <h2>👷 Pagamento de funcionários (interno)</h2>
-                <p class="hint">Controle semanal dos meninos — fica só no sistema interno, <strong>sem impressão</strong>. Cada pagamento também registra saída no caixa interno (Dinheiro → Balcão; PIX/Cartão → Banco).</p>
+                <h2>💰 Pagamento de funcionários (interno)</h2>
+                <p class="hint">Controle semanal — fica só no sistema interno, <strong>sem impressão</strong>. Cada pagamento também registra saída no caixa interno (Dinheiro → Balcão; PIX/Cartão → Banco). Cadastro completo em <strong>Cadastro de Funcionários</strong>.</p>
             </div>
 
             <div class="grid-2">
                 <div class="box">
-                    <h2>Cadastrar funcionário</h2>
-                    <form id="formFuncionario">
-                        <div class="row">
-                            <div class="col" style="flex:2"><label>Nome</label><input id="pfNomeFunc" required placeholder="Ex: João, Pedro..."></div>
-                            <div class="col" style="align-self:end;flex:0.7"><button type="submit" class="btn btn-primary" style="width:100%">+ Incluir</button></div>
-                        </div>
-                    </form>
+                    <h2>Funcionários</h2>
+                    <p class="hint" style="margin-top:0">Lista usada nos pagamentos e nas vendas internas.</p>
+                    <div class="row" style="margin-top:8px">
+                        <button type="button" class="btn btn-primary" id="btnPagIrCadFunc">👷 Abrir cadastro de funcionários</button>
+                    </div>
                     <table style="margin-top:14px">
-                        <thead><tr><th>Nome</th><th>Ações</th></tr></thead>
-                        <tbody id="tabelaFuncionarios"></tbody>
+                        <thead><tr><th>Nome</th><th>Cargo</th><th>Status</th></tr></thead>
+                        <tbody id="tabelaFuncionariosPag"></tbody>
                     </table>
-                    <div id="listaFuncionariosVazia" class="empty" style="display:none;margin-top:10px">Nenhum funcionário cadastrado.</div>
+                    <div id="listaFuncionariosPagVazia" class="empty" style="display:none;margin-top:10px">Nenhum funcionário. Cadastre primeiro.</div>
                 </div>
 
                 <div class="box" style="border-color:rgba(230,126,34,0.4)">
@@ -3046,6 +3102,7 @@
             painelPendentes: ['Contas a Receber', 'Pastas mensais · a receber'],
             painelRelatorioCaixa: ['Relatório Caixa', 'Pastas mensais · entradas · saídas · relatório geral'],
             painelDespesasOs: ['Despesas por OS', 'Pastas mensais · bruto · despesas · lucro'],
+            painelFuncionarios: ['Cadastro de Funcionários', 'Quem pode comprar no modo interno'],
             painelPagFuncionarios: ['Pagamento funcionários', 'Controle semanal interno · sem impressão'],
             painelConfig: ['Config / Empresa', 'Empresa, logo, endereço e backup']
         };
@@ -4241,6 +4298,11 @@
                 fecharBoxDespesaOs();
                 renderDespesasOs();
             }
+            if (id === 'painelFuncionarios') {
+                canalVendas = 'interno';
+                atualizarBadgeCanal();
+                renderCadastroFuncionarios();
+            }
             if (id === 'painelPagFuncionarios') {
                 canalVendas = 'interno';
                 atualizarBadgeCanal();
@@ -4258,6 +4320,7 @@
 
         var PAINEIS_CANAL = {
             painelDespesasOs: true,
+            painelFuncionarios: true,
             painelPagFuncionarios: true,
             painelProdutos: true,
             painelOrcamento: true,
@@ -6951,6 +7014,51 @@
             document.getElementById('vdEmissao').value = hojeISO();
             document.getElementById('vdVenc').value = hojeISO();
             preencherListaProdutosVenda(db);
+            atualizarUIVendaPorCanal();
+        }
+
+        function atualizarUIVendaPorCanal() {
+            var interno = canalVendas === 'interno';
+            var wrapN = document.getElementById('wrapVdClienteNormal');
+            var wrapI = document.getElementById('wrapVdClienteInterno');
+            var titulo = document.querySelector('#painelOrcamento .venda-form .box h2');
+            var hint = document.querySelector('#painelOrcamento .venda-form .box > .hint');
+            if (wrapN) wrapN.style.display = interno ? 'none' : '';
+            if (wrapI) wrapI.style.display = interno ? '' : 'none';
+            if (titulo) {
+                titulo.textContent = interno
+                    ? '🛒 Venda interna — somente para funcionário'
+                    : '🛒 Lançar venda — balcão / serviço imediato';
+            }
+            if (hint) {
+                hint.innerHTML = interno
+                    ? 'No modo interno a venda é <strong>só para funcionário cadastrado</strong>. Baixa o estoque unificado; dinheiro → caixa interno; PIX/cartão → banco interno.'
+                    : 'Venda baixa estoque; <strong>Dinheiro</strong> → Caixa Balcão; <strong>PIX/Cartão/Boleto</strong> → Caixa do Banco; <strong>Pendente</strong> → Contas a Receber.';
+            }
+            if (interno) preencherSelectFuncionariosVenda();
+        }
+
+        function listarFuncionariosOrdenados(db, soAtivos) {
+            return (db.funcionarios || []).slice().filter(function (f) {
+                if (!f) return false;
+                if (soAtivos && f.ativo === false) return false;
+                return true;
+            }).sort(function (a, b) {
+                return String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR');
+            });
+        }
+
+        function preencherSelectFuncionariosVenda() {
+            var sel = document.getElementById('vdFuncionarioId');
+            if (!sel) return;
+            var db = carregar();
+            var funcs = listarFuncionariosOrdenados(db, true);
+            var atual = sel.value;
+            sel.innerHTML = '<option value="">Selecione o funcionário...</option>' + funcs.map(function (f) {
+                var extra = f.cargo ? ' · ' + f.cargo : '';
+                return '<option value="' + esc(f.id) + '">' + esc(f.nome + extra) + '</option>';
+            }).join('');
+            if (atual && funcs.some(function (f) { return f.id === atual; })) sel.value = atual;
         }
 
         function encontrarProdutoPorBusca(texto) {
@@ -7179,6 +7287,10 @@
             produtoVendaSelecionado = null;
             document.getElementById('vdCliente').value = '';
             document.getElementById('vdPlaca').value = '';
+            var placaInt = document.getElementById('vdPlacaInterno');
+            if (placaInt) placaInt.value = '';
+            var selFunc = document.getElementById('vdFuncionarioId');
+            if (selFunc) selFunc.value = '';
             document.getElementById('vdProdBusca').value = '';
             document.getElementById('vdEstoqueInfo').style.display = 'none';
             document.getElementById('vdObs').value = '';
@@ -7199,8 +7311,29 @@
 
         document.getElementById('btnVdFinalizar').addEventListener('click', function () {
             var db = carregar();
-            var clienteNome = document.getElementById('vdCliente').value.trim();
-            if (!clienteNome) { toast('Informe o cliente (cadastrado ou avulso).'); return; }
+            var interno = canalVendas === 'interno';
+            var clienteNome = '';
+            var resolvido = { ok: false, clienteAvulso: true, clienteId: null };
+            var funcionarioId = null;
+            var funcionarioNome = '';
+            var placa = '';
+
+            if (interno) {
+                funcionarioId = document.getElementById('vdFuncionarioId').value;
+                var func = (db.funcionarios || []).find(function (f) { return f.id === funcionarioId; });
+                if (!func || func.ativo === false) {
+                    toast('Selecione um funcionário ativo. Cadastre em Modo interno → Cadastro de Funcionários.');
+                    return;
+                }
+                funcionarioNome = func.nome;
+                clienteNome = func.nome;
+                placa = (document.getElementById('vdPlacaInterno').value || '').toUpperCase().trim();
+            } else {
+                clienteNome = document.getElementById('vdCliente').value.trim();
+                if (!clienteNome) { toast('Informe o cliente (cadastrado ou avulso).'); return; }
+                resolvido = resolverClienteAtendimento(db, clienteNome);
+                placa = (document.getElementById('vdPlaca').value || '').toUpperCase().trim();
+            }
             if (!carrinhoVenda.length) { toast('Adicione itens ao carrinho.'); return; }
 
             var totais = calcTotaisVenda();
@@ -7208,7 +7341,6 @@
             var status = document.getElementById('vdStatus').value;
             var forma = document.getElementById('vdForma').value;
             var numero = Number(document.getElementById('vdNumero').value) || proximoNumeroVenda(db);
-            var resolvido = resolverClienteAtendimento(db, clienteNome);
 
             /* Baixa de estoque — só em VENDA */
             if (tipo === 'VENDA') {
@@ -7231,10 +7363,13 @@
                 id: uid(),
                 numero: numero,
                 tipo: tipo,
-                clienteId: resolvido.ok && !resolvido.clienteAvulso ? resolvido.clienteId : null,
+                clienteId: !interno && resolvido.ok && !resolvido.clienteAvulso ? resolvido.clienteId : null,
                 clienteNome: clienteNome,
-                clienteAvulso: !(resolvido.ok && !resolvido.clienteAvulso),
-                placa: (document.getElementById('vdPlaca').value || '').toUpperCase().trim(),
+                clienteAvulso: interno ? false : !(resolvido.ok && !resolvido.clienteAvulso),
+                vendaFuncionario: interno,
+                funcionarioId: funcionarioId,
+                funcionarioNome: funcionarioNome,
+                placa: placa,
                 statusPagamento: status,
                 formaPagamento: forma,
                 dataEmissao: document.getElementById('vdEmissao').value,
@@ -7297,7 +7432,9 @@
                     ? ('Venda Nº ' + numero + ' salva. Estoque baixado. ' +
                         (formaPagamentoEhDigital(forma) ? 'Valor no Caixa do Banco (PIX/cartão).' : 'Valor no Caixa Balcão (dinheiro).'))
                     : ('Venda Nº ' + numero + ' salva. Estoque baixado. Valor em Contas a Receber.'));
-            toast(msg);
+            toast(interno
+                ? (msg + ' Funcionário: ' + funcionarioNome + '.')
+                : msg);
             limparVendaForm();
             renderOrcamentos();
             renderProdutos();
@@ -7316,15 +7453,18 @@
                 return;
             }
             db.orcamentos.slice().reverse().forEach(function (o) {
-                var nome = o.clienteNome || nomeCliente(db, o.clienteId) || '—';
+                var nome = o.funcionarioNome || o.clienteNome || nomeCliente(db, o.clienteId) || '—';
                 var tagAvulso = o.clienteAvulso ? ' <span style="font-size:0.68rem;font-weight:700;color:#8fe0b8">AVULSO</span>' : '';
+                var tagFunc = o.vendaFuncionario || o.funcionarioId
+                    ? ' <span style="font-size:0.68rem;font-weight:700;color:#f1c40f">FUNCIONÁRIO</span>'
+                    : '';
                 var pgto = (o.statusPagamento || '—') + (o.formaPagamento ? ' / ' + o.formaPagamento : '');
                 var tr = document.createElement('tr');
                 tr.innerHTML =
                     '<td>' + esc(o.numero || '—') + '</td>' +
                     '<td>' + esc(fmtData(o.dataEmissao || o.criadoEm)) + '</td>' +
                     '<td>' + esc(o.tipo || '—') + '</td>' +
-                    '<td>' + esc(nome) + tagAvulso + '</td>' +
+                    '<td>' + esc(nome) + tagFunc + tagAvulso + '</td>' +
                     '<td>' + esc(pgto) + '</td>' +
                     '<td>' + moeda(o.valor) + '</td>' +
                     '<td class="actions"><button type="button" class="btn btn-danger" data-ex="' + o.id + '">Excluir</button></td>';
@@ -7627,14 +7767,55 @@
             }
         }
 
+        function limparFormFuncionario() {
+            document.getElementById('formFuncionario').reset();
+            document.getElementById('pfFuncEditId').value = '';
+            document.getElementById('pfAtivoFunc').checked = true;
+            document.getElementById('btnCancelarFunc').style.display = 'none';
+            document.getElementById('btnSalvarFunc').textContent = 'Salvar funcionário';
+        }
+
+        function renderCadastroFuncionarios() {
+            var panel = document.getElementById('painelFuncionarios');
+            if (!panel) return;
+            comCanalInterno(function () {
+                var db = carregar();
+                var q = (document.getElementById('buscaFuncionario').value || '').trim().toLowerCase();
+                var funcs = listarFuncionariosOrdenados(db, false).filter(function (f) {
+                    if (!q) return true;
+                    return [f.nome, f.telefone, f.cargo, f.obs].join(' ').toLowerCase().indexOf(q) >= 0;
+                });
+                var tb = document.getElementById('tabelaFuncionarios');
+                var vaz = document.getElementById('listaFuncionariosVazia');
+                if (!funcs.length) {
+                    tb.innerHTML = '';
+                    vaz.style.display = 'block';
+                } else {
+                    vaz.style.display = 'none';
+                    tb.innerHTML = funcs.map(function (f) {
+                        var ativo = f.ativo !== false;
+                        return '<tr>' +
+                            '<td>' + esc(f.nome || '—') + '</td>' +
+                            '<td>' + esc(f.telefone || '—') + '</td>' +
+                            '<td>' + esc(f.cargo || '—') + '</td>' +
+                            '<td>' + (ativo
+                                ? '<span style="color:#2ecc71;font-weight:700">Ativo</span>'
+                                : '<span style="color:#e74c3c;font-weight:700">Inativo</span>') + '</td>' +
+                            '<td class="actions">' +
+                            '<button type="button" class="btn btn-secondary" data-ed-func="' + esc(f.id) + '" style="padding:4px 8px;font-size:0.8rem">Editar</button> ' +
+                            '<button type="button" class="btn btn-danger" data-excluir-func="' + esc(f.id) + '" style="padding:4px 8px;font-size:0.8rem">Excluir</button>' +
+                            '</td></tr>';
+                    }).join('');
+                }
+            });
+        }
+
         function renderPagFuncionarios() {
             var panel = document.getElementById('painelPagFuncionarios');
             if (!panel) return;
             comCanalInterno(function () {
                 var db = carregar();
-                var funcs = (db.funcionarios || []).slice().sort(function (a, b) {
-                    return String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR');
-                });
+                var funcs = listarFuncionariosOrdenados(db, false);
                 var pags = (db.pagamentosFuncionarios || []).slice().sort(function (a, b) {
                     return String(b.data || b.criadoEm || '').localeCompare(String(a.data || a.criadoEm || ''));
                 });
@@ -7660,21 +7841,27 @@
                 var sel = document.getElementById('pfFuncId');
                 var selVal = sel.value;
                 sel.innerHTML = '<option value="">Selecione...</option>' + funcs.map(function (f) {
-                    return '<option value="' + esc(f.id) + '">' + esc(f.nome) + '</option>';
+                    var st = f.ativo === false ? ' (inativo)' : '';
+                    return '<option value="' + esc(f.id) + '">' + esc((f.nome || '') + st) + '</option>';
                 }).join('');
                 if (selVal && funcs.some(function (f) { return f.id === selVal; })) sel.value = selVal;
 
-                var tbF = document.getElementById('tabelaFuncionarios');
-                var vazF = document.getElementById('listaFuncionariosVazia');
-                if (!funcs.length) {
-                    tbF.innerHTML = '';
-                    vazF.style.display = 'block';
-                } else {
-                    vazF.style.display = 'none';
-                    tbF.innerHTML = funcs.map(function (f) {
-                        return '<tr><td>' + esc(f.nome) + '</td><td>' +
-                            '<button type="button" class="btn btn-secondary" data-excluir-func="' + esc(f.id) + '" style="padding:4px 8px;font-size:0.8rem">Excluir</button></td></tr>';
-                    }).join('');
+                var tbF = document.getElementById('tabelaFuncionariosPag');
+                var vazF = document.getElementById('listaFuncionariosPagVazia');
+                if (tbF && vazF) {
+                    if (!funcs.length) {
+                        tbF.innerHTML = '';
+                        vazF.style.display = 'block';
+                    } else {
+                        vazF.style.display = 'none';
+                        tbF.innerHTML = funcs.map(function (f) {
+                            return '<tr><td>' + esc(f.nome || '—') + '</td><td>' + esc(f.cargo || '—') + '</td><td>' +
+                                (f.ativo !== false
+                                    ? '<span style="color:#2ecc71;font-weight:700">Ativo</span>'
+                                    : '<span style="color:#e74c3c;font-weight:700">Inativo</span>') +
+                                '</td></tr>';
+                        }).join('');
+                    }
                 }
 
                 var q = (document.getElementById('buscaPagFunc').value || '').trim().toLowerCase();
@@ -7712,20 +7899,60 @@
         document.getElementById('formFuncionario').addEventListener('submit', function (e) {
             e.preventDefault();
             var nome = document.getElementById('pfNomeFunc').value.trim();
+            var telefone = document.getElementById('pfTelFunc').value.trim();
+            var cargo = document.getElementById('pfCargoFunc').value.trim();
+            var obs = document.getElementById('pfObsFunc').value.trim();
+            var ativo = document.getElementById('pfAtivoFunc').checked;
+            var editId = document.getElementById('pfFuncEditId').value;
             if (!nome) { toast('Informe o nome do funcionário.'); return; }
             comCanalInterno(function () {
                 var db = carregar();
                 if (!db.funcionarios) db.funcionarios = [];
                 var existe = db.funcionarios.some(function (f) {
-                    return String(f.nome || '').toLowerCase() === nome.toLowerCase();
+                    return String(f.nome || '').toLowerCase() === nome.toLowerCase() && f.id !== editId;
                 });
-                if (existe) { toast('Esse funcionário já está cadastrado.'); return; }
-                db.funcionarios.push({ id: uid(), nome: nome, criadoEm: new Date().toISOString() });
+                if (existe) { toast('Já existe funcionário com esse nome.'); return; }
+                var agora = new Date().toISOString();
+                if (editId) {
+                    var i = db.funcionarios.findIndex(function (f) { return f.id === editId; });
+                    if (i < 0) { toast('Funcionário não encontrado.'); return; }
+                    db.funcionarios[i] = Object.assign({}, db.funcionarios[i], {
+                        nome: nome,
+                        telefone: telefone,
+                        cargo: cargo,
+                        obs: obs,
+                        ativo: ativo,
+                        atualizadoEm: agora
+                    });
+                    toast('Funcionário atualizado.');
+                } else {
+                    db.funcionarios.push({
+                        id: uid(),
+                        nome: nome,
+                        telefone: telefone,
+                        cargo: cargo,
+                        obs: obs,
+                        ativo: ativo,
+                        criadoEm: agora,
+                        atualizadoEm: agora
+                    });
+                    toast('Funcionário cadastrado — já pode comprar no modo interno.');
+                }
                 salvar(db);
-                document.getElementById('formFuncionario').reset();
-                toast('Funcionário incluído.');
+                limparFormFuncionario();
             });
+            renderCadastroFuncionarios();
             renderPagFuncionarios();
+            preencherSelectFuncionariosVenda();
+        });
+
+        document.getElementById('btnCancelarFunc').addEventListener('click', limparFormFuncionario);
+        document.getElementById('buscaFuncionario').addEventListener('input', renderCadastroFuncionarios);
+        document.getElementById('btnPagIrCadFunc').addEventListener('click', function () {
+            abrirPainel('painelFuncionarios');
+        });
+        document.getElementById('btnVdIrFuncionarios').addEventListener('click', function () {
+            abrirPainel('painelFuncionarios');
         });
 
         document.getElementById('formPagFuncionario').addEventListener('submit', function (e) {
@@ -7788,17 +8015,40 @@
         });
 
         document.getElementById('tabelaFuncionarios').addEventListener('click', function (e) {
+            var btnEd = e.target.closest('[data-ed-func]');
+            if (btnEd) {
+                var idEd = btnEd.getAttribute('data-ed-func');
+                comCanalInterno(function () {
+                    var db = carregar();
+                    var f = (db.funcionarios || []).find(function (x) { return x.id === idEd; });
+                    if (!f) return;
+                    document.getElementById('pfFuncEditId').value = f.id;
+                    document.getElementById('pfNomeFunc').value = f.nome || '';
+                    document.getElementById('pfTelFunc').value = f.telefone || '';
+                    document.getElementById('pfCargoFunc').value = f.cargo || '';
+                    document.getElementById('pfObsFunc').value = f.obs || '';
+                    document.getElementById('pfAtivoFunc').checked = f.ativo !== false;
+                    document.getElementById('btnCancelarFunc').style.display = '';
+                    document.getElementById('btnSalvarFunc').textContent = 'Salvar alterações';
+                    document.getElementById('pfNomeFunc').focus();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+                return;
+            }
             var btn = e.target.closest('[data-excluir-func]');
             if (!btn) return;
             var id = btn.getAttribute('data-excluir-func');
-            if (!confirm('Excluir este funcionário? O histórico de pagamentos permanece.')) return;
+            if (!confirm('Excluir este funcionário? Histórico de pagamentos e vendas permanece.')) return;
             comCanalInterno(function () {
                 var db = carregar();
                 db.funcionarios = (db.funcionarios || []).filter(function (f) { return f.id !== id; });
                 salvar(db);
                 toast('Funcionário removido.');
+                if (document.getElementById('pfFuncEditId').value === id) limparFormFuncionario();
             });
+            renderCadastroFuncionarios();
             renderPagFuncionarios();
+            preencherSelectFuncionariosVenda();
         });
 
         document.getElementById('tabelaPagFuncionarios').addEventListener('click', function (e) {
@@ -9360,9 +9610,17 @@
                 document.getElementById('painelDespesasOs').classList.contains('active')) {
                 renderDespesasOs();
             }
+            if (document.getElementById('painelFuncionarios') &&
+                document.getElementById('painelFuncionarios').classList.contains('active')) {
+                renderCadastroFuncionarios();
+            }
             if (document.getElementById('painelPagFuncionarios') &&
                 document.getElementById('painelPagFuncionarios').classList.contains('active')) {
                 renderPagFuncionarios();
+            }
+            if (document.getElementById('painelOrcamento') &&
+                document.getElementById('painelOrcamento').classList.contains('active')) {
+                atualizarUIVendaPorCanal();
             }
             aplicarIdentidadeVisual();
         }
