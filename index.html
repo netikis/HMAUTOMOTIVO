@@ -2050,7 +2050,7 @@
         <section id="painelClientes" class="panel">
             <div class="box">
                 <h2 id="tituloFormCliente">Cadastro de Cliente</h2>
-                <p class="hint">Campos baseados no balcão, salvos apenas no banco HM.</p>
+                <p class="hint">Só o <strong>nome</strong> é obrigatório. Telefone, cidade e os demais campos são opcionais — preencha só o que quiser.</p>
                 <form id="formCliente">
                     <input type="hidden" id="cliId">
                     <div class="row">
@@ -2059,9 +2059,9 @@
                         <div class="col"><label>CNPJ</label><input id="cliCnpj" maxlength="18" placeholder="00.000.000/0000-00"></div>
                     </div>
                     <div class="row" style="margin-top:10px">
-                        <div class="col"><label>Telefone / WhatsApp</label><input id="cliTel" required placeholder="(00) 00000-0000"></div>
-                        <div class="col"><label>E-mail</label><input id="cliEmail" type="email"></div>
-                        <div class="col"><label>Cidade / UF</label><input id="cliCidade" placeholder="Ex: Ibaiti / PR"></div>
+                        <div class="col"><label>Telefone / WhatsApp <span class="muted">(opcional)</span></label><input id="cliTel" placeholder="(00) 00000-0000"></div>
+                        <div class="col"><label>E-mail <span class="muted">(opcional)</span></label><input id="cliEmail" type="email"></div>
+                        <div class="col"><label>Cidade / UF <span class="muted">(opcional)</span></label><input id="cliCidade" placeholder="Ex: Ibaiti / PR"></div>
                     </div>
                     <div class="row" style="margin-top:10px">
                         <div class="col"><label>CEP</label><input id="cliCep" maxlength="9"></div>
@@ -2121,10 +2121,11 @@
                 <input type="hidden" id="atId">
                 <div class="box">
                     <h2>Especificações do Veículo</h2>
+                    <p class="hint" style="margin-top:0">No orçamento/OS, placa, cidade, carro e demais dados são <strong>opcionais</strong> — salve só com o que precisar.</p>
                     <div class="row">
-                        <div class="col" style="flex:2"><label>Carro (Modelo / Marca)</label><input id="atCarro" required placeholder="Ex: Chevrolet Onix"></div>
-                        <div class="col"><label>Placa</label><input id="atPlaca" maxlength="7" required placeholder="ABC1D23" style="text-transform:uppercase"></div>
-                        <div class="col"><label>Cidade / UF (placa)</label><input id="atCidadePlaca" placeholder="Ibaiti / PR"></div>
+                        <div class="col" style="flex:2"><label>Carro (Modelo / Marca) <span class="muted">(opcional)</span></label><input id="atCarro" placeholder="Ex: Chevrolet Onix"></div>
+                        <div class="col"><label>Placa <span class="muted">(opcional)</span></label><input id="atPlaca" maxlength="7" placeholder="ABC1D23" style="text-transform:uppercase"></div>
+                        <div class="col"><label>Cidade / UF (placa) <span class="muted">(opcional)</span></label><input id="atCidadePlaca" placeholder="Ibaiti / PR"></div>
                     </div>
                     <div class="plate-preview">
                         <div class="ph"><span>★★★★★</span><span>BRASIL</span><span style="width:10px;height:7px;background:#009c3b;border:0.5px solid #fff;display:inline-block"></span></div>
@@ -2757,9 +2758,19 @@
                 <h2 id="tituloLancarDespesaOs">Lançar despesa na OS</h2>
                 <p class="hint" id="hintLancarDespesaOs"></p>
                 <input type="hidden" id="dosAtendimentoId">
+                <input type="hidden" id="dosProdutoId">
                 <form id="formDespesaOs">
                     <div class="row">
-                        <div class="col" style="flex:2"><label>Descrição da despesa</label><input id="dosDesc" required placeholder="Ex: tinta, lixa, peça, mão de obra auxiliar..."></div>
+                        <div class="col" style="flex:2">
+                            <label>Do estoque (produtos cadastrados)</label>
+                            <input id="dosProdBusca" list="listaProdutosDespesaOs" placeholder="Bipar ou digitar nome/código do produto..." autocomplete="off">
+                            <datalist id="listaProdutosDespesaOs"></datalist>
+                            <p class="hint" id="dosEstoqueInfo" style="margin-top:6px;display:none"></p>
+                        </div>
+                        <div class="col" style="flex:0.55"><label>Qtd</label><input id="dosProdQtd" inputmode="decimal" value="1"></div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col" style="flex:2"><label>Descrição da despesa</label><input id="dosDesc" required placeholder="Ex: tinta, lixa, peça… ou escolha do estoque acima"></div>
                         <div class="col"><label>Valor (R$)</label><input id="dosValor" inputmode="decimal" required placeholder="0,00"></div>
                         <div class="col"><label>Forma</label>
                             <select id="dosForma">
@@ -2770,8 +2781,17 @@
                             </select>
                         </div>
                     </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col">
+                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
+                                <input type="checkbox" id="dosBaixaEstoque" checked style="width:auto">
+                                Baixar quantidade do estoque unificado (quando vier de produto)
+                            </label>
+                        </div>
+                    </div>
                     <div class="row" style="margin-top:14px">
                         <button type="submit" class="btn btn-primary">Lançar despesa interna</button>
+                        <button type="button" class="btn btn-secondary" id="btnLimparProdDespesaOs">Limpar produto</button>
                         <button type="button" class="btn btn-secondary" id="btnCancelarDespesaOs">Fechar</button>
                     </div>
                 </form>
@@ -5686,7 +5706,10 @@
             e.preventDefault();
             var db = carregar();
             var resolvido = resolverClienteAtendimento(db, document.getElementById('atClienteBusca').value);
-            if (!resolvido.ok) { toast('Informe o nome do cliente (cadastrado ou avulso).'); return; }
+            if (!resolvido.ok) {
+                toast('Informe pelo menos o nome do cliente (o restante é opcional).');
+                return;
+            }
             var st = document.getElementById('atStatus').value;
             var agData = document.getElementById('atAgendadoPara').value;
             if (st === 'Agendado' && !agData) {
@@ -7750,12 +7773,84 @@
             };
         }
 
+        var produtoDespesaOsSelecionado = null;
+
+        function preencherListaProdutosDespesaOs() {
+            var lista = document.getElementById('listaProdutosDespesaOs');
+            if (!lista) return;
+            var main = carregarMain();
+            lista.innerHTML = '';
+            (main.produtos || []).slice().sort(function (a, b) {
+                return String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR');
+            }).forEach(function (p) {
+                var opt = document.createElement('option');
+                opt.value = p.nome + (p.codigo ? ' [' + p.codigo + ']' : '');
+                lista.appendChild(opt);
+            });
+        }
+
+        function limparProdutoDespesaOs() {
+            produtoDespesaOsSelecionado = null;
+            document.getElementById('dosProdutoId').value = '';
+            document.getElementById('dosProdBusca').value = '';
+            document.getElementById('dosProdQtd').value = '1';
+            document.getElementById('dosBaixaEstoque').checked = true;
+            var info = document.getElementById('dosEstoqueInfo');
+            if (info) {
+                info.style.display = 'none';
+                info.innerHTML = '';
+            }
+        }
+
+        function aplicarProdutoDespesaOs() {
+            var texto = document.getElementById('dosProdBusca').value;
+            var p = encontrarProdutoPorBusca(texto);
+            produtoDespesaOsSelecionado = p;
+            var info = document.getElementById('dosEstoqueInfo');
+            if (!p) {
+                document.getElementById('dosProdutoId').value = '';
+                if (info) { info.style.display = 'none'; info.innerHTML = ''; }
+                return;
+            }
+            document.getElementById('dosProdutoId').value = p.id;
+            document.getElementById('dosDesc').value = p.nome + (p.codigo ? ' [' + p.codigo + ']' : '');
+            var qtd = parseMoeda(document.getElementById('dosProdQtd').value) || 1;
+            if (qtd <= 0) qtd = 1;
+            document.getElementById('dosProdQtd').value = String(qtd);
+            var unit = Number(p.custo) > 0 ? Number(p.custo) : (Number(p.venda) || 0);
+            document.getElementById('dosValor').value = (unit * qtd).toFixed(2).replace('.', ',');
+            document.getElementById('dosBaixaEstoque').checked = true;
+            if (info) {
+                info.style.display = '';
+                info.innerHTML = 'Produto: <strong>' + esc(p.nome) +
+                    '</strong> · Estoque: <strong>' + esc(String(p.qtd) + ' ' + (p.unidade || 'un')) +
+                    '</strong> · Custo unit.: <strong>' + moeda(unit) + '</strong>';
+            }
+            toast('Produto do estoque selecionado: ' + p.nome);
+        }
+
+        function atualizarValorDespesaPeloProduto() {
+            if (!produtoDespesaOsSelecionado) return;
+            var p = produtoDespesaOsSelecionado;
+            var qtd = parseMoeda(document.getElementById('dosProdQtd').value) || 0;
+            var unit = Number(p.custo) > 0 ? Number(p.custo) : (Number(p.venda) || 0);
+            document.getElementById('dosValor').value = (unit * Math.max(0, qtd)).toFixed(2).replace('.', ',');
+            var info = document.getElementById('dosEstoqueInfo');
+            if (info && info.style.display !== 'none') {
+                info.innerHTML = 'Produto: <strong>' + esc(p.nome) +
+                    '</strong> · Estoque: <strong>' + esc(String(p.qtd) + ' ' + (p.unidade || 'un')) +
+                    '</strong> · Custo unit.: <strong>' + moeda(unit) +
+                    '</strong> · Qtd nesta despesa: <strong>' + esc(String(qtd)) + '</strong>';
+            }
+        }
+
         function fecharBoxDespesaOs() {
             despesaOsSelecionadaId = null;
             var box = document.getElementById('boxLancarDespesaOs');
             if (box) box.style.display = 'none';
             document.getElementById('dosAtendimentoId').value = '';
             document.getElementById('formDespesaOs').reset();
+            limparProdutoDespesaOs();
             document.getElementById('tabelaDespesasOsDetalhe').innerHTML = '';
             document.getElementById('listaDespesasOsDetalheVazia').style.display = 'none';
         }
@@ -7771,6 +7866,8 @@
             atualizarBadgeCanal();
             despesaOsSelecionadaId = atendimentoId;
             document.getElementById('dosAtendimentoId').value = atendimentoId;
+            limparProdutoDespesaOs();
+            preencherListaProdutosDespesaOs();
             var nome = nomeAtendimento(main, a);
             var resumo = resumoLucroOs(a);
             document.getElementById('tituloLancarDespesaOs').textContent =
@@ -7778,10 +7875,11 @@
             document.getElementById('hintLancarDespesaOs').innerHTML =
                 'Bruto OS: <strong>' + moeda(resumo.bruto) +
                 '</strong> · Despesas: <strong>' + moeda(resumo.despesas) +
-                '</strong> · Lucro: <strong>' + moeda(resumo.lucro) + '</strong>';
+                '</strong> · Lucro: <strong>' + moeda(resumo.lucro) +
+                '</strong><br>Pode digitar a despesa livre <strong>ou</strong> escolher um produto do estoque cadastrado.';
             document.getElementById('boxLancarDespesaOs').style.display = '';
             renderDespesasOsDetalhe(atendimentoId);
-            document.getElementById('dosDesc').focus();
+            document.getElementById('dosProdBusca').focus();
         }
 
         function renderDespesasOsDetalhe(atendimentoId) {
@@ -7811,7 +7909,18 @@
                     var canalAntes = canalVendas;
                     canalVendas = 'interno';
                     var db = carregar();
+                    var rem = (db.caixa || []).find(function (x) { return x.id === idEx; });
                     db.caixa = (db.caixa || []).filter(function (x) { return x.id !== idEx; });
+                    /* Devolve estoque se a despesa tinha baixado produto */
+                    if (rem && rem.baixaEstoque && rem.produtoId) {
+                        var main = carregarMain();
+                        var pi = (main.produtos || []).findIndex(function (p) { return p.id === rem.produtoId; });
+                        if (pi >= 0) {
+                            main.produtos[pi].qtd = Math.round(((Number(main.produtos[pi].qtd) || 0) + (Number(rem.qtdEstoque) || 0)) * 1000) / 1000;
+                            main.produtos[pi].atualizadoEm = new Date().toISOString();
+                            salvarMain(main);
+                        }
+                    }
                     salvar(db);
                     canalVendas = canalAntes;
                     toast('Despesa interna excluída.');
@@ -7819,6 +7928,7 @@
                     renderDespesasOs();
                     renderCaixa();
                     renderRelatorioCaixa();
+                    renderProdutos();
                 });
             });
         }
@@ -7911,11 +8021,26 @@
                 toast('OS não encontrada no balcão oficial.');
                 return;
             }
+            if (!produtoDespesaOsSelecionado && document.getElementById('dosProdBusca').value.trim()) {
+                aplicarProdutoDespesaOs();
+            }
             var desc = document.getElementById('dosDesc').value.trim();
             var valor = parseMoeda(document.getElementById('dosValor').value);
             var forma = document.getElementById('dosForma').value;
-            if (!desc) { toast('Informe a descrição da despesa.'); return; }
+            var prod = produtoDespesaOsSelecionado;
+            var qtdEstoque = parseMoeda(document.getElementById('dosProdQtd').value) || 0;
+            var querBaixa = !!(document.getElementById('dosBaixaEstoque').checked && prod && prod.id);
+            if (!desc) { toast('Informe a descrição da despesa (ou escolha um produto).'); return; }
             if (!(valor > 0)) { toast('Informe um valor válido.'); return; }
+            if (prod && querBaixa) {
+                if (qtdEstoque <= 0) { toast('Informe a quantidade do produto.'); return; }
+                var estoqueAtual = Number(prod.qtd) || 0;
+                if (qtdEstoque > estoqueAtual + 0.0001) {
+                    toast('Estoque insuficiente de ' + prod.nome + '. Disponível: ' +
+                        estoqueAtual + ' ' + (prod.unidade || 'un'));
+                    return;
+                }
+            }
 
             var canalAntes = canalVendas;
             canalVendas = 'interno';
@@ -7923,7 +8048,7 @@
             if (!db.caixa) db.caixa = [];
             var nome = nomeAtendimento(main, a);
             var placa = (a.placa || '—').toUpperCase();
-            db.caixa.push({
+            var lanc = {
                 id: uid(),
                 tipo: 'saida',
                 descricao: desc,
@@ -7931,6 +8056,9 @@
                 forma: forma,
                 conta: 'balcao',
                 atendimentoId: atendimentoId,
+                produtoId: prod ? prod.id : null,
+                qtdEstoque: querBaixa ? qtdEstoque : 0,
+                baixaEstoque: querBaixa,
                 osResumo: {
                     cliente: nome,
                     placa: placa,
@@ -7939,22 +8067,54 @@
                     entrada: a.entrada || a.criadoEm || ''
                 },
                 criadoEm: new Date().toISOString()
-            });
+            };
+            db.caixa.push(lanc);
             salvar(db);
+
+            if (querBaixa && prod) {
+                main = carregarMain();
+                var pi = (main.produtos || []).findIndex(function (p) { return p.id === prod.id; });
+                if (pi >= 0) {
+                    var novo = (Number(main.produtos[pi].qtd) || 0) - qtdEstoque;
+                    main.produtos[pi].qtd = Math.round(Math.max(0, novo) * 1000) / 1000;
+                    main.produtos[pi].atualizadoEm = new Date().toISOString();
+                    salvarMain(main);
+                    agendarSyncAutomatico('salvar');
+                }
+            }
+
             canalVendas = canalAntes;
             atualizarBadgeCanal();
 
             document.getElementById('formDespesaOs').reset();
-            toast('Despesa interna lançada na OS ' + placa + '.');
+            limparProdutoDespesaOs();
+            toast(querBaixa
+                ? ('Despesa lançada + estoque baixado (' + qtdEstoque + '× ' + prod.nome + ').')
+                : ('Despesa interna lançada na OS ' + placa + '.'));
             renderDespesasOsDetalhe(atendimentoId);
             renderDespesasOs();
             renderCaixa();
             renderRelatorioCaixa();
-            document.getElementById('dosDesc').focus();
+            renderProdutos();
+            document.getElementById('dosProdBusca').focus();
         }
 
         document.getElementById('formDespesaOs').addEventListener('submit', lancarDespesaOs);
         document.getElementById('btnCancelarDespesaOs').addEventListener('click', fecharBoxDespesaOs);
+        document.getElementById('btnLimparProdDespesaOs').addEventListener('click', function () {
+            limparProdutoDespesaOs();
+            document.getElementById('dosDesc').value = '';
+            document.getElementById('dosValor').value = '';
+            document.getElementById('dosProdBusca').focus();
+        });
+        document.getElementById('dosProdBusca').addEventListener('change', aplicarProdutoDespesaOs);
+        document.getElementById('dosProdBusca').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                aplicarProdutoDespesaOs();
+            }
+        });
+        document.getElementById('dosProdQtd').addEventListener('input', atualizarValorDespesaPeloProduto);
         document.getElementById('btnAtualizarDespesasOs').addEventListener('click', function () {
             renderDespesasOs();
             toast('Lista de OS atualizada.');
