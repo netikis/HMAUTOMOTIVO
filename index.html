@@ -2731,7 +2731,7 @@
 
             <div class="box">
                 <h2>Despesas por OS (Modo Interno)</h2>
-                <p class="hint">Lista as OS do balcão oficial. Lance aqui as <strong>despesas internas</strong> do serviço (só no banco interno) para fechar o lucro: bruto − despesas.</p>
+                <p class="hint">Lista as OS do balcão oficial. Lance aqui as <strong>despesas internas</strong> (bruto − despesas = lucro). Com login, despesas e o modo interno <strong>sincronizam na nuvem</strong> entre PC e celular.</p>
                 <div class="toolbar">
                     <input type="search" id="buscaDespesasOs" class="search" placeholder="Buscar OS por cliente, placa, veículo...">
                     <button type="button" class="btn btn-secondary" id="btnAtualizarDespesasOs">🔄 Atualizar</button>
@@ -2791,10 +2791,12 @@
                     </div>
                     <div class="row" style="margin-top:14px">
                         <button type="submit" class="btn btn-primary">Lançar despesa interna</button>
+                        <button type="button" class="btn btn-pdf" id="btnImprimirNotaInternaOs">📄 Imprimir folha interna</button>
                         <button type="button" class="btn btn-secondary" id="btnLimparProdDespesaOs">Limpar produto</button>
                         <button type="button" class="btn btn-secondary" id="btnCancelarDespesaOs">Fechar</button>
                     </div>
                 </form>
+                <p class="hint" style="margin-top:10px">A <strong>nota do cliente</strong> continua na Oficina (sem despesas). A <strong>folha interna</strong> é só para você/funcionário — mostra despesas e lucro limpo.</p>
                 <h3 style="margin-top:18px">Despesas desta OS</h3>
                 <table>
                     <thead><tr><th>Data</th><th>Descrição</th><th>Forma</th><th>Valor</th><th>Ações</th></tr></thead>
@@ -2972,7 +2974,7 @@
             <div class="box">
                 <h2>☁ Sincronizar — PC ↔ Celular</h2>
                 <p class="config-status aviso" id="nuvemStatusTexto"><strong>Nuvem:</strong> verificando…</p>
-                <p class="hint" style="margin-top:8px">Com login, a sincronização é <strong>automática</strong> (ao salvar, ao abrir o app e a cada minuto). O botão abaixo força na hora, se quiser.</p>
+                <p class="hint" style="margin-top:8px">Com login, a sincronização é <strong>automática</strong> (ao salvar, ao abrir o app e a cada minuto): balcão oficial <strong>e modo interno</strong> (despesas por OS, funcionários, caixa interno). O botão abaixo força na hora.</p>
                 <div class="row" style="margin-top:12px">
                     <button type="button" class="btn btn-primary" id="btnSyncNuvem">☁ Sincronizar agora</button>
                     <button type="button" class="btn btn-secondary" id="btnAppSair">Sair da conta</button>
@@ -5379,6 +5381,59 @@
             return snap.data() || null;
         }
 
+        /* Modo interno na nuvem (despesas OS, funcionários, caixa interno…) */
+        async function baixarBaseInternoNuvem() {
+            var sessao = await obterSessaoFirebase();
+            var snap = await sessao.fsMod.getDoc(
+                sessao.fsMod.doc(sessao.dbFs, 'hm_automotivo_base', 'interno')
+            );
+            if (!snap.exists()) return null;
+            return snap.data() || null;
+        }
+
+        async function enviarBaseInternoNuvem(intDb) {
+            var sessao = await obterSessaoFirebase();
+            var base = {
+                orcamentos: (intDb && intDb.orcamentos) || [],
+                caixa: (intDb && intDb.caixa) || [],
+                caixaBanco: (intDb && intDb.caixaBanco) || [],
+                pendentes: (intDb && intDb.pendentes) || [],
+                caixaConfig: (intDb && intDb.caixaConfig) || { inicialBalcao: 0, inicialBanco: 0 },
+                funcionarios: (intDb && intDb.funcionarios) || [],
+                pagamentosFuncionarios: (intDb && intDb.pagamentosFuncionarios) || [],
+                atualizadoEm: new Date().toISOString()
+            };
+            await sessao.fsMod.setDoc(
+                sessao.fsMod.doc(sessao.dbFs, 'hm_automotivo_base', 'interno'),
+                base
+            );
+            return base;
+        }
+
+        function mesclarBaseInternoLocalNuvem(local, nuvem) {
+            var L = Object.assign(estadoInternoVazio(), local || {});
+            L.produtos = []; /* estoque unificado fica no oficial */
+            if (!nuvem) return L;
+            var ex = {};
+            L.orcamentos = mesclarListaPorId(L.orcamentos, nuvem.orcamentos, ex);
+            L.caixa = mesclarListaPorId(L.caixa, nuvem.caixa, ex);
+            L.caixaBanco = mesclarListaPorId(L.caixaBanco, nuvem.caixaBanco, ex);
+            L.pendentes = mesclarListaPorId(L.pendentes, nuvem.pendentes, ex);
+            L.funcionarios = mesclarListaPorId(L.funcionarios, nuvem.funcionarios, ex);
+            L.pagamentosFuncionarios = mesclarListaPorId(
+                L.pagamentosFuncionarios,
+                nuvem.pagamentosFuncionarios,
+                ex
+            );
+            var tL = new Date(L.atualizadoEm || 0).getTime();
+            var tN = new Date(nuvem.atualizadoEm || 0).getTime();
+            if (nuvem.caixaConfig && (tN >= tL || !L.caixaConfig)) {
+                L.caixaConfig = nuvem.caixaConfig;
+            }
+            L.atualizadoEm = new Date().toISOString();
+            return L;
+        }
+
         async function sincronizarTodosNuvem(opts) {
             opts = opts || {};
             var silencioso = !!opts.silencioso;
@@ -5446,7 +5501,7 @@
                     }
                 } catch (eDel) { /* ok */ }
 
-                /* 3) Envia o resultado mesclado de volta */
+                /* 3) Envia o resultado mesclado de volta (oficial) */
                 await enviarBaseNuvem(db);
                 for (var i = 0; i < (db.atendimentos || []).length; i++) {
                     var r = await enviarAtendimentoNuvem(db.atendimentos[i]);
@@ -5472,15 +5527,36 @@
                 }
 
                 salvar(db);
+
+                /* 4) Modo interno na nuvem: despesas OS, funcionários, caixa interno… */
+                var intLocal = carregarInternoRaw();
+                var intNuv = null;
+                try {
+                    intNuv = await baixarBaseInternoNuvem();
+                } catch (eIntDown) { intNuv = null; }
+                var intMesclado = mesclarBaseInternoLocalNuvem(intLocal, intNuv);
+                salvarInternoRaw(intMesclado);
+                try {
+                    await enviarBaseInternoNuvem(intMesclado);
+                } catch (eIntUp) {
+                    if (!silencioso) {
+                        toast('Oficial OK, mas falhou sync do modo interno: ' + (eIntUp.message || eIntUp.code || ''));
+                    }
+                }
+
                 canalVendas = canalAntes;
                 _syncUltimaOkEm = Date.now();
                 try { localStorage.setItem(SYNC_ULTIMA_KEY, String(_syncUltimaOkEm)); } catch (eUlt) { /* ok */ }
 
                 if (mostrarToast) {
+                    var nDesp = (intMesclado.caixa || []).filter(function (x) {
+                        return x && x.tipo === 'saida' && x.atendimentoId;
+                    }).length;
                     if (silencioso) {
-                        toast('Sincronizado na nuvem.');
+                        toast('Sincronizado na nuvem (oficial + interno).');
                     } else {
                         toast('Nuvem OK: ' + ok + ' OS · ' + (db.clientes || []).length + ' cliente(s)' +
+                            ' · ' + nDesp + ' despesa(s) internas' +
                             (falha ? ' · ' + falha + ' falha(s)' : '') + '.');
                     }
                 }
@@ -7773,6 +7849,85 @@
             };
         }
 
+        /* Folha só do modo interno: serviço + despesas + lucro (não vai pro cliente) */
+        function htmlNotaInternaLucroOs(mainDb, a) {
+            var emp = getEmpresa(mainDb);
+            var nome = nomeAtendimento(mainDb, a);
+            var resumo = resumoLucroOs(a);
+            var despesas = listarDespesasInternasPorOs(a.id).slice().sort(function (x, y) {
+                return String(x.criadoEm || '').localeCompare(String(y.criadoEm || ''));
+            });
+            var linhasDesp = despesas.length
+                ? despesas.map(function (d, i) {
+                    return '<tr>' +
+                        '<td style="padding:6px 8px;border-bottom:1px solid #ddd">' + (i + 1) + '</td>' +
+                        '<td style="padding:6px 8px;border-bottom:1px solid #ddd">' + esc(fmtData(d.criadoEm)) + '</td>' +
+                        '<td style="padding:6px 8px;border-bottom:1px solid #ddd">' + esc(d.descricao || '—') + '</td>' +
+                        '<td style="padding:6px 8px;border-bottom:1px solid #ddd">' + esc(d.forma || '—') + '</td>' +
+                        '<td style="padding:6px 8px;border-bottom:1px solid #ddd;text-align:right;font-weight:700">' + moeda(d.valor) + '</td>' +
+                        '</tr>';
+                }).join('')
+                : '<tr><td colspan="5" style="padding:10px;color:#666">Nenhuma despesa interna lançada.</td></tr>';
+
+            return '<div class="nota-espelho" id="notaInternaLucroOs">' +
+                htmlCabecalhoNotaEmpresa(emp,
+                    '<div class="nota-sub nota-titulo-espelho" style="color:#c0392b">FOLHA INTERNA — LUCRO DA OS</div>' +
+                    '<div class="nota-sub nota-registro">Uso interno · não enviar ao cliente · ' +
+                    esc(fmtData(a.entrada || a.criadoEm)) +
+                    (a.id ? ' · ID ' + esc(String(a.id).slice(-6)) : '') + '</div>'
+                ) +
+                '<div class="nota-bloco compacto"><div class="tit azul">Cliente / Veículo</div><div class="nota-grid nota-grid-compacta">' +
+                '<div class="nota-campo full"><span class="nota-label">Cliente</span><span class="nota-valor">' + esc(nome) + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Veículo</span><span class="nota-valor">' + esc(a.carro || '—') + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Placa</span><span class="nota-valor" style="font-weight:800;letter-spacing:1px">' +
+                esc((a.placa || '—').toUpperCase()) + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Status</span><span class="nota-valor">' + esc(a.status || '—') + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' + esc(a.responsavel || '—') + '</span></div>' +
+                (a.servicos ? '<div class="nota-campo full"><span class="nota-label">Serviços</span><span class="nota-valor">' + esc(a.servicos) + '</span></div>' : '') +
+                '</div></div>' +
+                '<div class="nota-bloco compacto"><div class="tit verde">Valores do serviço (bruto)</div>' +
+                '<div class="nota-valores-pad compacto">' + htmlItensNota(a.itens) + '</div></div>' +
+                '<div class="nota-bloco compacto"><div class="tit vermelho">Despesas internas (modo interno)</div>' +
+                '<table style="width:100%;border-collapse:collapse;font-size:11pt;margin-top:6px">' +
+                '<thead><tr style="background:#f2f2f2">' +
+                '<th style="text-align:left;padding:6px 8px">#</th>' +
+                '<th style="text-align:left;padding:6px 8px">Data</th>' +
+                '<th style="text-align:left;padding:6px 8px">Descrição</th>' +
+                '<th style="text-align:left;padding:6px 8px">Forma</th>' +
+                '<th style="text-align:right;padding:6px 8px">Valor</th>' +
+                '</tr></thead><tbody>' + linhasDesp + '</tbody></table></div>' +
+                '<div class="nota-bloco compacto" style="border:2px solid #222;padding:12px">' +
+                '<div class="tit escuro">Resumo do lucro</div>' +
+                '<div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:8px;font-size:12pt">' +
+                '<div>Bruto OS: <strong>' + moeda(resumo.bruto) + '</strong></div>' +
+                '<div>Despesas: <strong style="color:#c0392b">' + moeda(resumo.despesas) + '</strong></div>' +
+                '<div>Lucro limpo: <strong style="color:#1e8449;font-size:1.15em">' + moeda(resumo.lucro) + '</strong></div>' +
+                '</div>' +
+                '<p style="margin:10px 0 0;font-size:9.5pt;color:#555">Folha exclusiva do modo interno — para apresentar ao funcionário / controle da oficina.</p>' +
+                '</div>' +
+                '<div class="nota-sigs compacto" style="margin-top:18px">' +
+                '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Responsável / Funcionário</div></div>' +
+                '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Visto do responsável</div></div>' +
+                '</div></div>';
+        }
+
+        function imprimirNotaInternaOs(atendimentoId) {
+            var id = atendimentoId || despesaOsSelecionadaId || document.getElementById('dosAtendimentoId').value;
+            if (!id) {
+                toast('Abra uma OS para imprimir a folha interna.');
+                return;
+            }
+            var main = carregarMain();
+            var a = (main.atendimentos || []).find(function (x) { return x.id === id; });
+            if (!a) {
+                toast('OS não encontrada.');
+                return;
+            }
+            var html = htmlNotaInternaLucroOs(main, a);
+            executarImpressaoHtml(html);
+            toast('Folha interna pronta para imprimir (despesas + lucro).');
+        }
+
         var produtoDespesaOsSelecionado = null;
 
         function preencherListaProdutosDespesaOs() {
@@ -7982,13 +8137,19 @@
                     '<td>' + moeda(r.despesas) + '</td>' +
                     '<td><strong>' + moeda(r.lucro) + '</strong></td>' +
                     '<td class="actions">' +
-                    '<button type="button" class="btn btn-primary" data-dos-abrir="' + esc(a.id) + '">Despesas</button>' +
+                    '<button type="button" class="btn btn-primary" data-dos-abrir="' + esc(a.id) + '">Despesas</button> ' +
+                    '<button type="button" class="btn btn-pdf" data-dos-print="' + esc(a.id) + '">📄 Folha interna</button>' +
                     '</td>';
                 tb.appendChild(tr);
             });
             tb.querySelectorAll('[data-dos-abrir]').forEach(function (b) {
                 b.addEventListener('click', function () {
                     abrirLancarDespesaOs(b.getAttribute('data-dos-abrir'));
+                });
+            });
+            tb.querySelectorAll('[data-dos-print]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    imprimirNotaInternaOs(b.getAttribute('data-dos-print'));
                 });
             });
 
@@ -8101,6 +8262,9 @@
 
         document.getElementById('formDespesaOs').addEventListener('submit', lancarDespesaOs);
         document.getElementById('btnCancelarDespesaOs').addEventListener('click', fecharBoxDespesaOs);
+        document.getElementById('btnImprimirNotaInternaOs').addEventListener('click', function () {
+            imprimirNotaInternaOs();
+        });
         document.getElementById('btnLimparProdDespesaOs').addEventListener('click', function () {
             limparProdutoDespesaOs();
             document.getElementById('dosDesc').value = '';
