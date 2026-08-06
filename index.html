@@ -961,11 +961,69 @@
             margin: 0 auto;
             background: #fff;
             box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+            width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
         #viewerPdfCorpo .nota-espelho {
             border-radius: 0;
             max-width: 100%;
+            width: 100%;
             box-sizing: border-box;
+            padding: 10px 12px 16px;
+            overflow-x: hidden;
+        }
+        #viewerPdfCorpo .nota-topo-dados .linha {
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+        #viewerPdfCorpo .nota-itens,
+        #viewerPdfCorpo .nota-tabela-desp {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+        #viewerPdfCorpo .nota-itens th,
+        #viewerPdfCorpo .nota-itens td,
+        #viewerPdfCorpo .nota-tabela-desp th,
+        #viewerPdfCorpo .nota-tabela-desp td {
+            padding: 5px 4px;
+            vertical-align: top;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            min-width: 0;
+        }
+        #viewerPdfCorpo .nota-tabela-desp th:nth-child(1),
+        #viewerPdfCorpo .nota-tabela-desp td:nth-child(1) { width: 8%; }
+        #viewerPdfCorpo .nota-tabela-desp th:nth-child(2),
+        #viewerPdfCorpo .nota-tabela-desp td:nth-child(2) { width: 18%; }
+        #viewerPdfCorpo .nota-tabela-desp th:nth-child(3),
+        #viewerPdfCorpo .nota-tabela-desp td:nth-child(3) { width: 38%; }
+        #viewerPdfCorpo .nota-tabela-desp th:nth-child(4),
+        #viewerPdfCorpo .nota-tabela-desp td:nth-child(4) { width: 18%; }
+        #viewerPdfCorpo .nota-tabela-desp th:nth-child(5),
+        #viewerPdfCorpo .nota-tabela-desp td:nth-child(5) { width: 18%; text-align: right; white-space: nowrap; }
+        #viewerPdfCorpo .nota-resumo-lucro {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 14px;
+            margin-top: 8px;
+            font-size: 0.95rem;
+        }
+        #viewerPdfCorpo .nota-resumo-lucro > div { flex: 1 1 140px; min-width: 0; }
+        @media (max-width: 560px) {
+            #viewerPdfBarra .btn { flex: 1 1 46%; font-size: 0.82rem; }
+            #viewerPdfCorpo .nota-espelho { padding: 8px; }
+            #viewerPdfCorpo .nota-grid { grid-template-columns: 1fr; }
+            #viewerPdfCorpo .nota-topo-logo { width: 38% !important; }
+            #viewerPdfCorpo .nota-topo-dados { width: 62% !important; font-size: 0.72rem !important; }
+            #viewerPdfCorpo .nota-itens,
+            #viewerPdfCorpo .nota-tabela-desp { font-size: 0.72rem; }
+            #viewerPdfCorpo .nota-tabela-desp th:nth-child(4),
+            #viewerPdfCorpo .nota-tabela-desp td:nth-child(4) { display: none; }
+            #viewerPdfCorpo .nota-sigs { grid-template-columns: 1fr; gap: 14px; }
         }
         #printFrame {
             position: fixed;
@@ -1364,11 +1422,26 @@
         }
         .nota-bloco.compacto { margin-bottom: 8px; }
         .nota-bloco.compacto .tit { padding: 5px 10px; font-size: 0.82rem; }
-        .nota-itens { width: 100%; border-collapse: collapse; font-size: 1rem; color: #000; }
-        .nota-itens th, .nota-itens td { border-bottom: 1px solid #ddd; padding: 8px 4px; text-align: left; color: #000; }
+        .nota-itens { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 1rem; color: #000; }
+        .nota-itens th, .nota-itens td { border-bottom: 1px solid #ddd; padding: 8px 4px; text-align: left; color: #000; overflow-wrap: anywhere; word-break: break-word; min-width: 0; vertical-align: top; }
         .nota-itens th { font-weight: 800; color: #000; }
         .nota-itens.compacta { font-size: 0.88rem; }
         .nota-itens.compacta th, .nota-itens.compacta td { padding: 4px 3px; }
+        .nota-itens th:nth-child(1), .nota-itens td:nth-child(1) { width: 22%; }
+        .nota-itens th:nth-child(2), .nota-itens td:nth-child(2) { width: 56%; }
+        .nota-itens th:nth-child(3), .nota-itens td:nth-child(3) { width: 22%; text-align: right; white-space: nowrap; }
+        .nota-tabela-desp { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.88rem; margin-top: 6px; color: #000; }
+        .nota-tabela-desp th, .nota-tabela-desp td { border-bottom: 1px solid #ddd; padding: 6px 4px; text-align: left; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; min-width: 0; }
+        .nota-tabela-desp thead tr { background: #f2f2f2; }
+        .nota-tabela-desp th { font-weight: 800; }
+        .nota-tabela-desp th:nth-child(1), .nota-tabela-desp td:nth-child(1) { width: 8%; }
+        .nota-tabela-desp th:nth-child(2), .nota-tabela-desp td:nth-child(2) { width: 18%; }
+        .nota-tabela-desp th:nth-child(3), .nota-tabela-desp td:nth-child(3) { width: 38%; }
+        .nota-tabela-desp th:nth-child(4), .nota-tabela-desp td:nth-child(4) { width: 18%; }
+        .nota-tabela-desp th:nth-child(5), .nota-tabela-desp td:nth-child(5) { width: 18%; text-align: right; font-weight: 700; white-space: nowrap; }
+        .nota-tabela-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .nota-resumo-lucro { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 8px; font-size: 1rem; }
+        .nota-resumo-lucro > div { flex: 1 1 140px; min-width: 0; }
         .nota-subtotais { margin-top: 8px; font-size: 1rem; color: #000; }
         .nota-subtotais.compacto { margin-top: 4px; font-size: 0.88rem; }
         .nota-total { text-align: right; font-size: 1.35rem; font-weight: 800; margin-top: 8px; color: #000; }
@@ -2731,7 +2804,7 @@
 
             <div class="box">
                 <h2>Despesas por OS (Modo Interno)</h2>
-                <p class="hint">Lista as OS do balcão oficial. Lance aqui as <strong>despesas internas</strong> (bruto − despesas = lucro). Com login, despesas e o modo interno <strong>sincronizam na nuvem</strong> entre PC e celular.</p>
+                <p class="hint">Lista as OS do balcão oficial. Lance despesas internas (bruto − despesas = lucro). <strong>Importante:</strong> no PC que tem as despesas, abra o site atualizado e clique <strong>Sincronizar agora</strong> (Config) ou <strong>Atualizar</strong> aqui — só assim sobem pra nuvem e aparecem neste PC.</p>
                 <div class="toolbar">
                     <input type="search" id="buscaDespesasOs" class="search" placeholder="Buscar OS por cliente, placa, veículo...">
                     <button type="button" class="btn btn-secondary" id="btnAtualizarDespesasOs">🔄 Atualizar</button>
@@ -3669,20 +3742,25 @@
         }
 
         function cssDocumentoImpressao() {
-            return 'html,body{margin:0;padding:0;background:#fff;color:#000;}' +
+            return '*,*:before,*:after{box-sizing:border-box;}' +
+                'html,body{margin:0;padding:0;background:#fff;color:#000;max-width:100%;overflow-x:hidden;}' +
                 'body{padding:10mm;font-family:Arial,Helvetica,sans-serif;font-size:10pt;line-height:1.25;}' +
-                '.nota-espelho{background:#fff;color:#111;}' +
+                '.barra-sair-print{display:none;position:sticky;top:0;z-index:9999;gap:8px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:#162233;border-bottom:1px solid rgba(255,255,255,.15);}' +
+                '.barra-sair-print button{flex:1 1 40%;min-height:44px;border:0;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;}' +
+                '.barra-sair-print .btn-fechar{background:#e74c3c;color:#fff;}' +
+                '.barra-sair-print .btn-print{background:#1e8449;color:#fff;}' +
+                '.nota-espelho{background:#fff;color:#111;max-width:100%;overflow-x:hidden;}' +
                 '.nota-topo{text-align:center;border-bottom:2px solid #0d3d6e;padding-bottom:8pt;margin-bottom:10pt;}' +
                 '.nota-topo-linha{width:100%;border-collapse:collapse;table-layout:fixed;}' +
                 '.nota-topo-logo{width:42%;vertical-align:middle;padding:0 8pt 0 0;}' +
                 '.nota-topo-logo img{display:block;width:100%;max-width:100%;max-height:32mm;height:auto;object-fit:contain;object-position:left center;}' +
                 '.nota-topo-dados{width:58%;vertical-align:middle;text-align:left;font-size:9.5pt;line-height:1.3;color:#000;}' +
-                '.nota-topo-dados .linha{display:block;white-space:nowrap;overflow:visible;color:#000;}' +
+                '.nota-topo-dados .linha{display:block;white-space:normal;overflow-wrap:anywhere;word-break:break-word;color:#000;}' +
                 '.nota-topo-dados .linha-end{font-size:9pt;}' +
                 '.nota-topo-dados .linha-tel{font-weight:600;}' +
                 '.nota-titulo-espelho{margin-top:8pt;margin-bottom:0;font-size:12pt;font-weight:800;color:#0d3d6e;letter-spacing:.04em;text-align:center;}' +
                 '.nota-registro{margin-top:4pt;text-align:center;font-size:9pt;}' +
-                '.nota-bloco{margin-bottom:8pt;border:1px solid #ccc;border-radius:4px;overflow:visible;page-break-inside:avoid;}' +
+                '.nota-bloco{margin-bottom:8pt;border:1px solid #ccc;border-radius:4px;overflow:hidden;page-break-inside:avoid;max-width:100%;}' +
                 '.nota-bloco .tit{padding:4pt 6pt;font-size:9pt;font-weight:800;text-transform:uppercase;color:#000;background:#fff;border-bottom:1.5pt solid #000;}' +
                 '.nota-grid{display:grid;grid-template-columns:1fr 1fr;gap:4pt 8pt;padding:6pt;}' +
                 '.nota-campo.full{grid-column:1/-1;}' +
@@ -3692,9 +3770,22 @@
                 '.nota-grid-compacta .nota-label::after{content:":";}' +
                 '.nota-grid-compacta .nota-valor{display:inline;font-size:9pt;margin:0;overflow-wrap:anywhere;word-break:break-word;min-width:0;flex:1 1 auto;}' +
                 '.nota-chassi{font-family:Consolas,Courier New,monospace;word-break:break-all;}' +
-                '.nota-itens{width:100%;border-collapse:collapse;font-size:9pt;}' +
-                '.nota-itens th,.nota-itens td{border-bottom:1px solid #ddd;padding:3pt;text-align:left;}' +
-                '.nota-itens th{font-weight:800;}' +
+                '.nota-itens,.nota-tabela-desp{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9pt;}' +
+                '.nota-itens th,.nota-itens td,.nota-tabela-desp th,.nota-tabela-desp td{border-bottom:1px solid #ddd;padding:3pt 2pt;text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:break-word;min-width:0;}' +
+                '.nota-itens th,.nota-tabela-desp th{font-weight:800;}' +
+                '.nota-itens th:nth-child(1),.nota-itens td:nth-child(1){width:22%;}' +
+                '.nota-itens th:nth-child(2),.nota-itens td:nth-child(2){width:56%;}' +
+                '.nota-itens th:nth-child(3),.nota-itens td:nth-child(3){width:22%;text-align:right;white-space:nowrap;}' +
+                '.nota-tabela-desp{margin-top:4pt;}' +
+                '.nota-tabela-desp thead tr{background:#f2f2f2;}' +
+                '.nota-tabela-desp th:nth-child(1),.nota-tabela-desp td:nth-child(1){width:8%;}' +
+                '.nota-tabela-desp th:nth-child(2),.nota-tabela-desp td:nth-child(2){width:18%;}' +
+                '.nota-tabela-desp th:nth-child(3),.nota-tabela-desp td:nth-child(3){width:38%;}' +
+                '.nota-tabela-desp th:nth-child(4),.nota-tabela-desp td:nth-child(4){width:18%;}' +
+                '.nota-tabela-desp th:nth-child(5),.nota-tabela-desp td:nth-child(5){width:18%;text-align:right;font-weight:700;white-space:nowrap;}' +
+                '.nota-tabela-wrap{width:100%;max-width:100%;overflow:hidden;}' +
+                '.nota-resumo-lucro{display:flex;flex-wrap:wrap;gap:8pt 12pt;margin-top:6pt;font-size:10pt;}' +
+                '.nota-resumo-lucro>div{flex:1 1 120px;min-width:0;}' +
                 '.nota-valores-pad{padding:6pt;}' +
                 '.nota-subtotais{margin-top:4pt;font-size:9pt;}' +
                 '.nota-total{text-align:right;font-size:11pt;font-weight:800;margin-top:4pt;}' +
@@ -3706,14 +3797,29 @@
                 '.nota-fotos{display:flex;flex-wrap:wrap;gap:6pt;padding:6pt;}' +
                 '.nota-fotos img{width:45mm;height:34mm;object-fit:cover;}' +
                 '@page{size:A4;margin:10mm;}' +
-                '@media print{body{padding:0;}}';
+                '@media screen and (max-width:700px){' +
+                '.barra-sair-print{display:flex;}' +
+                'body{padding:8px;padding-top:0;font-size:12px;}' +
+                '.nota-grid{grid-template-columns:1fr;}' +
+                '.nota-titulo-espelho{font-size:13px;}' +
+                '.nota-itens,.nota-tabela-desp{font-size:11px;}' +
+                '.nota-tabela-desp th:nth-child(4),.nota-tabela-desp td:nth-child(4){display:none;}' +
+                '.nota-sigs{grid-template-columns:1fr;gap:12px;}' +
+                '}' +
+                '@media print{.barra-sair-print{display:none!important;}body{padding:0;}}';
         }
 
         function montarHtmlDocumentoImpressao(htmlCorpo) {
+            var barra =
+                '<div class="barra-sair-print" id="barraSairPrint">' +
+                '<button type="button" class="btn-fechar" onclick="try{if(window.opener){window.close();}else if(history.length>1){history.back();}else{window.close();}}catch(e){try{history.back();}catch(e2){}}">✕ Fechar / Voltar</button>' +
+                '<button type="button" class="btn-print" onclick="window.print()">🖨️ Imprimir</button>' +
+                '</div>';
             return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">' +
-                '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+                '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">' +
                 '<title>' + esc(_tituloNotaImpressao || 'Espelho de Atendimento') + '</title>' +
                 '<style>' + cssDocumentoImpressao() + '</style></head><body>' +
+                barra +
                 (htmlCorpo || '') +
                 '</body></html>';
         }
@@ -4388,6 +4494,12 @@
                 atualizarBadgeCanal();
                 fecharBoxDespesaOs();
                 renderDespesasOs();
+                /* Puxa despesas do outro PC/celular ao abrir a tela */
+                if (usuarioNuvemLogado()) {
+                    sincronizarTodosNuvem({ silencioso: true, mostrarToast: true }).then(function () {
+                        renderDespesasOs();
+                    }).catch(function () { /* offline */ });
+                }
             }
             if (id === 'painelFuncionarios') {
                 canalVendas = 'interno';
@@ -5410,6 +5522,66 @@
             return base;
         }
 
+        /* Cada despesa de OS também vai em documento próprio (mais confiável entre PCs) */
+        async function baixarDespesasOsNuvem() {
+            var sessao = await obterSessaoFirebase();
+            var snap = await sessao.fsMod.getDocs(
+                sessao.fsMod.collection(sessao.dbFs, 'hm_automotivo_despesas_os')
+            );
+            var lista = [];
+            snap.forEach(function (docSnap) {
+                var d = docSnap.data() || {};
+                if (!d.id) d.id = docSnap.id;
+                lista.push(d);
+            });
+            return lista;
+        }
+
+        async function enviarDespesaOsNuvem(despesa) {
+            if (!despesa || !despesa.id) return false;
+            var sessao = await obterSessaoFirebase();
+            var out = JSON.parse(JSON.stringify(despesa));
+            out.atualizadoEm = out.atualizadoEm || out.criadoEm || new Date().toISOString();
+            await sessao.fsMod.setDoc(
+                sessao.fsMod.doc(sessao.dbFs, 'hm_automotivo_despesas_os', despesa.id),
+                out
+            );
+            return true;
+        }
+
+        async function enviarDespesasOsNuvemLista(intDb) {
+            var lista = ((intDb && intDb.caixa) || []).filter(function (x) {
+                return x && x.id && x.tipo === 'saida' && x.atendimentoId;
+            });
+            var ok = 0, falha = 0;
+            for (var i = 0; i < lista.length; i++) {
+                try {
+                    await enviarDespesaOsNuvem(lista[i]);
+                    ok++;
+                } catch (e) { falha++; }
+            }
+            return { ok: ok, falha: falha, total: lista.length };
+        }
+
+        function mesclarCaixaComDespesasNuvem(caixaLocal, despNuvem) {
+            var map = {};
+            (caixaLocal || []).forEach(function (x) {
+                if (x && x.id) map[x.id] = x;
+            });
+            (despNuvem || []).forEach(function (n) {
+                if (!n || !n.id) return;
+                var L = map[n.id];
+                if (!L) {
+                    map[n.id] = n;
+                    return;
+                }
+                var tL = tempoRegistro(L, Date.now());
+                var tN = tempoRegistro(n, 0);
+                map[n.id] = tN > tL ? Object.assign({}, L, n) : Object.assign({}, n, L);
+            });
+            return Object.keys(map).map(function (k) { return map[k]; });
+        }
+
         function mesclarBaseInternoLocalNuvem(local, nuvem) {
             var L = Object.assign(estadoInternoVazio(), local || {});
             L.produtos = []; /* estoque unificado fica no oficial */
@@ -5432,6 +5604,48 @@
             }
             L.atualizadoEm = new Date().toISOString();
             return L;
+        }
+
+        async function sincronizarModoInternoNuvem(opts) {
+            opts = opts || {};
+            var intLocal = carregarInternoRaw();
+            var intNuv = null;
+            var despNuv = [];
+            var erro = null;
+            try {
+                intNuv = await baixarBaseInternoNuvem();
+            } catch (e1) {
+                erro = e1;
+            }
+            try {
+                despNuv = await baixarDespesasOsNuvem();
+            } catch (e2) {
+                if (!erro) erro = e2;
+            }
+            /* Junta despesas individuais da nuvem no caixa local antes do merge geral */
+            intLocal.caixa = mesclarCaixaComDespesasNuvem(intLocal.caixa, despNuv);
+            var intMesclado = mesclarBaseInternoLocalNuvem(intLocal, intNuv);
+            /* Garante de novo as despesas individuais (não perder se o doc interno estiver vazio) */
+            intMesclado.caixa = mesclarCaixaComDespesasNuvem(intMesclado.caixa, despNuv);
+            salvarInternoRaw(intMesclado);
+            var envio = { ok: 0, falha: 0, total: 0 };
+            try {
+                await enviarBaseInternoNuvem(intMesclado);
+                envio = await enviarDespesasOsNuvemLista(intMesclado);
+            } catch (eUp) {
+                erro = eUp;
+            }
+            var nDesp = (intMesclado.caixa || []).filter(function (x) {
+                return x && x.tipo === 'saida' && x.atendimentoId;
+            }).length;
+            return {
+                ok: !erro || envio.ok > 0,
+                erro: erro,
+                nDesp: nDesp,
+                baixadasNuvem: (despNuv || []).length,
+                envio: envio,
+                intDb: intMesclado
+            };
         }
 
         async function sincronizarTodosNuvem(opts) {
@@ -5528,20 +5742,11 @@
 
                 salvar(db);
 
-                /* 4) Modo interno na nuvem: despesas OS, funcionários, caixa interno… */
-                var intLocal = carregarInternoRaw();
-                var intNuv = null;
-                try {
-                    intNuv = await baixarBaseInternoNuvem();
-                } catch (eIntDown) { intNuv = null; }
-                var intMesclado = mesclarBaseInternoLocalNuvem(intLocal, intNuv);
-                salvarInternoRaw(intMesclado);
-                try {
-                    await enviarBaseInternoNuvem(intMesclado);
-                } catch (eIntUp) {
-                    if (!silencioso) {
-                        toast('Oficial OK, mas falhou sync do modo interno: ' + (eIntUp.message || eIntUp.code || ''));
-                    }
+                /* 4) Modo interno + despesas OS (doc geral + coleção por despesa) */
+                var syncInt = await sincronizarModoInternoNuvem();
+                if (syncInt.erro && !silencioso) {
+                    toast('Oficial OK, mas falhou sync interno: ' +
+                        (syncInt.erro.message || syncInt.erro.code || 'verifique regras do Firestore'));
                 }
 
                 canalVendas = canalAntes;
@@ -5549,14 +5754,12 @@
                 try { localStorage.setItem(SYNC_ULTIMA_KEY, String(_syncUltimaOkEm)); } catch (eUlt) { /* ok */ }
 
                 if (mostrarToast) {
-                    var nDesp = (intMesclado.caixa || []).filter(function (x) {
-                        return x && x.tipo === 'saida' && x.atendimentoId;
-                    }).length;
                     if (silencioso) {
-                        toast('Sincronizado na nuvem (oficial + interno).');
+                        toast('Sincronizado: ' + syncInt.nDesp + ' despesa(s) internas na nuvem.');
                     } else {
                         toast('Nuvem OK: ' + ok + ' OS · ' + (db.clientes || []).length + ' cliente(s)' +
-                            ' · ' + nDesp + ' despesa(s) internas' +
+                            ' · ' + syncInt.nDesp + ' despesa(s) internas' +
+                            (syncInt.baixadasNuvem ? ' (baixou ' + syncInt.baixadasNuvem + ' da nuvem)' : '') +
                             (falha ? ' · ' + falha + ' falha(s)' : '') + '.');
                     }
                 }
@@ -6042,11 +6245,11 @@
             if (!lista.length) return '<p style="color:#000;font-size:0.85rem;">Sem itens lançados.</p>';
             var rows = lista.map(function (it) {
                 var tipo = (it.tipo === 'mao') ? 'Mão de obra' : 'Peça';
-                return '<tr><td>' + esc(tipo) + '</td><td>' + esc(it.desc || '') + '</td><td style="text-align:right">' + moeda(it.valor) + '</td></tr>';
+                return '<tr><td>' + esc(tipo) + '</td><td>' + esc(it.desc || '') + '</td><td>' + moeda(it.valor) + '</td></tr>';
             }).join('');
             var pecas = lista.reduce(function (s, it) { return s + ((it.tipo || 'peca') === 'peca' ? (Number(it.valor) || 0) : 0); }, 0);
             var mao = lista.reduce(function (s, it) { return s + (it.tipo === 'mao' ? (Number(it.valor) || 0) : 0); }, 0);
-            return '<table class="nota-itens compacta"><thead><tr><th>Tipo</th><th>Descrição</th><th style="text-align:right">Valor</th></tr></thead><tbody>' +
+            return '<table class="nota-itens compacta"><thead><tr><th>Tipo</th><th>Descrição</th><th>Valor</th></tr></thead><tbody>' +
                 rows + '</tbody></table>' +
                 '<div class="nota-subtotais compacto">Peças: <strong>' + moeda(pecas) +
                 '</strong> · Mão de obra: <strong>' + moeda(mao) + '</strong></div>' +
@@ -7860,11 +8063,11 @@
             var linhasDesp = despesas.length
                 ? despesas.map(function (d, i) {
                     return '<tr>' +
-                        '<td style="padding:6px 8px;border-bottom:1px solid #ddd">' + (i + 1) + '</td>' +
-                        '<td style="padding:6px 8px;border-bottom:1px solid #ddd">' + esc(fmtData(d.criadoEm)) + '</td>' +
-                        '<td style="padding:6px 8px;border-bottom:1px solid #ddd">' + esc(d.descricao || '—') + '</td>' +
-                        '<td style="padding:6px 8px;border-bottom:1px solid #ddd">' + esc(d.forma || '—') + '</td>' +
-                        '<td style="padding:6px 8px;border-bottom:1px solid #ddd;text-align:right;font-weight:700">' + moeda(d.valor) + '</td>' +
+                        '<td>' + (i + 1) + '</td>' +
+                        '<td>' + esc(fmtData(d.criadoEm)) + '</td>' +
+                        '<td>' + esc(d.descricao || '—') + '</td>' +
+                        '<td>' + esc(d.forma || '—') + '</td>' +
+                        '<td>' + moeda(d.valor) + '</td>' +
                         '</tr>';
                 }).join('')
                 : '<tr><td colspan="5" style="padding:10px;color:#666">Nenhuma despesa interna lançada.</td></tr>';
@@ -7888,23 +8091,20 @@
                 '<div class="nota-bloco compacto"><div class="tit verde">Valores do serviço (bruto)</div>' +
                 '<div class="nota-valores-pad compacto">' + htmlItensNota(a.itens) + '</div></div>' +
                 '<div class="nota-bloco compacto"><div class="tit vermelho">Despesas internas (modo interno)</div>' +
-                '<table style="width:100%;border-collapse:collapse;font-size:11pt;margin-top:6px">' +
-                '<thead><tr style="background:#f2f2f2">' +
-                '<th style="text-align:left;padding:6px 8px">#</th>' +
-                '<th style="text-align:left;padding:6px 8px">Data</th>' +
-                '<th style="text-align:left;padding:6px 8px">Descrição</th>' +
-                '<th style="text-align:left;padding:6px 8px">Forma</th>' +
-                '<th style="text-align:right;padding:6px 8px">Valor</th>' +
-                '</tr></thead><tbody>' + linhasDesp + '</tbody></table></div>' +
-                '<div class="nota-bloco compacto" style="border:2px solid #222;padding:12px">' +
+                '<div class="nota-tabela-wrap"><table class="nota-tabela-desp">' +
+                '<thead><tr>' +
+                '<th>#</th><th>Data</th><th>Descrição</th><th>Forma</th><th>Valor</th>' +
+                '</tr></thead><tbody>' + linhasDesp + '</tbody></table></div></div>' +
+                '<div class="nota-bloco compacto" style="border:2px solid #222">' +
                 '<div class="tit escuro">Resumo do lucro</div>' +
-                '<div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:8px;font-size:12pt">' +
+                '<div class="nota-valores-pad compacto">' +
+                '<div class="nota-resumo-lucro">' +
                 '<div>Bruto OS: <strong>' + moeda(resumo.bruto) + '</strong></div>' +
                 '<div>Despesas: <strong style="color:#c0392b">' + moeda(resumo.despesas) + '</strong></div>' +
-                '<div>Lucro limpo: <strong style="color:#1e8449;font-size:1.15em">' + moeda(resumo.lucro) + '</strong></div>' +
+                '<div>Lucro limpo: <strong style="color:#1e8449">' + moeda(resumo.lucro) + '</strong></div>' +
                 '</div>' +
-                '<p style="margin:10px 0 0;font-size:9.5pt;color:#555">Folha exclusiva do modo interno — para apresentar ao funcionário / controle da oficina.</p>' +
-                '</div>' +
+                '<p style="margin:10px 0 0;font-size:0.85rem;color:#555">Folha exclusiva do modo interno — para apresentar ao funcionário / controle da oficina.</p>' +
+                '</div></div>' +
                 '<div class="nota-sigs compacto" style="margin-top:18px">' +
                 '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Responsável / Funcionário</div></div>' +
                 '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Visto do responsável</div></div>' +
@@ -7924,6 +8124,16 @@
                 return;
             }
             var html = htmlNotaInternaLucroOs(main, a);
+            var titulo = 'Folha interna — ' + ((a.placa || '').toUpperCase() || nomeAtendimento(main, a));
+            _htmlNotaImpressaoAtual = html;
+            _tituloNotaImpressao = titulo;
+
+            if (ehCelular()) {
+                /* Celular: viewer com Fechar / Imprimir / Encaminhar — evita aba sem saída */
+                abrirViewerPdf(html, titulo);
+                toast('Folha interna aberta. Use Fechar para sair.');
+                return;
+            }
             executarImpressaoHtml(html);
             toast('Folha interna pronta para imprimir (despesas + lucro).');
         }
@@ -8227,7 +8437,8 @@
                     totalOs: Number(a.total) || 0,
                     entrada: a.entrada || a.criadoEm || ''
                 },
-                criadoEm: new Date().toISOString()
+                criadoEm: new Date().toISOString(),
+                atualizadoEm: new Date().toISOString()
             };
             db.caixa.push(lanc);
             salvar(db);
@@ -8240,7 +8451,6 @@
                     main.produtos[pi].qtd = Math.round(Math.max(0, novo) * 1000) / 1000;
                     main.produtos[pi].atualizadoEm = new Date().toISOString();
                     salvarMain(main);
-                    agendarSyncAutomatico('salvar');
                 }
             }
 
@@ -8250,14 +8460,23 @@
             document.getElementById('formDespesaOs').reset();
             limparProdutoDespesaOs();
             toast(querBaixa
-                ? ('Despesa lançada + estoque baixado (' + qtdEstoque + '× ' + prod.nome + ').')
-                : ('Despesa interna lançada na OS ' + placa + '.'));
+                ? ('Despesa lançada + estoque baixado (' + qtdEstoque + '× ' + prod.nome + '). Enviando à nuvem…')
+                : ('Despesa interna lançada na OS ' + placa + '. Enviando à nuvem…'));
             renderDespesasOsDetalhe(atendimentoId);
             renderDespesasOs();
             renderCaixa();
             renderRelatorioCaixa();
             renderProdutos();
             document.getElementById('dosProdBusca').focus();
+
+            /* Sobe na hora para o outro PC ver (não espera o debounce) */
+            enviarDespesaOsNuvem(lanc).then(function () {
+                return sincronizarModoInternoNuvem();
+            }).then(function (r) {
+                toast('Despesa na nuvem OK (' + (r && r.nDesp != null ? r.nDesp : '?') + ' no total).');
+            }).catch(function (err) {
+                toast('Despesa salva aqui, mas falhou na nuvem: ' + (err.message || err.code || 'tente Sincronizar agora'));
+            });
         }
 
         document.getElementById('formDespesaOs').addEventListener('submit', lancarDespesaOs);
@@ -8280,8 +8499,14 @@
         });
         document.getElementById('dosProdQtd').addEventListener('input', atualizarValorDespesaPeloProduto);
         document.getElementById('btnAtualizarDespesasOs').addEventListener('click', function () {
-            renderDespesasOs();
-            toast('Lista de OS atualizada.');
+            toast('Baixando despesas da nuvem…');
+            sincronizarTodosNuvem({ silencioso: false, mostrarToast: true }).then(function () {
+                renderDespesasOs();
+                if (despesaOsSelecionadaId) renderDespesasOsDetalhe(despesaOsSelecionadaId);
+            }).catch(function (err) {
+                renderDespesasOs();
+                toast('Falha ao sincronizar: ' + (err.message || err.code || 'verifique login'));
+            });
         });
         document.getElementById('buscaDespesasOs').addEventListener('input', renderDespesasOs);
         document.getElementById('btnAtualizarPastasDos').addEventListener('click', function () {
