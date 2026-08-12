@@ -2185,8 +2185,11 @@
                 </div>
                 <div class="box">
                     <h2>Responsável</h2>
-                    <label>Responsável pelo serviço</label>
-                    <input id="atResponsavel" placeholder="Quem vai executar o serviço?">
+                    <label for="atResponsavelId">Responsável pelo serviço (funcionário)</label>
+                    <select id="atResponsavelId">
+                        <option value="">Selecione o funcionário...</option>
+                    </select>
+                    <p class="hint" style="margin-top:8px">Lista do <strong>Cadastro de Funcionários</strong> (modo interno). Assim a OS cai no funcionário para fechar lucro depois.</p>
                 </div>
             </div>
 
@@ -2804,10 +2807,18 @@
 
             <div class="box">
                 <h2>Despesas por OS (Modo Interno)</h2>
-                <p class="hint">Lista as OS do balcão oficial. Lance despesas internas (bruto − despesas = lucro). <strong>Importante:</strong> no PC que tem as despesas, abra o site atualizado e clique <strong>Sincronizar agora</strong> (Config) ou <strong>Atualizar</strong> aqui — só assim sobem pra nuvem e aparecem neste PC.</p>
+                <p class="hint">Lista as OS do balcão oficial. Lance despesas internas (bruto − despesas = lucro). Escolha o <strong>funcionário responsável</strong> na OS para filtrar e fechar o lucro por pessoa. <strong>Importante:</strong> no PC que tem as despesas, abra o site atualizado e clique <strong>Sincronizar agora</strong> (Config) ou <strong>Atualizar</strong> aqui — só assim sobem pra nuvem e aparecem neste PC.</p>
                 <div class="toolbar">
-                    <input type="search" id="buscaDespesasOs" class="search" placeholder="Buscar OS por cliente, placa, veículo...">
+                    <input type="search" id="buscaDespesasOs" class="search" placeholder="Buscar OS por cliente, placa, veículo, responsável...">
+                    <select id="filtroFuncionarioDos" style="min-width:180px;max-width:240px">
+                        <option value="">Todos os funcionários</option>
+                    </select>
                     <button type="button" class="btn btn-secondary" id="btnAtualizarDespesasOs">🔄 Atualizar</button>
+                </div>
+                <div class="box" id="boxLucroPorFuncionario" style="margin:12px 0;padding:10px 12px;background:rgba(41,128,185,0.08);border:1px solid rgba(41,128,185,0.25)">
+                    <h3 style="margin:0 0 8px;font-size:1rem">👷 Lucro por funcionário (para fechar)</h3>
+                    <p class="hint" style="margin:0 0 8px">Soma das OS em que o funcionário é o <strong>responsável</strong> (bruto − despesas internas).</p>
+                    <div id="resumoLucroPorFuncionario" class="muted">Nenhuma OS com responsável vinculado.</div>
                 </div>
                 <table>
                     <thead>
@@ -2815,6 +2826,7 @@
                             <th>Data</th>
                             <th>Cliente</th>
                             <th>Veículo / Placa</th>
+                            <th>Responsável</th>
                             <th>Status</th>
                             <th>Bruto OS</th>
                             <th>Despesas</th>
@@ -2883,7 +2895,7 @@
         <section id="painelFuncionarios" class="panel">
             <div class="box">
                 <h2>👷 Cadastro de Funcionários (interno)</h2>
-                <p class="hint">Cadastre aqui quem pode comprar no <strong>modo interno</strong>. A venda interna só libera para funcionário desta lista.</p>
+                <p class="hint">Cadastre aqui quem executa serviço e quem pode comprar no <strong>modo interno</strong>. O responsável da OS usa esta lista; a venda interna só libera para funcionário ativo.</p>
                 <form id="formFuncionario">
                     <input type="hidden" id="pfFuncEditId">
                     <div class="row">
@@ -4488,6 +4500,12 @@
                 prepararVendaForm();
                 renderCarrinhoVenda();
             }
+            if (id === 'painelVeiculo') {
+                preencherSelectResponsavelOs(
+                    (document.getElementById('atResponsavelId') || {}).value || '',
+                    ''
+                );
+            }
             if (id === 'painelRelatorioCaixa') renderRelatorioCaixa();
             if (id === 'painelDespesasOs') {
                 canalVendas = 'interno';
@@ -5966,6 +5984,7 @@
             document.getElementById('atEntrada').value = hojeISO();
             document.getElementById('atStatus').value = 'Em andamento';
             document.getElementById('atAgendadoPara').value = '';
+            preencherSelectResponsavelOs('', '');
             itensTemp = [];
             fotosAtuais = [];
             renderItens();
@@ -5999,13 +6018,15 @@
             var id = document.getElementById('atId').value;
             var pecas = somaPorTipo('peca');
             var mao = somaPorTipo('mao');
+            var resp = obterResponsavelOsDoForm();
             var payload = {
                 id: id || uid(),
                 clienteId: resolvido.clienteId,
                 clienteNome: resolvido.clienteNome,
                 clienteAvulso: resolvido.clienteAvulso,
                 clienteCadastro: snapshotClienteCadastro(db, resolvido),
-                responsavel: document.getElementById('atResponsavel').value.trim(),
+                responsavelId: resp.responsavelId,
+                responsavel: resp.responsavel,
                 carro: document.getElementById('atCarro').value.trim(),
                 placa: (document.getElementById('atPlaca').value || '').toUpperCase().trim(),
                 cidadePlaca: document.getElementById('atCidadePlaca').value.trim(),
@@ -6100,7 +6121,7 @@
                 ? (a.clienteNome || '')
                 : (a.clienteNome || nomeCliente(db, a.clienteId));
             atualizarStatusClienteAt();
-            document.getElementById('atResponsavel').value = a.responsavel || '';
+            preencherSelectResponsavelOs(a.responsavelId || '', a.responsavel || '');
             document.getElementById('atCarro').value = a.carro || '';
             document.getElementById('atPlaca').value = a.placa || '';
             document.getElementById('atCidadePlaca').value = a.cidadePlaca || '';
@@ -6304,7 +6325,7 @@
                 '<div class="nota-campo full"><span class="nota-label">Chassi</span><span class="nota-valor nota-chassi">' + esc((a.chassi || '—').toUpperCase()) + '</span></div>' +
                 '</div></div>' +
                 '<div class="nota-bloco compacto"><div class="tit escuro">Oficina, Chegada &amp; Serviços</div><div class="nota-grid nota-grid-compacta">' +
-                '<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' + esc(a.responsavel || '—') + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' + esc(nomeResponsavelOs(a)) + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Status</span><span class="nota-valor">' + esc(a.status || '—') +
                 (a.status === 'Agendado' && a.agendadoPara ? ' · ' + esc(fmtData(a.agendadoPara)) : '') + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Entrada</span><span class="nota-valor">' + esc(fmtData(a.entrada)) + '</span></div>' +
@@ -6551,6 +6572,7 @@
                 telefone: cad.telefone || '',
                 email: cad.email || '',
                 responsavel: a.responsavel || '',
+                responsavelId: a.responsavelId || '',
                 carro: a.carro || '',
                 placa: a.placa || '',
                 cidadePlaca: a.cidadePlaca || '',
@@ -7472,6 +7494,13 @@
             });
         }
 
+        /* Funcionários sempre no banco interno — disponível também na OS do balcão */
+        function obterDbFuncionarios() {
+            if (canalVendas === 'interno') return carregar();
+            var int = carregarInternoRaw();
+            return { funcionarios: (int && int.funcionarios) || [] };
+        }
+
         function preencherSelectFuncionariosVenda() {
             var sel = document.getElementById('vdFuncionarioId');
             if (!sel) return;
@@ -7483,6 +7512,115 @@
                 return '<option value="' + esc(f.id) + '">' + esc(f.nome + extra) + '</option>';
             }).join('');
             if (atual && funcs.some(function (f) { return f.id === atual; })) sel.value = atual;
+        }
+
+        /* Responsável da OS = funcionário do cadastro interno (para fechar lucro depois) */
+        function preencherSelectResponsavelOs(selecionadoId, nomeLegado) {
+            var sel = document.getElementById('atResponsavelId');
+            if (!sel) return;
+            var db = obterDbFuncionarios();
+            var funcs = listarFuncionariosOrdenados(db, false);
+            var ativos = funcs.filter(function (f) { return f.ativo !== false; });
+            var atual = selecionadoId != null ? String(selecionadoId || '') : (sel.value || '');
+            var html = '<option value="">Selecione o funcionário...</option>';
+            ativos.forEach(function (f) {
+                var extra = f.cargo ? ' · ' + f.cargo : '';
+                html += '<option value="' + esc(f.id) + '">' + esc(f.nome + extra) + '</option>';
+            });
+            /* Mantém inativo se já estava na OS */
+            if (atual) {
+                var inativo = funcs.find(function (f) { return f.id === atual && f.ativo === false; });
+                if (inativo) {
+                    html += '<option value="' + esc(inativo.id) + '">' + esc((inativo.nome || 'Funcionário') + ' (inativo)') + '</option>';
+                }
+            }
+            sel.innerHTML = html;
+            if (atual && Array.prototype.some.call(sel.options, function (o) { return o.value === atual; })) {
+                sel.value = atual;
+            } else if (!atual && nomeLegado) {
+                var porNome = funcs.find(function (f) {
+                    return String(f.nome || '').trim().toLowerCase() === String(nomeLegado).trim().toLowerCase();
+                });
+                if (porNome) sel.value = porNome.id;
+            }
+        }
+
+        function obterResponsavelOsDoForm() {
+            var sel = document.getElementById('atResponsavelId');
+            var id = sel ? String(sel.value || '').trim() : '';
+            if (!id) return { responsavelId: '', responsavel: '' };
+            var db = obterDbFuncionarios();
+            var func = (db.funcionarios || []).find(function (f) { return f.id === id; });
+            var nome = func ? String(func.nome || '').trim() : '';
+            if (!nome && sel && sel.selectedIndex >= 0) {
+                nome = String(sel.options[sel.selectedIndex].text || '').replace(/\s*·.*$/, '').replace(/\s*\(inativo\)\s*$/i, '').trim();
+            }
+            return { responsavelId: id, responsavel: nome };
+        }
+
+        function nomeResponsavelOs(a) {
+            if (!a) return '—';
+            if (a.responsavel) return a.responsavel;
+            if (a.responsavelId) {
+                var db = obterDbFuncionarios();
+                var f = (db.funcionarios || []).find(function (x) { return x.id === a.responsavelId; });
+                if (f && f.nome) return f.nome;
+            }
+            return '—';
+        }
+
+        function preencherFiltroFuncionarioDos() {
+            var sel = document.getElementById('filtroFuncionarioDos');
+            if (!sel) return;
+            var db = obterDbFuncionarios();
+            var funcs = listarFuncionariosOrdenados(db, false);
+            var atual = sel.value;
+            sel.innerHTML = '<option value="">Todos os funcionários</option>' +
+                '<option value="__sem__">Sem responsável</option>' +
+                funcs.map(function (f) {
+                    var extra = f.cargo ? ' · ' + f.cargo : '';
+                    var tag = f.ativo === false ? ' (inativo)' : '';
+                    return '<option value="' + esc(f.id) + '">' + esc(f.nome + extra + tag) + '</option>';
+                }).join('');
+            if (atual && Array.prototype.some.call(sel.options, function (o) { return o.value === atual; })) {
+                sel.value = atual;
+            }
+        }
+
+        function renderResumoLucroPorFuncionario(listaOs) {
+            var el = document.getElementById('resumoLucroPorFuncionario');
+            if (!el) return;
+            var por = {};
+            (listaOs || []).forEach(function (a) {
+                var key = a.responsavelId || ('nome:' + String(a.responsavel || '').trim().toLowerCase());
+                var nome = nomeResponsavelOs(a);
+                if (!a.responsavelId && (!a.responsavel || !String(a.responsavel).trim())) {
+                    key = '__sem__';
+                    nome = 'Sem responsável';
+                }
+                if (!por[key]) por[key] = { nome: nome, qtd: 0, bruto: 0, despesas: 0, lucro: 0 };
+                var r = resumoLucroOs(a);
+                por[key].qtd += 1;
+                por[key].bruto += r.bruto;
+                por[key].despesas += r.despesas;
+                por[key].lucro += r.lucro;
+            });
+            var rows = Object.keys(por).map(function (k) { return por[k]; }).sort(function (a, b) {
+                if (a.nome === 'Sem responsável') return 1;
+                if (b.nome === 'Sem responsável') return -1;
+                return String(a.nome).localeCompare(String(b.nome), 'pt-BR');
+            });
+            if (!rows.length) {
+                el.innerHTML = '<span class="muted">Nenhuma OS com responsável vinculado.</span>';
+                return;
+            }
+            el.innerHTML = '<table style="margin:0;width:100%"><thead><tr>' +
+                '<th>Funcionário</th><th>OS</th><th>Bruto</th><th>Despesas</th><th>Lucro limpo</th>' +
+                '</tr></thead><tbody>' + rows.map(function (r) {
+                    return '<tr><td><strong>' + esc(r.nome) + '</strong></td><td>' + r.qtd +
+                        '</td><td>' + moeda(r.bruto) + '</td><td>' + moeda(r.despesas) +
+                        '</td><td><strong style="color:#1e8449">' + moeda(r.lucro) + '</strong></td></tr>';
+                }).join('') + '</tbody></table>';
         }
 
         function encontrarProdutoPorBusca(texto) {
@@ -8085,7 +8223,7 @@
                 '<div class="nota-campo"><span class="nota-label">Placa</span><span class="nota-valor" style="font-weight:800;letter-spacing:1px">' +
                 esc((a.placa || '—').toUpperCase()) + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Status</span><span class="nota-valor">' + esc(a.status || '—') + '</span></div>' +
-                '<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' + esc(a.responsavel || '—') + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' + esc(nomeResponsavelOs(a)) + '</span></div>' +
                 (a.servicos ? '<div class="nota-campo full"><span class="nota-label">Serviços</span><span class="nota-valor">' + esc(a.servicos) + '</span></div>' : '') +
                 '</div></div>' +
                 '<div class="nota-bloco compacto"><div class="tit verde">Valores do serviço (bruto)</div>' +
@@ -8238,7 +8376,8 @@
             document.getElementById('tituloLancarDespesaOs').textContent =
                 'Despesas — ' + nome + ' · ' + ((a.placa || '—').toUpperCase());
             document.getElementById('hintLancarDespesaOs').innerHTML =
-                'Bruto OS: <strong>' + moeda(resumo.bruto) +
+                'Responsável: <strong>' + esc(nomeResponsavelOs(a)) +
+                '</strong> · Bruto OS: <strong>' + moeda(resumo.bruto) +
                 '</strong> · Despesas: <strong>' + moeda(resumo.despesas) +
                 '</strong> · Lucro: <strong>' + moeda(resumo.lucro) +
                 '</strong><br>Pode digitar a despesa livre <strong>ou</strong> escolher um produto do estoque cadastrado.';
@@ -8301,15 +8440,32 @@
         function renderDespesasOs() {
             var panel = document.getElementById('painelDespesasOs');
             if (!panel) return;
+            preencherFiltroFuncionarioDos();
             var main = carregarMain();
             var q = (document.getElementById('buscaDespesasOs').value || '').toLowerCase().trim();
+            var filtroFunc = (document.getElementById('filtroFuncionarioDos') || {}).value || '';
             var lista = (main.atendimentos || []).slice().sort(function (a, b) {
                 return String(b.entrada || b.criadoEm || '').localeCompare(String(a.entrada || a.criadoEm || ''));
             });
+            if (filtroFunc === '__sem__') {
+                lista = lista.filter(function (a) {
+                    return !a.responsavelId && !String(a.responsavel || '').trim();
+                });
+            } else if (filtroFunc) {
+                lista = lista.filter(function (a) {
+                    if (a.responsavelId === filtroFunc) return true;
+                    var dbInt = obterDbFuncionarios();
+                    var f = (dbInt.funcionarios || []).find(function (x) { return x.id === filtroFunc; });
+                    if (f && a.responsavel && String(a.responsavel).trim().toLowerCase() === String(f.nome || '').trim().toLowerCase()) {
+                        return true;
+                    }
+                    return false;
+                });
+            }
             if (q) {
                 lista = lista.filter(function (a) {
                     var nome = nomeAtendimento(main, a);
-                    return [nome, a.placa, a.carro, a.status, a.responsavel].join(' ').toLowerCase().indexOf(q) > -1;
+                    return [nome, a.placa, a.carro, a.status, a.responsavel, nomeResponsavelOs(a)].join(' ').toLowerCase().indexOf(q) > -1;
                 });
             }
 
@@ -8323,6 +8479,7 @@
             document.getElementById('dosBruto').textContent = moeda(totBruto);
             document.getElementById('dosDespesas').textContent = moeda(totDesp);
             document.getElementById('dosLucro').textContent = moeda(totBruto - totDesp);
+            renderResumoLucroPorFuncionario(lista);
 
             if (typeof gerarArvorePastasDespesasOs === 'function') gerarArvorePastasDespesasOs();
 
@@ -8342,6 +8499,7 @@
                     '<td>' + esc(fmtData(a.entrada || a.criadoEm)) + '</td>' +
                     '<td>' + esc(nome) + '</td>' +
                     '<td>' + esc(a.carro || '—') + ' · <strong>' + esc((a.placa || '—').toUpperCase()) + '</strong></td>' +
+                    '<td>' + esc(nomeResponsavelOs(a)) + '</td>' +
                     '<td>' + esc(a.status || '—') + '</td>' +
                     '<td>' + moeda(r.bruto) + '</td>' +
                     '<td>' + moeda(r.despesas) + '</td>' +
@@ -8370,7 +8528,8 @@
                     if (aSel) {
                         var resumo = resumoLucroOs(aSel);
                         document.getElementById('hintLancarDespesaOs').innerHTML =
-                            'Bruto OS: <strong>' + moeda(resumo.bruto) +
+                            'Responsável: <strong>' + esc(nomeResponsavelOs(aSel)) +
+                            '</strong> · Bruto OS: <strong>' + moeda(resumo.bruto) +
                             '</strong> · Despesas: <strong>' + moeda(resumo.despesas) +
                             '</strong> · Lucro: <strong>' + moeda(resumo.lucro) + '</strong>';
                         renderDespesasOsDetalhe(despesaOsSelecionadaId);
@@ -8509,6 +8668,8 @@
             });
         });
         document.getElementById('buscaDespesasOs').addEventListener('input', renderDespesasOs);
+        var filtroFuncDos = document.getElementById('filtroFuncionarioDos');
+        if (filtroFuncDos) filtroFuncDos.addEventListener('change', renderDespesasOs);
         document.getElementById('btnAtualizarPastasDos').addEventListener('click', function () {
             if (typeof gerarArvorePastasDespesasOs === 'function') gerarArvorePastasDespesasOs();
             toast('Pastas de despesas atualizadas.');
@@ -8734,6 +8895,11 @@
             renderCadastroFuncionarios();
             renderPagFuncionarios();
             preencherSelectFuncionariosVenda();
+            preencherSelectResponsavelOs(
+                (document.getElementById('atResponsavelId') || {}).value || '',
+                ''
+            );
+            preencherFiltroFuncionarioDos();
         });
 
         document.getElementById('btnCancelarFunc').addEventListener('click', limparFormFuncionario);
@@ -8839,6 +9005,11 @@
             renderCadastroFuncionarios();
             renderPagFuncionarios();
             preencherSelectFuncionariosVenda();
+            preencherSelectResponsavelOs(
+                (document.getElementById('atResponsavelId') || {}).value || '',
+                ''
+            );
+            preencherFiltroFuncionarioDos();
         });
 
         document.getElementById('tabelaPagFuncionarios').addEventListener('click', function (e) {
@@ -10411,6 +10582,12 @@
             if (document.getElementById('painelOrcamento') &&
                 document.getElementById('painelOrcamento').classList.contains('active')) {
                 atualizarUIVendaPorCanal();
+            }
+            if (document.getElementById('atResponsavelId')) {
+                preencherSelectResponsavelOs(
+                    (document.getElementById('atResponsavelId') || {}).value || '',
+                    ''
+                );
             }
             aplicarIdentidadeVisual();
         }
