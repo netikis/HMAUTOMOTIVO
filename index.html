@@ -2066,7 +2066,6 @@
             <button type="button" class="menu-grupo-btn" data-toggle-grupo="interno">🔒 Modo interno</button>
             <div class="submenu-lateral">
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelDespesasOs" data-canal="interno">🧾 Despesas por OS</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelServicoSeguro" data-canal="interno">🛡️ Serviço de Seguro</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelFuncionarios" data-canal="interno">👷 Cadastro de Funcionários</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelPagFuncionarios" data-canal="interno">💰 Pagamento funcionários</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelProdutos" data-canal="interno">🏷️ Cadastro de Produtos</button>
@@ -2197,6 +2196,32 @@
             <form id="formAtendimento">
                 <input type="hidden" id="atId">
                 <div class="box">
+                    <h2>Tipo de orçamento</h2>
+                    <div class="row">
+                        <div class="col">
+                            <label for="atTipoOrcamento">Selecione</label>
+                            <select id="atTipoOrcamento">
+                                <option value="normal" selected>Orçamento normal (OS)</option>
+                                <option value="seguro">Orçamento de seguro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="hint" style="margin-top:8px" id="hintTipoOrcamento">Orçamento normal: impressão padrão. Seguro: no PDF cliente você escolhe o que exportar (franquia, mão de obra e/ou peças).</p>
+                </div>
+
+                <div class="box" id="boxSeguroOs" style="display:none;border-color:rgba(230,126,34,0.45)">
+                    <h2>Dados do seguro</h2>
+                    <div class="row">
+                        <div class="col"><label>Seguradora</label><input id="atSeguradora" placeholder="Ex: Porto Seguro, Allianz..."></div>
+                        <div class="col"><label>Nº sinistro / apólice</label><input id="atSinistro" placeholder="Opcional"></div>
+                        <div class="col"><label>Franquia (R$)</label>
+                            <input id="atFranquia" inputmode="decimal" placeholder="0,00">
+                        </div>
+                    </div>
+                    <p class="hint" style="margin-top:8px">No <strong>PDF cliente</strong> você marca o que sai: Franquia, Mão de obra e/ou Peças. Peças só aparecem se você selecionar.</p>
+                </div>
+
+                <div class="box">
                     <h2>Especificações do Veículo</h2>
                     <p class="hint" style="margin-top:0">No orçamento/OS, placa, cidade, carro e demais dados são <strong>opcionais</strong> — salve só com o que precisar.</p>
                     <div class="row">
@@ -2226,6 +2251,7 @@
                                 <option value="Agendado">📅 Agendado</option>
                                 <option value="Em andamento" selected>Em andamento</option>
                                 <option value="Aguardando peça">Aguardando peça</option>
+                                <option value="Aguardando seguradora">Aguardando seguradora</option>
                                 <option value="Pronto">Pronto</option>
                                 <option value="Entregue">Entregue</option>
                             </select>
@@ -2287,8 +2313,12 @@
                         <span class="muted">Mão de obra</span>
                         <strong id="atSubMao" style="font-size:1.1rem;color:var(--chrome)">R$ 0,00</strong>
                     </div>
+                    <div class="total-line" id="linhaFranquiaOs" style="display:none;border-top:none;padding-top:0;margin-top:0">
+                        <span class="muted">Franquia (interno)</span>
+                        <strong id="atSubFranquia" style="font-size:1.1rem;color:#e67e22">R$ 0,00</strong>
+                    </div>
                     <div class="total-line">
-                        <span>Valor total</span>
+                        <span id="labelTotalOs">Valor total</span>
                         <strong id="atTotal">R$ 0,00</strong>
                     </div>
                 </div>
@@ -2308,8 +2338,9 @@
             </div>
             <div class="box">
                 <h2>Histórico de Atendimentos</h2>
+                <p class="hint" style="margin-top:0">Já fez o orçamento? Use o seletor <strong>Normal / Seguro</strong> em cada linha para mudar o modo quando quiser (sem refazer a OS).</p>
                 <div class="toolbar">
-                    <input type="search" id="buscaAtend" class="search" placeholder="Buscar placa, cliente, carro, agendado...">
+                    <input type="search" id="buscaAtend" class="search" placeholder="Buscar placa, cliente, carro, agendado, seguro...">
                 </div>
                 <table>
                     <thead>
@@ -2892,138 +2923,6 @@
             </div>
         </section>
 
-        <!-- SERVIÇO DE SEGURO (Modo Interno) -->
-        <section id="painelServicoSeguro" class="panel">
-            <div class="box">
-                <h2>🛡️ Serviço de Seguro</h2>
-                <p class="hint">Cadastro no mesmo esquema da OS, com valor de <strong>Franquia</strong>.
-                    Impressão <strong>interna</strong>: mão de obra, peças, franquia e responsável.
-                    Impressão <strong>cliente</strong>: só o valor do serviço (sem franquia).</p>
-            </div>
-
-            <div class="grid-2">
-                <div class="box">
-                    <h2>Cliente</h2>
-                    <label for="ssClienteBusca">Buscar cadastrado ou digitar nome avulso</label>
-                    <input type="hidden" id="ssClienteId" value="">
-                    <input id="ssClienteBusca" list="listaClientesSeguro" autocomplete="off" placeholder="Digite para buscar ou escreva o nome avulso...">
-                    <datalist id="listaClientesSeguro"></datalist>
-                    <p class="hint" style="margin-top:10px" id="ssClienteStatus">Digite o nome: se existir no cadastro, aparece na busca; se não, fica como cliente avulso.</p>
-                    <div id="ssClienteCard" class="cliente-card-os" style="display:none"></div>
-                </div>
-                <div class="box">
-                    <h2>Responsável</h2>
-                    <label for="ssResponsavelId">Responsável pelo serviço (funcionário)</label>
-                    <select id="ssResponsavelId">
-                        <option value="">Selecione o funcionário...</option>
-                    </select>
-                    <p class="hint" style="margin-top:8px">Aparece na impressão interna.</p>
-                </div>
-            </div>
-
-            <form id="formServicoSeguro">
-                <input type="hidden" id="ssId">
-                <div class="box">
-                    <h2>Veículo / Serviço</h2>
-                    <div class="row">
-                        <div class="col" style="flex:2"><label>Carro (Modelo / Marca)</label><input id="ssCarro" placeholder="Ex: Toyota Corolla"></div>
-                        <div class="col"><label>Placa</label><input id="ssPlaca" maxlength="7" placeholder="ABC1D23" style="text-transform:uppercase"></div>
-                        <div class="col"><label>Cidade / UF</label><input id="ssCidadePlaca" placeholder="Ibaiti / PR"></div>
-                    </div>
-                    <div class="row" style="margin-top:10px">
-                        <div class="col"><label>Cor</label><input id="ssCor"></div>
-                        <div class="col"><label>Ano fab.</label><input id="ssAnoFabricacao" inputmode="numeric" maxlength="4"></div>
-                        <div class="col"><label>Ano modelo</label><input id="ssAnoModelo" inputmode="numeric" maxlength="4"></div>
-                        <div class="col"><label>Km</label><input id="ssKm" type="number" min="0"></div>
-                    </div>
-                    <div class="row" style="margin-top:10px">
-                        <div class="col"><label>Seguradora</label><input id="ssSeguradora" placeholder="Ex: Porto Seguro, Allianz..."></div>
-                        <div class="col"><label>Nº sinistro / apólice</label><input id="ssSinistro" placeholder="Opcional"></div>
-                        <div class="col"><label>Data entrada</label><input id="ssEntrada" type="date"></div>
-                        <div class="col"><label>Status</label>
-                            <select id="ssStatus">
-                                <option value="Em andamento" selected>Em andamento</option>
-                                <option value="Aguardando peça">Aguardando peça</option>
-                                <option value="Aguardando seguradora">Aguardando seguradora</option>
-                                <option value="Pronto">Pronto</option>
-                                <option value="Entregue">Entregue</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row" style="margin-top:10px">
-                        <div class="col"><label>Serviços / descrição</label>
-                            <textarea id="ssServicos" placeholder="Funilaria, pintura, troca de peças..."></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="box">
-                    <h2>Valores — Peças, Mão de Obra e Franquia</h2>
-                    <div class="row">
-                        <div class="col" style="flex:2"><label>Descrição peça / item</label><input id="ssItemDesc" placeholder="Ex: Para-lama dianteiro"></div>
-                        <div class="col"><label>Valor (R$)</label><input id="ssItemValor" inputmode="decimal" placeholder="0,00"></div>
-                        <div class="col" style="flex:0.7;align-self:end"><button type="button" class="btn btn-secondary" id="btnSsAddItem" style="width:100%">+ Peça</button></div>
-                    </div>
-                    <div class="row" style="margin-top:10px">
-                        <div class="col" style="flex:2"><label>Descrição mão de obra</label><input id="ssMaoDesc" placeholder="Ex: Funilaria e pintura"></div>
-                        <div class="col"><label>Valor (R$)</label><input id="ssMaoValor" inputmode="decimal" placeholder="0,00"></div>
-                        <div class="col" style="flex:0.7;align-self:end"><button type="button" class="btn btn-ok" id="btnSsAddMao" style="width:100%">+ Mão de obra</button></div>
-                    </div>
-                    <div id="listaItensSeguro" style="margin-top:12px"></div>
-                    <div class="row" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
-                        <div class="col"><label>Franquia (R$)</label>
-                            <input id="ssFranquia" inputmode="decimal" placeholder="0,00">
-                            <p class="hint" style="margin-top:6px">Valor da franquia — só na impressão interna. O cliente não vê este valor.</p>
-                        </div>
-                    </div>
-                    <div class="total-line" style="border-top:none;padding-top:8px;margin-top:8px">
-                        <span class="muted">Peças</span>
-                        <strong id="ssSubPecas" style="font-size:1.1rem;color:var(--chrome)">R$ 0,00</strong>
-                    </div>
-                    <div class="total-line" style="border-top:none;padding-top:0;margin-top:0">
-                        <span class="muted">Mão de obra</span>
-                        <strong id="ssSubMao" style="font-size:1.1rem;color:var(--chrome)">R$ 0,00</strong>
-                    </div>
-                    <div class="total-line" style="border-top:none;padding-top:0;margin-top:0">
-                        <span class="muted">Franquia (interno)</span>
-                        <strong id="ssSubFranquia" style="font-size:1.1rem;color:#e67e22">R$ 0,00</strong>
-                    </div>
-                    <div class="total-line">
-                        <span>Total serviço (cliente)</span>
-                        <strong id="ssTotalCliente">R$ 0,00</strong>
-                    </div>
-                </div>
-
-                <div class="row" style="flex-wrap:wrap;gap:8px">
-                    <button type="submit" class="btn btn-primary" id="btnSalvarSeguro">Salvar serviço de seguro</button>
-                    <button type="button" class="btn btn-pdf" id="btnPrintSeguroInterno">📄 Imprimir interno</button>
-                    <button type="button" class="btn btn-ok" id="btnPrintSeguroCliente">🖨️ Imprimir cliente</button>
-                    <button type="button" class="btn btn-secondary" id="btnLimparSeguro">Limpar formulário</button>
-                </div>
-            </form>
-
-            <div class="box" style="margin-top:16px">
-                <h2>Serviços de seguro cadastrados</h2>
-                <div class="toolbar">
-                    <input type="search" id="buscaServicoSeguro" class="search" placeholder="Buscar cliente, placa, seguradora...">
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Cliente</th>
-                            <th>Veículo / Placa</th>
-                            <th>Responsável</th>
-                            <th>Franquia</th>
-                            <th>Total (cliente)</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabelaServicoSeguro"></tbody>
-                </table>
-                <div id="listaServicoSeguroVazia" class="empty" style="display:none;margin-top:12px">Nenhum serviço de seguro cadastrado.</div>
-            </div>
-        </section>
 
         <!-- CADASTRO DE FUNCIONÁRIOS (Modo Interno — vendas internas) -->
         <section id="painelFuncionarios" class="panel">
@@ -3310,6 +3209,8 @@
             <div id="modalNotaCorpo"></div>
             <div class="modal-acoes">
                 <button type="button" class="btn btn-pdf" id="btnNotaPdf">Salvar / Imprimir PDF</button>
+                <button type="button" class="btn btn-pdf" id="btnNotaPdfInterno" style="display:none">📄 PDF interno (com franquia)</button>
+                <button type="button" class="btn btn-ok" id="btnNotaPdfCliente" style="display:none">🖨️ PDF cliente (escolher itens)</button>
                 <button type="button" class="btn btn-ok" id="btnNotaSalvarPdf">💾 Salvar PDF</button>
                 <button type="button" class="btn btn-primary" id="btnNotaEncaminhar">📤 Encaminhar PDF</button>
                 <button type="button" class="btn btn-assinar" id="btnNotaLink">Enviar nota ao cliente</button>
@@ -3354,6 +3255,32 @@
                 <button type="button" class="btn btn-ok" id="btnFotosSim" style="width:100%">📷 COM FOTOS — documento + fotos anexadas</button>
                 <button type="button" class="btn btn-secondary" id="btnFotosNao" style="width:100%">📄 SEM FOTOS — apenas o documento</button>
                 <button type="button" class="btn btn-danger" id="btnFotosCancelar" style="width:100%">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalItensPdfCliente">
+        <div class="modal-box" style="width:min(480px,100%)">
+            <h3>PDF cliente — o que exportar?</h3>
+            <p class="hint">Marque o que deve aparecer no PDF do cliente. Pode marcar 1, 2 ou os 3.</p>
+            <div style="display:flex;flex-direction:column;gap:12px;margin:14px 0">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:1.05rem">
+                    <input type="checkbox" id="chkPdfFranquia" checked style="width:20px;height:20px">
+                    Franquia
+                </label>
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:1.05rem">
+                    <input type="checkbox" id="chkPdfMao" checked style="width:20px;height:20px">
+                    Mão de obra
+                </label>
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:1.05rem">
+                    <input type="checkbox" id="chkPdfPecas" style="width:20px;height:20px">
+                    Peças
+                </label>
+            </div>
+            <p class="hint" style="margin:0">Sugestão: franquia e mão de obra marcadas; peças só se você quiser mostrar ao cliente.</p>
+            <div class="modal-acoes" style="margin-top:16px">
+                <button type="button" class="btn btn-primary" id="btnItensPdfOk" style="flex:1">Gerar PDF</button>
+                <button type="button" class="btn btn-secondary" id="btnItensPdfCancelar" style="flex:1">Cancelar</button>
             </div>
         </div>
     </div>
@@ -3412,14 +3339,12 @@
             painelPendentes: ['Contas a Receber', 'Pastas mensais · a receber'],
             painelRelatorioCaixa: ['Relatório Caixa', 'Pastas mensais · entradas · saídas · relatório geral'],
             painelDespesasOs: ['Despesas por OS', 'Pastas mensais · bruto · despesas · lucro'],
-            painelServicoSeguro: ['Serviço de Seguro', 'OS de seguro · franquia · impressão interna e cliente'],
             painelFuncionarios: ['Cadastro de Funcionários', 'Quem pode comprar no modo interno'],
             painelPagFuncionarios: ['Pagamento funcionários', 'Controle semanal interno · sem impressão'],
             painelConfig: ['Config / Empresa', 'Empresa, logo, endereço e backup']
         };
 
         var itensTemp = [];
-        var itensSeguroTemp = [];
         var carrinhoVenda = [];
         var produtoVendaSelecionado = null;
         var fotosAtuais = [];
@@ -4655,11 +4580,6 @@
                     }).catch(function () { /* offline */ });
                 }
             }
-            if (id === 'painelServicoSeguro') {
-                canalVendas = 'interno';
-                atualizarBadgeCanal();
-                prepararPainelServicoSeguro();
-            }
             if (id === 'painelFuncionarios') {
                 canalVendas = 'interno';
                 atualizarBadgeCanal();
@@ -4682,7 +4602,6 @@
 
         var PAINEIS_CANAL = {
             painelDespesasOs: true,
-            painelServicoSeguro: true,
             painelFuncionarios: true,
             painelPagFuncionarios: true,
             painelProdutos: true,
@@ -4756,7 +4675,6 @@
 
         function preencherSelectsCliente(db) {
             preencherListaClientesAt(db);
-            preencherListaClientesSeguro(db);
             var listaCli = document.getElementById('listaClientesVenda');
             if (listaCli) {
                 listaCli.innerHTML = '';
@@ -4769,19 +4687,6 @@
                 });
             }
             preencherListaProdutosVenda(db);
-        }
-
-        function preencherListaClientesSeguro(db) {
-            var lista = document.getElementById('listaClientesSeguro');
-            if (!lista) return;
-            lista.innerHTML = '';
-            (db.clientes || []).slice().sort(function (a, b) {
-                return String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR');
-            }).forEach(function (c) {
-                var opt = document.createElement('option');
-                opt.value = c.nome;
-                lista.appendChild(opt);
-            });
         }
 
         function preencherListaProdutosVenda(db) {
@@ -6109,9 +6014,40 @@
         function calcTotal() {
             var pecas = somaPorTipo('peca');
             var mao = somaPorTipo('mao');
+            var seguro = (document.getElementById('atTipoOrcamento') || {}).value === 'seguro';
+            var franquia = seguro ? (parseMoeda((document.getElementById('atFranquia') || {}).value) || 0) : 0;
             document.getElementById('atSubPecas').textContent = moeda(pecas);
             document.getElementById('atSubMao').textContent = moeda(mao);
+            var linhaF = document.getElementById('linhaFranquiaOs');
+            var subF = document.getElementById('atSubFranquia');
+            var labelT = document.getElementById('labelTotalOs');
+            if (linhaF) linhaF.style.display = seguro ? '' : 'none';
+            if (subF) subF.textContent = moeda(franquia);
+            if (labelT) labelT.textContent = seguro ? 'Total serviço (cliente)' : 'Valor total';
             document.getElementById('atTotal').textContent = moeda(pecas + mao);
+        }
+
+        function atualizarUITipoOrcamento() {
+            var tipo = (document.getElementById('atTipoOrcamento') || {}).value || 'normal';
+            var box = document.getElementById('boxSeguroOs');
+            var hint = document.getElementById('hintTipoOrcamento');
+            if (box) box.style.display = tipo === 'seguro' ? '' : 'none';
+            if (hint) {
+                hint.textContent = tipo === 'seguro'
+                    ? 'Orçamento de seguro: no PDF cliente você escolhe Franquia, Mão de obra e/ou Peças. Peças só saem se marcar.'
+                    : 'Orçamento normal: impressão padrão da OS.';
+            }
+            var st = document.getElementById('atStatus');
+            if (st && tipo === 'seguro') {
+                var tem = Array.prototype.some.call(st.options, function (o) { return o.value === 'Aguardando seguradora'; });
+                if (!tem) {
+                    var opt = document.createElement('option');
+                    opt.value = 'Aguardando seguradora';
+                    opt.textContent = 'Aguardando seguradora';
+                    st.appendChild(opt);
+                }
+            }
+            calcTotal();
         }
 
         function addLinhaValor(tipo, descId, valorId, msgVazio) {
@@ -6140,6 +6076,10 @@
             document.getElementById('atEntrada').value = hojeISO();
             document.getElementById('atStatus').value = 'Em andamento';
             document.getElementById('atAgendadoPara').value = '';
+            document.getElementById('atTipoOrcamento').value = 'normal';
+            document.getElementById('atFranquia').value = '';
+            document.getElementById('atSeguradora').value = '';
+            document.getElementById('atSinistro').value = '';
             preencherSelectResponsavelOs('', '');
             itensTemp = [];
             fotosAtuais = [];
@@ -6148,10 +6088,13 @@
             atualizarPlaca();
             atualizarStatusClienteAt();
             atualizarCampoAgendamentoUI();
+            atualizarUITipoOrcamento();
         }
 
         document.getElementById('btnLimparAt').addEventListener('click', limparAtendimento);
         document.getElementById('atStatus').addEventListener('change', atualizarCampoAgendamentoUI);
+        document.getElementById('atTipoOrcamento').addEventListener('change', atualizarUITipoOrcamento);
+        document.getElementById('atFranquia').addEventListener('input', calcTotal);
 
         document.getElementById('atClienteBusca').addEventListener('input', atualizarStatusClienteAt);
         document.getElementById('atClienteBusca').addEventListener('change', atualizarStatusClienteAt);
@@ -6175,8 +6118,13 @@
             var pecas = somaPorTipo('peca');
             var mao = somaPorTipo('mao');
             var resp = obterResponsavelOsDoForm();
+            var tipoOrc = (document.getElementById('atTipoOrcamento') || {}).value === 'seguro' ? 'seguro' : 'normal';
+            var franquia = tipoOrc === 'seguro'
+                ? (parseMoeda((document.getElementById('atFranquia') || {}).value) || 0)
+                : 0;
             var payload = {
                 id: id || uid(),
+                tipoServico: tipoOrc === 'seguro' ? 'seguro' : 'normal',
                 clienteId: resolvido.clienteId,
                 clienteNome: resolvido.clienteNome,
                 clienteAvulso: resolvido.clienteAvulso,
@@ -6197,6 +6145,9 @@
                 agendadoPara: document.getElementById('atAgendadoPara').value || '',
                 estado: document.getElementById('atEstado').value.trim(),
                 servicos: document.getElementById('atServicos').value.trim(),
+                seguradora: tipoOrc === 'seguro' ? document.getElementById('atSeguradora').value.trim() : '',
+                sinistro: tipoOrc === 'seguro' ? document.getElementById('atSinistro').value.trim() : '',
+                franquia: franquia,
                 itens: itensTemp.slice(),
                 fotos: fotosAtuais.map(function (f) {
                     return { id: f.id || uid(), data: f.data || null, url: f.url || null };
@@ -6270,10 +6221,6 @@
             var db = carregar();
             var a = db.atendimentos.find(function (x) { return x.id === id; });
             if (!a) return;
-            if (ehServicoSeguro(a)) {
-                editarServicoSeguro(id);
-                return;
-            }
             abrirPainel('painelVeiculo');
             document.getElementById('atId').value = a.id;
             document.getElementById('atClienteId').value = a.clienteId || '';
@@ -6282,6 +6229,12 @@
                 : (a.clienteNome || nomeCliente(db, a.clienteId));
             atualizarStatusClienteAt();
             preencherSelectResponsavelOs(a.responsavelId || '', a.responsavel || '');
+            document.getElementById('atTipoOrcamento').value = ehServicoSeguro(a) ? 'seguro' : 'normal';
+            document.getElementById('atSeguradora').value = a.seguradora || '';
+            document.getElementById('atSinistro').value = a.sinistro || '';
+            document.getElementById('atFranquia').value = a.franquia != null && a.franquia !== ''
+                ? String(a.franquia).replace('.', ',')
+                : '';
             document.getElementById('atCarro').value = a.carro || '';
             document.getElementById('atPlaca').value = a.placa || '';
             document.getElementById('atCidadePlaca').value = a.cidadePlaca || '';
@@ -6312,6 +6265,7 @@
             renderItens();
             carregarFotosNoForm(a.fotos);
             atualizarPlaca();
+            atualizarUITipoOrcamento();
         }
 
         function excluirAtendimento(id) {
@@ -6326,7 +6280,7 @@
         }
 
         function opcoesStatusAt(atual) {
-            var opts = ['Agendado', 'Em andamento', 'Aguardando peça', 'Pronto', 'Entregue'];
+            var opts = ['Agendado', 'Em andamento', 'Aguardando peça', 'Aguardando seguradora', 'Pronto', 'Entregue'];
             return opts.map(function (s) {
                 var label = s === 'Agendado' ? '📅 Agendado' : s;
                 return '<option value="' + s + '"' + (s === atual ? ' selected' : '') + '>' + label + '</option>';
@@ -6462,8 +6416,17 @@
             }
             return '<div class="nota-espelho" id="notaEspelhoHtml">' +
                 htmlCabecalhoNotaEmpresa(emp,
-                    '<div class="nota-sub nota-titulo-espelho">ESPELHO DE ATENDIMENTO</div>' +
-                    '<div class="nota-sub nota-registro">Registro ' + esc(fmtData(a.entrada || a.criadoEm)) +
+                    '<div class="nota-sub nota-titulo-espelho"' + (ehServicoSeguro(a) && opts.modoInternoSeguro ? ' style="color:#c0392b"' : '') + '>' +
+                    (ehServicoSeguro(a)
+                        ? (opts.modoInternoSeguro ? 'SERVIÇO DE SEGURO — USO INTERNO' : 'ORÇAMENTO / SERVIÇO DE SEGURO')
+                        : 'ESPELHO DE ATENDIMENTO') + '</div>' +
+                    '<div class="nota-sub nota-registro">' +
+                    (ehServicoSeguro(a)
+                        ? (opts.modoInternoSeguro
+                            ? 'Interno · mão de obra, peças, franquia e responsável · '
+                            : 'Documento para o cliente · itens conforme seleção · ')
+                        : '') +
+                    'Registro ' + esc(fmtData(a.entrada || a.criadoEm)) +
                     (a.id ? ' · ID ' + esc(String(a.id).slice(-6)) : '') + '</div>'
                 ) +
                 '<div class="nota-bloco compacto"><div class="tit azul">Cliente</div><div class="nota-grid nota-grid-compacta">' +
@@ -6485,19 +6448,32 @@
                 '<div class="nota-campo full"><span class="nota-label">Chassi</span><span class="nota-valor nota-chassi">' + esc((a.chassi || '—').toUpperCase()) + '</span></div>' +
                 '</div></div>' +
                 '<div class="nota-bloco compacto"><div class="tit escuro">Oficina, Chegada &amp; Serviços</div><div class="nota-grid nota-grid-compacta">' +
-                '<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' + esc(nomeResponsavelOs(a)) + '</span></div>' +
+                ((opts.modoInternoSeguro || !ehServicoSeguro(a))
+                    ? '<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' + esc(nomeResponsavelOs(a)) + '</span></div>'
+                    : '') +
                 '<div class="nota-campo"><span class="nota-label">Status</span><span class="nota-valor">' + esc(a.status || '—') +
                 (a.status === 'Agendado' && a.agendadoPara ? ' · ' + esc(fmtData(a.agendadoPara)) : '') + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Entrada</span><span class="nota-valor">' + esc(fmtData(a.entrada)) + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Saída</span><span class="nota-valor">' + esc(fmtData(a.saida)) + '</span></div>' +
                 (a.agendadoPara ? '<div class="nota-campo full"><span class="nota-label">Agendado para</span><span class="nota-valor">' + esc(fmtData(a.agendadoPara)) + '</span></div>' : '') +
+                (ehServicoSeguro(a) && a.seguradora ? '<div class="nota-campo"><span class="nota-label">Seguradora</span><span class="nota-valor">' + esc(a.seguradora) + '</span></div>' : '') +
+                (ehServicoSeguro(a) && opts.modoInternoSeguro && a.sinistro ? '<div class="nota-campo"><span class="nota-label">Sinistro</span><span class="nota-valor">' + esc(a.sinistro) + '</span></div>' : '') +
                 '<div class="nota-campo full"><span class="nota-label">Estado de chegada</span><span class="nota-valor">' + esc(a.estado || 'Sem observações.') + '</span></div>' +
                 '<div class="nota-campo full"><span class="nota-label">Serviços</span><span class="nota-valor" style="color:#000;font-weight:800">' + esc(a.servicos || '—') + '</span></div>' +
                 '</div></div>' +
                 blocoFotos +
-                '<div class="nota-bloco compacto"><div class="tit verde">Valores</div><div class="nota-valores-pad compacto">' + htmlItensNota(a.itens) + '</div></div>' +
+                '<div class="nota-bloco compacto"><div class="tit verde">Valores</div><div class="nota-valores-pad compacto">' +
+                (ehServicoSeguro(a)
+                    ? htmlItensNotaSeguro(a.itens, {
+                        interno: !!opts.modoInternoSeguro,
+                        franquia: a.franquia,
+                        exportItens: opts.exportItens || null
+                    })
+                    : htmlItensNota(a.itens)) +
+                '</div></div>' +
                 '<div class="nota-sigs compacto">' +
-                '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Assinatura do Responsável</div></div>' +
+                '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">' +
+                (opts.modoInternoSeguro ? 'Responsável / Funcionário' : 'Assinatura do Responsável') + '</div></div>' +
                 '<div class="nota-sig"><div class="nota-sig-espaco">' + sigEspaco + '</div><div class="nota-sig-base">' + sigBase + '</div></div>' +
                 '</div></div>';
         }
@@ -6665,12 +6641,17 @@
             var a = db.atendimentos.find(function (x) { return x.id === id; });
             if (!a) { toast('Atendimento não encontrado.'); return; }
             atendimentoNotaAtual = a;
-            var titulo = 'Nota — ' + (a.placa || '').toUpperCase() + ' · ' + nomeAtendimento(db, a);
-            var html = htmlNotaEspelho(db, a, { incluirFotos: true }) +
+            var seguro = ehServicoSeguro(a);
+            var titulo = (seguro ? 'Seguro — ' : 'Nota — ') + (a.placa || '').toUpperCase() + ' · ' + nomeAtendimento(db, a);
+            /* Preview: interno se seguro (mostra franquia); PDF cliente usa botão específico */
+            var html = htmlNotaEspelho(db, a, { incluirFotos: true, modoInternoSeguro: seguro }) +
                 (atendimentoTemFotos(a)
                     ? '<p class="hint" style="margin-top:10px;color:#0d3d6e">Fotos acima são internas. Em <strong>Enviar nota ao cliente</strong> você escolhe COM FOTOS ou SEM FOTOS.</p>'
+                    : '') +
+                (seguro
+                    ? '<p class="hint" style="margin-top:8px;color:#c0392b">Orçamento de seguro: <strong>PDF interno</strong> mostra tudo. <strong>PDF cliente</strong> pergunta o que exportar (Franquia, Mão de obra, Peças).</p>'
                     : '');
-            _htmlNotaImpressaoAtual = htmlNotaEspelho(db, a, { incluirFotos: true });
+            _htmlNotaImpressaoAtual = htmlNotaEspelho(db, a, { incluirFotos: true, modoInternoSeguro: seguro });
             _tituloNotaImpressao = titulo;
 
             if (ehCelular()) {
@@ -6681,6 +6662,9 @@
             document.getElementById('modalNotaTitulo').textContent = titulo;
             document.getElementById('modalNotaCorpo').innerHTML = html;
             document.getElementById('btnNotaExportFotos').style.display = atendimentoTemFotos(a) ? '' : 'none';
+            document.getElementById('btnNotaPdf').style.display = seguro ? 'none' : '';
+            document.getElementById('btnNotaPdfInterno').style.display = seguro ? '' : 'none';
+            document.getElementById('btnNotaPdfCliente').style.display = seguro ? '' : 'none';
             document.getElementById('modalNota').classList.add('aberto');
         }
 
@@ -6689,29 +6673,108 @@
             fecharViewerPdf();
         }
 
-        async function imprimirNotaPdf(id) {
+        var _itensPdfClienteResolve = null;
+        function perguntarItensPdfCliente() {
+            return new Promise(function (resolve) {
+                _itensPdfClienteResolve = resolve;
+                var chkF = document.getElementById('chkPdfFranquia');
+                var chkM = document.getElementById('chkPdfMao');
+                var chkP = document.getElementById('chkPdfPecas');
+                if (chkF) chkF.checked = true;
+                if (chkM) chkM.checked = true;
+                if (chkP) chkP.checked = false;
+                document.getElementById('modalItensPdfCliente').classList.add('aberto');
+            });
+        }
+        function fecharModalItensPdfCliente(ok) {
+            document.getElementById('modalItensPdfCliente').classList.remove('aberto');
+            if (!_itensPdfClienteResolve) return;
+            var r = _itensPdfClienteResolve;
+            _itensPdfClienteResolve = null;
+            if (!ok) {
+                r(null);
+                return;
+            }
+            var exportItens = {
+                franquia: !!(document.getElementById('chkPdfFranquia') || {}).checked,
+                mao: !!(document.getElementById('chkPdfMao') || {}).checked,
+                pecas: !!(document.getElementById('chkPdfPecas') || {}).checked
+            };
+            if (!exportItens.franquia && !exportItens.mao && !exportItens.pecas) {
+                toast('Marque pelo menos um item: Franquia, Mão de obra ou Peças.');
+                _itensPdfClienteResolve = r;
+                document.getElementById('modalItensPdfCliente').classList.add('aberto');
+                return;
+            }
+            r(exportItens);
+        }
+        document.getElementById('btnItensPdfOk').addEventListener('click', function () {
+            fecharModalItensPdfCliente(true);
+        });
+        document.getElementById('btnItensPdfCancelar').addEventListener('click', function () {
+            fecharModalItensPdfCliente(false);
+        });
+        document.getElementById('modalItensPdfCliente').addEventListener('click', function (e) {
+            if (e.target.id === 'modalItensPdfCliente') fecharModalItensPdfCliente(false);
+        });
+
+        async function imprimirNotaPdf(id, opts) {
+            opts = opts || {};
             sincronizarAssinaturasNoDb();
             var db = carregar();
             var a = id ? db.atendimentos.find(function (x) { return x.id === id; }) : atendimentoNotaAtual;
             if (!a) { toast('Selecione um atendimento.'); return; }
             atendimentoNotaAtual = a;
-            var comFotos = await perguntarEnviarComFotos(a, { forcarPergunta: true });
-            if (comFotos === null) return;
-            if (comFotos) {
-                a = await garantirFotosCarregadas(a);
-                var okFoto = (a.fotos || []).some(function (f) { return f && (f.data || f.url); });
-                if (!okFoto) {
-                    toast('Não há fotos disponíveis — imprimindo só o documento.');
-                    comFotos = false;
+            var seguro = ehServicoSeguro(a);
+            var modoInterno = !!opts.modoInternoSeguro;
+            var exportItens = opts.exportItens || null;
+
+            if (seguro && opts.modoInternoSeguro == null) {
+                var escolha = prompt(
+                    'Orçamento de seguro — tipo de impressão:\n\n' +
+                    '1 = Cliente (escolher Franquia / Mão de obra / Peças)\n' +
+                    '2 = Interno (tudo + responsável)\n\n' +
+                    'Digite 1 ou 2:',
+                    '1'
+                );
+                if (escolha == null) return;
+                modoInterno = String(escolha).trim() === '2';
+            }
+
+            if (seguro && !modoInterno && !exportItens) {
+                exportItens = await perguntarItensPdfCliente();
+                if (!exportItens) return;
+            }
+            if (seguro && modoInterno) {
+                exportItens = { franquia: true, mao: true, pecas: true };
+            }
+
+            var comFotos = false;
+            if (!modoInterno) {
+                comFotos = await perguntarEnviarComFotos(a, { forcarPergunta: true });
+                if (comFotos === null) return;
+                if (comFotos) {
+                    a = await garantirFotosCarregadas(a);
+                    var okFoto = (a.fotos || []).some(function (f) { return f && (f.data || f.url); });
+                    if (!okFoto) {
+                        toast('Não há fotos disponíveis — imprimindo só o documento.');
+                        comFotos = false;
+                    }
                 }
             }
-            var html = htmlNotaEspelho(db, a, { incluirFotos: !!comFotos });
-            var titulo = 'Espelho — ' + (a.placa || '').toUpperCase() + ' · ' + nomeAtendimento(db, a);
+            var html = htmlNotaEspelho(db, a, {
+                incluirFotos: !!comFotos,
+                modoInternoSeguro: seguro && modoInterno,
+                exportItens: exportItens
+            });
+            var titulo = (seguro
+                ? (modoInterno ? 'Seguro interno — ' : 'Seguro cliente — ')
+                : 'Espelho — ') +
+                (a.placa || '').toUpperCase() + ' · ' + nomeAtendimento(db, a);
             _htmlNotaImpressaoAtual = html;
             _tituloNotaImpressao = titulo;
 
             if (ehCelular()) {
-                /* No celular: abre viewer legível; usuário escolhe Imprimir / Encaminhar / Fechar */
                 fecharNota();
                 abrirViewerPdf(html, titulo);
                 return;
@@ -6747,8 +6810,11 @@
                 agendadoPara: a.agendadoPara || '',
                 estado: a.estado || '',
                 servicos: a.servicos || '',
+                tipoServico: a.tipoServico || 'normal',
+                seguradora: a.seguradora || '',
                 itens: a.itens || [],
                 total: a.total || 0,
+                franquia: 0,
                 empresa: emp.nome || 'HM Centro Automotivo',
                 empresaEndereco: enderecoCompleto(emp),
                 empresaTelefone: emp.telefone || '',
@@ -6873,10 +6939,9 @@
             var db = carregar();
             var q = (document.getElementById('buscaAtend').value || '').toLowerCase().trim();
             var lista = db.atendimentos.slice().filter(function (a) {
-                if (a && a.tipoServico === 'seguro') return false;
                 if (!q) return true;
                 var nome = nomeAtendimento(db, a);
-                return [nome, a.carro, a.placa, a.status, a.servicos, a.agendadoPara, fmtData(a.agendadoPara)]
+                return [nome, a.carro, a.placa, a.status, a.servicos, a.agendadoPara, fmtData(a.agendadoPara), a.tipoServico, a.seguradora]
                     .join(' ').toLowerCase().indexOf(q) > -1;
             }).sort(function (a, b) {
                 var aAg = (a.status || '') === 'Agendado' ? 0 : 1;
@@ -6924,6 +6989,9 @@
                 var tagAvulso = a.clienteAvulso
                     ? ' <span style="font-size:0.68rem;font-weight:700;color:#8fe0b8">AVULSO</span>'
                     : '';
+                var tagSeguro = ehServicoSeguro(a)
+                    ? ' <span style="font-size:0.68rem;font-weight:700;color:#e67e22">SEGURO</span>'
+                    : '';
                 var statusAtual = a.status || 'Em andamento';
                 var ehAgendado = statusAtual === 'Agendado';
                 var badgeAg = ehAgendado
@@ -6944,7 +7012,7 @@
                     '<td>' + esc(fmtData(ehAgendado && a.agendadoPara ? a.agendadoPara : (a.entrada || a.criadoEm))) +
                     (ehAgendado ? '<div style="font-size:0.68rem;color:#f1c40f;font-weight:700">agendado</div>' : '') +
                     '</td>' +
-                    '<td>' + badgeAg + esc(nome) + tagAvulso + badgeAssinatura(a) + badgePago + '</td>' +
+                    '<td>' + badgeAg + esc(nome) + tagAvulso + tagSeguro + badgeAssinatura(a) + badgePago + '</td>' +
                     '<td>' + esc(a.carro || '—') + '</td>' +
                     '<td>' + esc(a.placa || '—') + '</td>' +
                     '<td>' + moeda(a.total) + '</td>' +
@@ -6952,6 +7020,11 @@
                     '<select class="status-at-select' + (ehAgendado ? ' status-agendado' : '') +
                     '" data-st="' + a.id + '" title="Alterar status" style="min-width:150px;padding:6px 8px;font-size:0.75rem;font-weight:700">' +
                     opcoesStatusAt(statusAtual) +
+                    '</select>' +
+                    '<select data-tipo-orc="' + a.id + '" title="Tipo de orçamento" style="min-width:130px;padding:6px 8px;font-size:0.75rem;font-weight:700;' +
+                    (ehServicoSeguro(a) ? 'border-color:#e67e22;color:#e67e22' : '') + '">' +
+                    '<option value="normal"' + (!ehServicoSeguro(a) ? ' selected' : '') + '>📄 Normal</option>' +
+                    '<option value="seguro"' + (ehServicoSeguro(a) ? ' selected' : '') + '>🛡️ Seguro</option>' +
                     '</select>' +
                     btnReceber +
                     '<button type="button" class="btn btn-ver" data-ver="' + a.id + '">Ver nota</button>' +
@@ -6968,6 +7041,11 @@
             tb.querySelectorAll('[data-st]').forEach(function (sel) {
                 sel.addEventListener('change', function () {
                     alterarStatusAtendimento(sel.getAttribute('data-st'), sel.value);
+                });
+            });
+            tb.querySelectorAll('[data-tipo-orc]').forEach(function (sel) {
+                sel.addEventListener('change', function () {
+                    alterarTipoOrcamentoAtendimento(sel.getAttribute('data-tipo-orc'), sel.value);
                 });
             });
             tb.querySelectorAll('[data-rec]').forEach(function (b) {
@@ -6995,6 +7073,71 @@
             tb.querySelectorAll('[data-ex]').forEach(function (b) {
                 b.addEventListener('click', function () { excluirAtendimento(b.getAttribute('data-ex')); });
             });
+        }
+
+        function alterarTipoOrcamentoAtendimento(id, novoTipo) {
+            var db = carregar();
+            var i = db.atendimentos.findIndex(function (a) { return a.id === id; });
+            if (i < 0) {
+                toast('Atendimento não encontrado.');
+                renderHistorico();
+                return;
+            }
+            var a = db.atendimentos[i];
+            var paraSeguro = String(novoTipo || '') === 'seguro';
+            var atualSeguro = ehServicoSeguro(a);
+            if (paraSeguro === atualSeguro) {
+                renderHistorico();
+                return;
+            }
+            if (paraSeguro) {
+                var franquiaAtual = Number(a.franquia) || 0;
+                var sugestao = franquiaAtual > 0
+                    ? String(franquiaAtual).replace('.', ',')
+                    : '0';
+                var dig = prompt(
+                    'Trocar para ORÇAMENTO DE SEGURO.\n\nInforme a franquia (R$). Deixe 0 se ainda não souber:',
+                    sugestao
+                );
+                if (dig === null) {
+                    renderHistorico();
+                    return;
+                }
+                var franquia = parseMoeda(dig);
+                if (isNaN(franquia) || franquia < 0) franquia = 0;
+                a.tipoServico = 'seguro';
+                a.franquia = franquia;
+                if (!a.seguradora) {
+                    var seg = prompt('Seguradora (opcional):', a.seguradora || '');
+                    if (seg !== null) a.seguradora = String(seg || '').trim();
+                }
+                toast('Orçamento marcado como SEGURO' + (franquia > 0 ? ' · franquia ' + moeda(franquia) : '') + '.');
+            } else {
+                if (!confirm('Trocar para ORÇAMENTO NORMAL?\nA franquia deixa de aparecer na impressão do cliente (fica só no histórico interno se já existir).')) {
+                    renderHistorico();
+                    return;
+                }
+                a.tipoServico = 'normal';
+                toast('Orçamento marcado como NORMAL.');
+            }
+            a.atualizadoEm = new Date().toISOString();
+            db.atendimentos[i] = a;
+            salvar(db);
+            if (usuarioNuvemLogado()) {
+                enviarAtendimentoNuvem(a).catch(function () { /* offline */ });
+            }
+            /* Se estiver aberto no formulário, sincroniza o seletor */
+            if (document.getElementById('atId').value === id) {
+                document.getElementById('atTipoOrcamento').value = paraSeguro ? 'seguro' : 'normal';
+                if (paraSeguro) {
+                    document.getElementById('atFranquia').value = a.franquia
+                        ? String(a.franquia).replace('.', ',')
+                        : '';
+                    document.getElementById('atSeguradora').value = a.seguradora || '';
+                }
+                atualizarUITipoOrcamento();
+            }
+            renderHistorico();
         }
 
         /* ---------- Receber OS (Histórico → Caixa oficial ou Interno) ---------- */
@@ -7162,6 +7305,12 @@
         });
         document.getElementById('btnNotaPdf').addEventListener('click', function () {
             if (atendimentoNotaAtual) imprimirNotaPdf(atendimentoNotaAtual.id);
+        });
+        document.getElementById('btnNotaPdfInterno').addEventListener('click', function () {
+            if (atendimentoNotaAtual) imprimirNotaPdf(atendimentoNotaAtual.id, { modoInternoSeguro: true });
+        });
+        document.getElementById('btnNotaPdfCliente').addEventListener('click', function () {
+            if (atendimentoNotaAtual) imprimirNotaPdf(atendimentoNotaAtual.id, { modoInternoSeguro: false });
         });
         document.getElementById('btnNotaEncaminhar').addEventListener('click', function () {
             encaminharNotaAtual();
@@ -8378,439 +8527,74 @@
             });
         }
 
-        /* ---------- Serviço de Seguro (Modo Interno) ---------- */
+                /* ---------- Serviço de Seguro (integrado na OS) ---------- */
         function ehServicoSeguro(a) {
             return !!(a && a.tipoServico === 'seguro');
-        }
-
-        function somaItensSeguroPorTipo(tipo) {
-            return itensSeguroTemp.reduce(function (s, it) {
-                return s + ((it.tipo || 'peca') === tipo ? (Number(it.valor) || 0) : 0);
-            }, 0);
-        }
-
-        function valorFranquiaSeguroForm() {
-            return parseMoeda((document.getElementById('ssFranquia') || {}).value) || 0;
-        }
-
-        function calcTotalSeguro() {
-            var pecas = somaItensSeguroPorTipo('peca');
-            var mao = somaItensSeguroPorTipo('mao');
-            var franquia = valorFranquiaSeguroForm();
-            var elP = document.getElementById('ssSubPecas');
-            var elM = document.getElementById('ssSubMao');
-            var elF = document.getElementById('ssSubFranquia');
-            var elT = document.getElementById('ssTotalCliente');
-            if (elP) elP.textContent = moeda(pecas);
-            if (elM) elM.textContent = moeda(mao);
-            if (elF) elF.textContent = moeda(franquia);
-            if (elT) elT.textContent = moeda(pecas + mao);
-        }
-
-        function renderItensSeguro() {
-            var box = document.getElementById('listaItensSeguro');
-            if (!box) return;
-            if (!itensSeguroTemp.length) {
-                box.innerHTML = '<p class="muted">Nenhuma peça ou mão de obra adicionada.</p>';
-            } else {
-                box.innerHTML = itensSeguroTemp.map(function (it, idx) {
-                    var tipo = it.tipo || 'peca';
-                    var tag = tipo === 'mao'
-                        ? '<span style="display:inline-block;margin-right:8px;padding:2px 8px;border-radius:999px;font-size:0.7rem;font-weight:700;background:rgba(47,158,107,0.2);color:#8fe0b8;border:1px solid rgba(47,158,107,0.45)">MÃO DE OBRA</span>'
-                        : '<span style="display:inline-block;margin-right:8px;padding:2px 8px;border-radius:999px;font-size:0.7rem;font-weight:700;background:rgba(61,160,232,0.15);color:#9fd3ff;border:1px solid rgba(61,160,232,0.4)">PEÇA</span>';
-                    return '<div class="row" style="margin-bottom:6px;align-items:center">' +
-                        '<div class="col" style="flex:2">' + tag + esc(it.desc) + '</div>' +
-                        '<div class="col">' + moeda(it.valor) + '</div>' +
-                        '<div class="col" style="flex:0.5"><button type="button" class="btn btn-danger" data-ss-rm="' + idx + '">×</button></div>' +
-                        '</div>';
-                }).join('');
-                box.querySelectorAll('[data-ss-rm]').forEach(function (b) {
-                    b.addEventListener('click', function () {
-                        itensSeguroTemp.splice(Number(b.getAttribute('data-ss-rm')), 1);
-                        renderItensSeguro();
-                    });
-                });
-            }
-            calcTotalSeguro();
-        }
-
-        function addLinhaValorSeguro(tipo, descId, valorId, msgVazio) {
-            var desc = document.getElementById(descId).value.trim();
-            var valor = parseMoeda(document.getElementById(valorId).value);
-            if (!desc) { toast(msgVazio); return; }
-            itensSeguroTemp.push({ tipo: tipo, desc: desc, valor: valor });
-            document.getElementById(descId).value = '';
-            document.getElementById(valorId).value = '';
-            renderItensSeguro();
-        }
-
-        function atualizarStatusClienteSeguro() {
-            var db = carregarMain();
-            var texto = (document.getElementById('ssClienteBusca') || {}).value;
-            texto = String(texto || '').trim();
-            var status = document.getElementById('ssClienteStatus');
-            var hid = document.getElementById('ssClienteId');
-            var card = document.getElementById('ssClienteCard');
-            if (!status || !hid || !card) return;
-            if (!texto) {
-                hid.value = '';
-                status.innerHTML = 'Digite o nome: se existir no cadastro, aparece na busca; se não, fica como cliente avulso.';
-                card.style.display = 'none';
-                card.innerHTML = '';
-                return;
-            }
-            var r = resolverClienteAtendimento(db, texto);
-            if (!r.clienteAvulso) {
-                hid.value = r.clienteId;
-                status.innerHTML = '<span style="color:#8fe0b8;font-weight:700">Cliente cadastrado</span> — dados do cadastro carregados abaixo.';
-                card.innerHTML = htmlCardClienteOs(snapshotClienteCadastro(db, r));
-                card.style.display = '';
-            } else {
-                hid.value = '';
-                status.innerHTML = '<span style="color:#9fd3ff;font-weight:700">Cliente avulso</span> — será salvo só com este nome.';
-                card.style.display = 'none';
-                card.innerHTML = '';
-            }
-        }
-
-        function limparServicoSeguro() {
-            var form = document.getElementById('formServicoSeguro');
-            if (form) form.reset();
-            document.getElementById('ssId').value = '';
-            document.getElementById('ssClienteId').value = '';
-            document.getElementById('ssClienteBusca').value = '';
-            document.getElementById('ssEntrada').value = hojeISO();
-            document.getElementById('ssStatus').value = 'Em andamento';
-            document.getElementById('ssFranquia').value = '';
-            preencherSelectResponsavelOs('', '', 'ssResponsavelId');
-            itensSeguroTemp = [];
-            renderItensSeguro();
-            atualizarStatusClienteSeguro();
-        }
-
-        function prepararPainelServicoSeguro() {
-            preencherListaClientesSeguro(carregarMain());
-            preencherSelectResponsavelOs(
-                (document.getElementById('ssResponsavelId') || {}).value || '',
-                '',
-                'ssResponsavelId'
-            );
-            if (!document.getElementById('ssEntrada').value) {
-                document.getElementById('ssEntrada').value = hojeISO();
-            }
-            renderItensSeguro();
-            renderListaServicosSeguro();
-        }
-
-        function montarPayloadServicoSeguro() {
-            var main = carregarMain();
-            var resolvido = resolverClienteAtendimento(main, document.getElementById('ssClienteBusca').value);
-            if (!resolvido.ok) {
-                toast('Informe pelo menos o nome do cliente.');
-                return null;
-            }
-            var resp = obterResponsavelOsDoForm('ssResponsavelId');
-            var pecas = somaItensSeguroPorTipo('peca');
-            var mao = somaItensSeguroPorTipo('mao');
-            var franquia = valorFranquiaSeguroForm();
-            var id = document.getElementById('ssId').value;
-            return {
-                id: id || uid(),
-                tipoServico: 'seguro',
-                clienteId: resolvido.clienteId,
-                clienteNome: resolvido.clienteNome,
-                clienteAvulso: resolvido.clienteAvulso,
-                clienteCadastro: snapshotClienteCadastro(main, resolvido),
-                responsavelId: resp.responsavelId,
-                responsavel: resp.responsavel,
-                carro: document.getElementById('ssCarro').value.trim(),
-                placa: (document.getElementById('ssPlaca').value || '').toUpperCase().trim(),
-                cidadePlaca: document.getElementById('ssCidadePlaca').value.trim(),
-                cor: document.getElementById('ssCor').value.trim(),
-                anoFabricacao: document.getElementById('ssAnoFabricacao').value.trim(),
-                anoModelo: document.getElementById('ssAnoModelo').value.trim(),
-                km: document.getElementById('ssKm').value,
-                seguradora: document.getElementById('ssSeguradora').value.trim(),
-                sinistro: document.getElementById('ssSinistro').value.trim(),
-                entrada: document.getElementById('ssEntrada').value,
-                saida: '',
-                status: document.getElementById('ssStatus').value,
-                servicos: document.getElementById('ssServicos').value.trim(),
-                itens: itensSeguroTemp.slice(),
-                franquia: franquia,
-                maoObra: mao,
-                totalPecas: pecas,
-                total: pecas + mao,
-                fotos: [],
-                atualizadoEm: new Date().toISOString()
-            };
-        }
-
-        async function salvarServicoSeguro(e) {
-            if (e) e.preventDefault();
-            var payload = montarPayloadServicoSeguro();
-            if (!payload) return;
-            var id = document.getElementById('ssId').value;
-            var db = carregarMain();
-            if (id) {
-                var i = db.atendimentos.findIndex(function (a) { return a.id === id; });
-                if (i >= 0) {
-                    payload.criadoEm = db.atendimentos[i].criadoEm || payload.atualizadoEm;
-                    db.atendimentos[i] = Object.assign({}, db.atendimentos[i], payload);
-                } else {
-                    payload.criadoEm = payload.atualizadoEm;
-                    db.atendimentos.push(payload);
-                }
-            } else {
-                payload.criadoEm = payload.atualizadoEm;
-                db.atendimentos.push(payload);
-            }
-            limparExcluido(db, 'atendimentos', payload.id);
-            salvarMain(db);
-            agendarSyncAutomatico('salvar');
-
-            if (usuarioNuvemLogado()) {
-                try {
-                    await enviarAtendimentoNuvem(payload);
-                } catch (err) { /* offline */ }
-            }
-
-            document.getElementById('ssId').value = payload.id;
-            toast('Serviço de seguro salvo.');
-            renderListaServicosSeguro();
-            renderHistorico();
-            atualizarKPIs(carregar());
-        }
-
-        function editarServicoSeguro(id) {
-            var db = carregarMain();
-            var a = (db.atendimentos || []).find(function (x) { return x.id === id && ehServicoSeguro(x); });
-            if (!a) {
-                toast('Serviço de seguro não encontrado.');
-                return;
-            }
-            abrirPainel('painelServicoSeguro');
-            document.getElementById('ssId').value = a.id;
-            document.getElementById('ssClienteId').value = a.clienteId || '';
-            document.getElementById('ssClienteBusca').value = a.clienteAvulso
-                ? (a.clienteNome || '')
-                : (a.clienteNome || nomeCliente(db, a.clienteId));
-            atualizarStatusClienteSeguro();
-            preencherSelectResponsavelOs(a.responsavelId || '', a.responsavel || '', 'ssResponsavelId');
-            document.getElementById('ssCarro').value = a.carro || '';
-            document.getElementById('ssPlaca').value = a.placa || '';
-            document.getElementById('ssCidadePlaca').value = a.cidadePlaca || '';
-            document.getElementById('ssCor').value = a.cor || '';
-            document.getElementById('ssAnoFabricacao').value = a.anoFabricacao || '';
-            document.getElementById('ssAnoModelo').value = a.anoModelo || '';
-            document.getElementById('ssKm').value = a.km || '';
-            document.getElementById('ssSeguradora').value = a.seguradora || '';
-            document.getElementById('ssSinistro').value = a.sinistro || '';
-            document.getElementById('ssEntrada').value = a.entrada || '';
-            document.getElementById('ssStatus').value = a.status || 'Em andamento';
-            document.getElementById('ssServicos').value = a.servicos || '';
-            document.getElementById('ssFranquia').value = a.franquia != null && a.franquia !== ''
-                ? String(a.franquia).replace('.', ',')
-                : '';
-            itensSeguroTemp = (a.itens || []).map(function (it) {
-                return { tipo: it.tipo || 'peca', desc: it.desc || '', valor: Number(it.valor) || 0 };
-            });
-            renderItensSeguro();
-            toast('Serviço de seguro carregado para edição.');
-        }
-
-        function obterServicoSeguroAtual() {
-            var id = document.getElementById('ssId').value;
-            if (id) {
-                var db = carregarMain();
-                var a = (db.atendimentos || []).find(function (x) { return x.id === id && ehServicoSeguro(x); });
-                if (a) return a;
-            }
-            return montarPayloadServicoSeguro();
         }
 
         function htmlItensNotaSeguro(itens, opts) {
             opts = opts || {};
             var lista = itens || [];
-            var pecas = lista.reduce(function (s, it) {
-                return s + ((it.tipo || 'peca') === 'peca' ? (Number(it.valor) || 0) : 0);
-            }, 0);
-            var mao = lista.reduce(function (s, it) {
-                return s + (it.tipo === 'mao' ? (Number(it.valor) || 0) : 0);
-            }, 0);
             var franquia = Number(opts.franquia) || 0;
             var interno = !!opts.interno;
-            if (!lista.length && !(interno && franquia > 0)) {
-                return '<p style="color:#000;font-size:0.85rem;">Sem itens lançados.</p>';
+            var exp = opts.exportItens;
+            /* Interno: sempre tudo. Cliente: só o que foi marcado no aviso. */
+            var showPecas = interno || !exp || !!exp.pecas;
+            var showMao = interno || !exp || !!exp.mao;
+            var showFranquia = interno || !exp || !!exp.franquia;
+
+            var pecasLista = showPecas
+                ? lista.filter(function (it) { return (it.tipo || 'peca') === 'peca'; })
+                : [];
+            var maoLista = showMao
+                ? lista.filter(function (it) { return it.tipo === 'mao'; })
+                : [];
+            var pecas = pecasLista.reduce(function (s, it) { return s + (Number(it.valor) || 0); }, 0);
+            var mao = maoLista.reduce(function (s, it) { return s + (Number(it.valor) || 0); }, 0);
+            var franquiaShow = showFranquia ? franquia : 0;
+
+            if (!pecasLista.length && !maoLista.length && !(franquiaShow > 0)) {
+                return '<p style="color:#000;font-size:0.85rem;">Nenhum item selecionado para este PDF.</p>';
             }
-            var rows = lista.map(function (it) {
-                var tipo = (it.tipo === 'mao') ? 'Mão de obra' : 'Peça';
-                return '<tr><td>' + esc(tipo) + '</td><td>' + esc(it.desc || '') + '</td><td>' + moeda(it.valor) + '</td></tr>';
-            }).join('');
-            if (interno && franquia > 0) {
-                rows += '<tr><td>Franquia</td><td>Franquia do seguro</td><td>' + moeda(franquia) + '</td></tr>';
+
+            var rows = '';
+            pecasLista.forEach(function (it) {
+                rows += '<tr><td>Peça</td><td>' + esc(it.desc || '') + '</td><td>' + moeda(it.valor) + '</td></tr>';
+            });
+            maoLista.forEach(function (it) {
+                rows += '<tr><td>Mão de obra</td><td>' + esc(it.desc || '') + '</td><td>' + moeda(it.valor) + '</td></tr>';
+            });
+            if (franquiaShow > 0) {
+                rows += '<tr><td>Franquia</td><td>Franquia do seguro</td><td>' + moeda(franquiaShow) + '</td></tr>';
             }
+
             var html = '<table class="nota-itens compacta"><thead><tr><th>Tipo</th><th>Descrição</th><th>Valor</th></tr></thead><tbody>' +
                 rows + '</tbody></table>';
+
+            var partesSub = [];
+            if (showPecas) partesSub.push('Peças: <strong>' + moeda(pecas) + '</strong>');
+            if (showMao) partesSub.push('Mão de obra: <strong>' + moeda(mao) + '</strong>');
+            if (showFranquia) partesSub.push('Franquia: <strong>' + moeda(franquiaShow) + '</strong>');
+            if (partesSub.length) {
+                html += '<div class="nota-subtotais compacto">' + partesSub.join(' · ') + '</div>';
+            }
+            var totalVisivel = pecas + mao + franquiaShow;
+            html += '<div class="nota-total compacto">Total: ' + moeda(totalVisivel) + '</div>';
             if (interno) {
-                html += '<div class="nota-subtotais compacto">Peças: <strong>' + moeda(pecas) +
-                    '</strong> · Mão de obra: <strong>' + moeda(mao) +
-                    '</strong> · Franquia: <strong>' + moeda(franquia) + '</strong></div>' +
-                    '<div class="nota-total compacto">Total serviço (cliente): ' + moeda(pecas + mao) + '</div>' +
-                    (franquia > 0 ? '<div class="nota-subtotais compacto" style="margin-top:4px">Franquia (controle interno — não vai ao cliente): <strong>' + moeda(franquia) + '</strong></div>' : '');
-            } else {
-                html += '<div class="nota-subtotais compacto">Peças: <strong>' + moeda(pecas) +
-                    '</strong> · Mão de obra: <strong>' + moeda(mao) + '</strong></div>' +
-                    '<div class="nota-total compacto">Total: ' + moeda(pecas + mao) + '</div>';
+                var pecasAll = lista.reduce(function (s, it) {
+                    return s + ((it.tipo || 'peca') === 'peca' ? (Number(it.valor) || 0) : 0);
+                }, 0);
+                var maoAll = lista.reduce(function (s, it) {
+                    return s + (it.tipo === 'mao' ? (Number(it.valor) || 0) : 0);
+                }, 0);
+                html += '<div class="nota-subtotais compacto" style="margin-top:4px">Total serviço (peças + mão, sem franquia): <strong>' +
+                    moeda(pecasAll + maoAll) + '</strong></div>';
             }
             return html;
         }
 
-        function htmlNotaServicoSeguro(db, a, opts) {
-            opts = opts || {};
-            var interno = !!opts.interno;
-            var emp = getEmpresa(db);
-            var cad = dadosClienteDoAtendimento(db, a);
-            var nome = cad.nome || nomeAtendimento(db, a);
-            var titulo = interno
-                ? 'SERVIÇO DE SEGURO — USO INTERNO'
-                : 'ORÇAMENTO / SERVIÇO DE SEGURO';
-            var sub = interno
-                ? 'Interno · mão de obra, peças, franquia e responsável'
-                : 'Documento para o cliente · sem valor de franquia';
-            var blocoResp = interno
-                ? ('<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' +
-                    esc(nomeResponsavelOs(a)) + '</span></div>')
-                : '';
-            return '<div class="nota-espelho" id="notaServicoSeguro">' +
-                htmlCabecalhoNotaEmpresa(emp,
-                    '<div class="nota-sub nota-titulo-espelho"' + (interno ? ' style="color:#c0392b"' : '') + '>' + titulo + '</div>' +
-                    '<div class="nota-sub nota-registro">' + esc(sub) + ' · ' +
-                    esc(fmtData(a.entrada || a.criadoEm)) +
-                    (a.id ? ' · ID ' + esc(String(a.id).slice(-6)) : '') + '</div>'
-                ) +
-                '<div class="nota-bloco compacto"><div class="tit azul">Cliente / Veículo</div><div class="nota-grid nota-grid-compacta">' +
-                '<div class="nota-campo full"><span class="nota-label">Cliente</span><span class="nota-valor">' + esc(nome) + '</span></div>' +
-                '<div class="nota-campo"><span class="nota-label">Veículo</span><span class="nota-valor">' + esc(a.carro || '—') + '</span></div>' +
-                '<div class="nota-campo"><span class="nota-label">Placa</span><span class="nota-valor" style="font-weight:800;letter-spacing:1px">' +
-                esc((a.placa || '—').toUpperCase()) + '</span></div>' +
-                '<div class="nota-campo"><span class="nota-label">Status</span><span class="nota-valor">' + esc(a.status || '—') + '</span></div>' +
-                blocoResp +
-                (a.seguradora ? '<div class="nota-campo"><span class="nota-label">Seguradora</span><span class="nota-valor">' + esc(a.seguradora) + '</span></div>' : '') +
-                (a.sinistro && interno ? '<div class="nota-campo"><span class="nota-label">Sinistro</span><span class="nota-valor">' + esc(a.sinistro) + '</span></div>' : '') +
-                (a.servicos ? '<div class="nota-campo full"><span class="nota-label">Serviços</span><span class="nota-valor">' + esc(a.servicos) + '</span></div>' : '') +
-                '</div></div>' +
-                '<div class="nota-bloco compacto"><div class="tit verde">Valores</div><div class="nota-valores-pad compacto">' +
-                htmlItensNotaSeguro(a.itens, { interno: interno, franquia: a.franquia }) +
-                '</div></div>' +
-                '<div class="nota-sigs compacto">' +
-                '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">' +
-                (interno ? 'Responsável / Funcionário' : 'Assinatura do Responsável') + '</div></div>' +
-                '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Assinatura do Cliente</div></div>' +
-                '</div></div>';
-        }
-
-        function imprimirServicoSeguro(modoInterno, atendimentoId) {
-            var a = null;
-            if (atendimentoId) {
-                var dbFind = carregarMain();
-                a = (dbFind.atendimentos || []).find(function (x) {
-                    return x.id === atendimentoId && ehServicoSeguro(x);
-                });
-            }
-            if (!a) a = obterServicoSeguroAtual();
-            if (!a) return;
-            if (!a.clienteNome && !a.clienteId) {
-                toast('Informe o cliente antes de imprimir.');
-                return;
-            }
-            var db = carregarMain();
-            var html = htmlNotaServicoSeguro(db, a, { interno: !!modoInterno });
-            var titulo = (modoInterno ? 'Seguro interno — ' : 'Seguro cliente — ') +
-                ((a.placa || '').toUpperCase() || a.clienteNome || 'OS');
-            _htmlNotaImpressaoAtual = html;
-            _tituloNotaImpressao = titulo;
-            if (ehCelular()) {
-                abrirViewerPdf(html, titulo);
-                toast(modoInterno
-                    ? 'Impressão interna (com franquia). Use Fechar para sair.'
-                    : 'Impressão cliente (sem franquia). Use Fechar para sair.');
-                return;
-            }
-            executarImpressaoHtml(html);
-            toast(modoInterno ? 'Impressão interna pronta.' : 'Impressão cliente pronta (sem franquia).');
-        }
-
-        function renderListaServicosSeguro() {
-            var tb = document.getElementById('tabelaServicoSeguro');
-            var vazio = document.getElementById('listaServicoSeguroVazia');
-            if (!tb) return;
-            var db = carregarMain();
-            var q = (document.getElementById('buscaServicoSeguro') || {}).value || '';
-            q = String(q).toLowerCase().trim();
-            var lista = (db.atendimentos || []).filter(function (a) {
-                if (!ehServicoSeguro(a)) return false;
-                if (!q) return true;
-                var nome = nomeAtendimento(db, a);
-                return [nome, a.placa, a.carro, a.seguradora, a.responsavel, a.sinistro, a.status]
-                    .join(' ').toLowerCase().indexOf(q) > -1;
-            }).sort(function (a, b) {
-                return String(b.entrada || b.criadoEm || '').localeCompare(String(a.entrada || a.criadoEm || ''));
-            });
-            tb.innerHTML = '';
-            if (!lista.length) {
-                if (vazio) vazio.style.display = '';
-                return;
-            }
-            if (vazio) vazio.style.display = 'none';
-            lista.forEach(function (a) {
-                var tr = document.createElement('tr');
-                tr.innerHTML =
-                    '<td>' + esc(fmtData(a.entrada || a.criadoEm)) + '</td>' +
-                    '<td>' + esc(nomeAtendimento(db, a)) + '</td>' +
-                    '<td>' + esc(a.carro || '—') + ' · <strong>' + esc((a.placa || '—').toUpperCase()) + '</strong></td>' +
-                    '<td>' + esc(nomeResponsavelOs(a)) + '</td>' +
-                    '<td>' + moeda(a.franquia) + '</td>' +
-                    '<td><strong>' + moeda(a.total) + '</strong></td>' +
-                    '<td class="actions">' +
-                    '<button type="button" class="btn btn-secondary" data-ss-ed="' + esc(a.id) + '">Editar</button> ' +
-                    '<button type="button" class="btn btn-pdf" data-ss-int="' + esc(a.id) + '">📄 Interno</button> ' +
-                    '<button type="button" class="btn btn-ok" data-ss-cli="' + esc(a.id) + '">🖨️ Cliente</button> ' +
-                    '<button type="button" class="btn btn-danger" data-ss-ex="' + esc(a.id) + '">Excluir</button>' +
-                    '</td>';
-                tb.appendChild(tr);
-            });
-            tb.querySelectorAll('[data-ss-ed]').forEach(function (b) {
-                b.addEventListener('click', function () { editarServicoSeguro(b.getAttribute('data-ss-ed')); });
-            });
-            tb.querySelectorAll('[data-ss-int]').forEach(function (b) {
-                b.addEventListener('click', function () {
-                    imprimirServicoSeguro(true, b.getAttribute('data-ss-int'));
-                });
-            });
-            tb.querySelectorAll('[data-ss-cli]').forEach(function (b) {
-                b.addEventListener('click', function () {
-                    imprimirServicoSeguro(false, b.getAttribute('data-ss-cli'));
-                });
-            });
-            tb.querySelectorAll('[data-ss-ex]').forEach(function (b) {
-                b.addEventListener('click', function () {
-                    if (!confirm('Excluir este serviço de seguro?')) return;
-                    var idEx = b.getAttribute('data-ss-ex');
-                    var db2 = carregarMain();
-                    marcarExcluido(db2, 'atendimentos', idEx);
-                    db2.atendimentos = (db2.atendimentos || []).filter(function (x) { return x.id !== idEx; });
-                    salvarMain(db2);
-                    agendarSyncAutomatico('salvar');
-                    if (document.getElementById('ssId').value === idEx) limparServicoSeguro();
-                    toast('Serviço de seguro excluído.');
-                    renderListaServicosSeguro();
-                    renderHistorico();
-                });
-            });
-        }
-
         /* ---------- Despesas por OS (Modo Interno) ---------- */
+
         var despesaOsSelecionadaId = null;
 
         function listarDespesasInternasPorOs(atendimentoId) {
@@ -9284,25 +9068,6 @@
             });
         }
 
-        document.getElementById('btnSsAddItem').addEventListener('click', function () {
-            addLinhaValorSeguro('peca', 'ssItemDesc', 'ssItemValor', 'Informe a descrição da peça/item.');
-        });
-        document.getElementById('btnSsAddMao').addEventListener('click', function () {
-            addLinhaValorSeguro('mao', 'ssMaoDesc', 'ssMaoValor', 'Informe a descrição da mão de obra.');
-        });
-        document.getElementById('ssFranquia').addEventListener('input', calcTotalSeguro);
-        document.getElementById('ssClienteBusca').addEventListener('input', atualizarStatusClienteSeguro);
-        document.getElementById('ssClienteBusca').addEventListener('change', atualizarStatusClienteSeguro);
-        document.getElementById('formServicoSeguro').addEventListener('submit', salvarServicoSeguro);
-        document.getElementById('btnLimparSeguro').addEventListener('click', limparServicoSeguro);
-        document.getElementById('btnPrintSeguroInterno').addEventListener('click', function () {
-            imprimirServicoSeguro(true);
-        });
-        document.getElementById('btnPrintSeguroCliente').addEventListener('click', function () {
-            imprimirServicoSeguro(false);
-        });
-        document.getElementById('buscaServicoSeguro').addEventListener('input', renderListaServicosSeguro);
-
         document.getElementById('formDespesaOs').addEventListener('submit', lancarDespesaOs);
         document.getElementById('btnCancelarDespesaOs').addEventListener('click', fecharBoxDespesaOs);
         document.getElementById('btnImprimirNotaInternaOs').addEventListener('click', function () {
@@ -9564,11 +9329,6 @@
                 (document.getElementById('atResponsavelId') || {}).value || '',
                 ''
             );
-            preencherSelectResponsavelOs(
-                (document.getElementById('ssResponsavelId') || {}).value || '',
-                '',
-                'ssResponsavelId'
-            );
             preencherFiltroFuncionarioDos();
         });
 
@@ -9678,11 +9438,6 @@
             preencherSelectResponsavelOs(
                 (document.getElementById('atResponsavelId') || {}).value || '',
                 ''
-            );
-            preencherSelectResponsavelOs(
-                (document.getElementById('ssResponsavelId') || {}).value || '',
-                '',
-                'ssResponsavelId'
             );
             preencherFiltroFuncionarioDos();
         });
@@ -11246,15 +11001,6 @@
                 document.getElementById('painelDespesasOs').classList.contains('active')) {
                 renderDespesasOs();
             }
-            if (document.getElementById('painelServicoSeguro') &&
-                document.getElementById('painelServicoSeguro').classList.contains('active')) {
-                renderListaServicosSeguro();
-                preencherSelectResponsavelOs(
-                    (document.getElementById('ssResponsavelId') || {}).value || '',
-                    '',
-                    'ssResponsavelId'
-                );
-            }
             if (document.getElementById('painelFuncionarios') &&
                 document.getElementById('painelFuncionarios').classList.contains('active')) {
                 renderCadastroFuncionarios();
@@ -11280,6 +11026,7 @@
         migrarProdutosInternoParaEstoqueUnificado();
         document.getElementById('atEntrada').value = hojeISO();
         atualizarCampoAgendamentoUI();
+        atualizarUITipoOrcamento();
         renderItens();
         atualizarPlaca();
         prepararVendaForm();
