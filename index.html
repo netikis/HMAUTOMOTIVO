@@ -2066,6 +2066,7 @@
             <button type="button" class="menu-grupo-btn" data-toggle-grupo="interno">🔒 Modo interno</button>
             <div class="submenu-lateral">
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelDespesasOs" data-canal="interno">🧾 Despesas por OS</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelServicoSeguro" data-canal="interno">🛡️ Serviço de Seguro</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelFuncionarios" data-canal="interno">👷 Cadastro de Funcionários</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelPagFuncionarios" data-canal="interno">💰 Pagamento funcionários</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelProdutos" data-canal="interno">🏷️ Cadastro de Produtos</button>
@@ -2361,7 +2362,7 @@
                     <input type="search" id="buscaProd" class="search" placeholder="Buscar nome ou bipar código...">
                     <button type="button" class="btn btn-secondary" id="btnImprimirEtiquetas" style="border:2px solid #fff;font-weight:700;text-transform:uppercase;font-size:0.78rem">🖨️ Imprimir Etiquetas</button>
                 </div>
-                <p class="hint" style="margin-top:8px;color:#ff8a80">Marque as caixinhas na tabela para imprimir as etiquetas (Elgin L42 Pro — 2 por linha, 50×30 mm). Estoque abaixo de 2 fica em vermelho.</p>
+                <p class="hint" style="margin-top:8px;color:#ff8a80">Marque as caixinhas na tabela para imprimir. Escolha <strong>A4</strong> (várias por folha) ou <strong>térmica Elgin</strong> (50×30 mm). Estoque abaixo de 2 fica em vermelho.</p>
                 <div id="alertaEstoqueBaixo" class="alerta-estoque-baixo" style="display:none"></div>
                 <table>
                     <thead>
@@ -2891,6 +2892,139 @@
             </div>
         </section>
 
+        <!-- SERVIÇO DE SEGURO (Modo Interno) -->
+        <section id="painelServicoSeguro" class="panel">
+            <div class="box">
+                <h2>🛡️ Serviço de Seguro</h2>
+                <p class="hint">Cadastro no mesmo esquema da OS, com valor de <strong>Franquia</strong>.
+                    Impressão <strong>interna</strong>: mão de obra, peças, franquia e responsável.
+                    Impressão <strong>cliente</strong>: só o valor do serviço (sem franquia).</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="box">
+                    <h2>Cliente</h2>
+                    <label for="ssClienteBusca">Buscar cadastrado ou digitar nome avulso</label>
+                    <input type="hidden" id="ssClienteId" value="">
+                    <input id="ssClienteBusca" list="listaClientesSeguro" autocomplete="off" placeholder="Digite para buscar ou escreva o nome avulso...">
+                    <datalist id="listaClientesSeguro"></datalist>
+                    <p class="hint" style="margin-top:10px" id="ssClienteStatus">Digite o nome: se existir no cadastro, aparece na busca; se não, fica como cliente avulso.</p>
+                    <div id="ssClienteCard" class="cliente-card-os" style="display:none"></div>
+                </div>
+                <div class="box">
+                    <h2>Responsável</h2>
+                    <label for="ssResponsavelId">Responsável pelo serviço (funcionário)</label>
+                    <select id="ssResponsavelId">
+                        <option value="">Selecione o funcionário...</option>
+                    </select>
+                    <p class="hint" style="margin-top:8px">Aparece na impressão interna.</p>
+                </div>
+            </div>
+
+            <form id="formServicoSeguro">
+                <input type="hidden" id="ssId">
+                <div class="box">
+                    <h2>Veículo / Serviço</h2>
+                    <div class="row">
+                        <div class="col" style="flex:2"><label>Carro (Modelo / Marca)</label><input id="ssCarro" placeholder="Ex: Toyota Corolla"></div>
+                        <div class="col"><label>Placa</label><input id="ssPlaca" maxlength="7" placeholder="ABC1D23" style="text-transform:uppercase"></div>
+                        <div class="col"><label>Cidade / UF</label><input id="ssCidadePlaca" placeholder="Ibaiti / PR"></div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col"><label>Cor</label><input id="ssCor"></div>
+                        <div class="col"><label>Ano fab.</label><input id="ssAnoFabricacao" inputmode="numeric" maxlength="4"></div>
+                        <div class="col"><label>Ano modelo</label><input id="ssAnoModelo" inputmode="numeric" maxlength="4"></div>
+                        <div class="col"><label>Km</label><input id="ssKm" type="number" min="0"></div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col"><label>Seguradora</label><input id="ssSeguradora" placeholder="Ex: Porto Seguro, Allianz..."></div>
+                        <div class="col"><label>Nº sinistro / apólice</label><input id="ssSinistro" placeholder="Opcional"></div>
+                        <div class="col"><label>Data entrada</label><input id="ssEntrada" type="date"></div>
+                        <div class="col"><label>Status</label>
+                            <select id="ssStatus">
+                                <option value="Em andamento" selected>Em andamento</option>
+                                <option value="Aguardando peça">Aguardando peça</option>
+                                <option value="Aguardando seguradora">Aguardando seguradora</option>
+                                <option value="Pronto">Pronto</option>
+                                <option value="Entregue">Entregue</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col"><label>Serviços / descrição</label>
+                            <textarea id="ssServicos" placeholder="Funilaria, pintura, troca de peças..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box">
+                    <h2>Valores — Peças, Mão de Obra e Franquia</h2>
+                    <div class="row">
+                        <div class="col" style="flex:2"><label>Descrição peça / item</label><input id="ssItemDesc" placeholder="Ex: Para-lama dianteiro"></div>
+                        <div class="col"><label>Valor (R$)</label><input id="ssItemValor" inputmode="decimal" placeholder="0,00"></div>
+                        <div class="col" style="flex:0.7;align-self:end"><button type="button" class="btn btn-secondary" id="btnSsAddItem" style="width:100%">+ Peça</button></div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col" style="flex:2"><label>Descrição mão de obra</label><input id="ssMaoDesc" placeholder="Ex: Funilaria e pintura"></div>
+                        <div class="col"><label>Valor (R$)</label><input id="ssMaoValor" inputmode="decimal" placeholder="0,00"></div>
+                        <div class="col" style="flex:0.7;align-self:end"><button type="button" class="btn btn-ok" id="btnSsAddMao" style="width:100%">+ Mão de obra</button></div>
+                    </div>
+                    <div id="listaItensSeguro" style="margin-top:12px"></div>
+                    <div class="row" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
+                        <div class="col"><label>Franquia (R$)</label>
+                            <input id="ssFranquia" inputmode="decimal" placeholder="0,00">
+                            <p class="hint" style="margin-top:6px">Valor da franquia — só na impressão interna. O cliente não vê este valor.</p>
+                        </div>
+                    </div>
+                    <div class="total-line" style="border-top:none;padding-top:8px;margin-top:8px">
+                        <span class="muted">Peças</span>
+                        <strong id="ssSubPecas" style="font-size:1.1rem;color:var(--chrome)">R$ 0,00</strong>
+                    </div>
+                    <div class="total-line" style="border-top:none;padding-top:0;margin-top:0">
+                        <span class="muted">Mão de obra</span>
+                        <strong id="ssSubMao" style="font-size:1.1rem;color:var(--chrome)">R$ 0,00</strong>
+                    </div>
+                    <div class="total-line" style="border-top:none;padding-top:0;margin-top:0">
+                        <span class="muted">Franquia (interno)</span>
+                        <strong id="ssSubFranquia" style="font-size:1.1rem;color:#e67e22">R$ 0,00</strong>
+                    </div>
+                    <div class="total-line">
+                        <span>Total serviço (cliente)</span>
+                        <strong id="ssTotalCliente">R$ 0,00</strong>
+                    </div>
+                </div>
+
+                <div class="row" style="flex-wrap:wrap;gap:8px">
+                    <button type="submit" class="btn btn-primary" id="btnSalvarSeguro">Salvar serviço de seguro</button>
+                    <button type="button" class="btn btn-pdf" id="btnPrintSeguroInterno">📄 Imprimir interno</button>
+                    <button type="button" class="btn btn-ok" id="btnPrintSeguroCliente">🖨️ Imprimir cliente</button>
+                    <button type="button" class="btn btn-secondary" id="btnLimparSeguro">Limpar formulário</button>
+                </div>
+            </form>
+
+            <div class="box" style="margin-top:16px">
+                <h2>Serviços de seguro cadastrados</h2>
+                <div class="toolbar">
+                    <input type="search" id="buscaServicoSeguro" class="search" placeholder="Buscar cliente, placa, seguradora...">
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Cliente</th>
+                            <th>Veículo / Placa</th>
+                            <th>Responsável</th>
+                            <th>Franquia</th>
+                            <th>Total (cliente)</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaServicoSeguro"></tbody>
+                </table>
+                <div id="listaServicoSeguroVazia" class="empty" style="display:none;margin-top:12px">Nenhum serviço de seguro cadastrado.</div>
+            </div>
+        </section>
+
         <!-- CADASTRO DE FUNCIONÁRIOS (Modo Interno — vendas internas) -->
         <section id="painelFuncionarios" class="panel">
             <div class="box">
@@ -3278,12 +3412,14 @@
             painelPendentes: ['Contas a Receber', 'Pastas mensais · a receber'],
             painelRelatorioCaixa: ['Relatório Caixa', 'Pastas mensais · entradas · saídas · relatório geral'],
             painelDespesasOs: ['Despesas por OS', 'Pastas mensais · bruto · despesas · lucro'],
+            painelServicoSeguro: ['Serviço de Seguro', 'OS de seguro · franquia · impressão interna e cliente'],
             painelFuncionarios: ['Cadastro de Funcionários', 'Quem pode comprar no modo interno'],
             painelPagFuncionarios: ['Pagamento funcionários', 'Controle semanal interno · sem impressão'],
             painelConfig: ['Config / Empresa', 'Empresa, logo, endereço e backup']
         };
 
         var itensTemp = [];
+        var itensSeguroTemp = [];
         var carrinhoVenda = [];
         var produtoVendaSelecionado = null;
         var fotosAtuais = [];
@@ -4519,6 +4655,11 @@
                     }).catch(function () { /* offline */ });
                 }
             }
+            if (id === 'painelServicoSeguro') {
+                canalVendas = 'interno';
+                atualizarBadgeCanal();
+                prepararPainelServicoSeguro();
+            }
             if (id === 'painelFuncionarios') {
                 canalVendas = 'interno';
                 atualizarBadgeCanal();
@@ -4541,6 +4682,7 @@
 
         var PAINEIS_CANAL = {
             painelDespesasOs: true,
+            painelServicoSeguro: true,
             painelFuncionarios: true,
             painelPagFuncionarios: true,
             painelProdutos: true,
@@ -4614,6 +4756,7 @@
 
         function preencherSelectsCliente(db) {
             preencherListaClientesAt(db);
+            preencherListaClientesSeguro(db);
             var listaCli = document.getElementById('listaClientesVenda');
             if (listaCli) {
                 listaCli.innerHTML = '';
@@ -4626,6 +4769,19 @@
                 });
             }
             preencherListaProdutosVenda(db);
+        }
+
+        function preencherListaClientesSeguro(db) {
+            var lista = document.getElementById('listaClientesSeguro');
+            if (!lista) return;
+            lista.innerHTML = '';
+            (db.clientes || []).slice().sort(function (a, b) {
+                return String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR');
+            }).forEach(function (c) {
+                var opt = document.createElement('option');
+                opt.value = c.nome;
+                lista.appendChild(opt);
+            });
         }
 
         function preencherListaProdutosVenda(db) {
@@ -6114,6 +6270,10 @@
             var db = carregar();
             var a = db.atendimentos.find(function (x) { return x.id === id; });
             if (!a) return;
+            if (ehServicoSeguro(a)) {
+                editarServicoSeguro(id);
+                return;
+            }
             abrirPainel('painelVeiculo');
             document.getElementById('atId').value = a.id;
             document.getElementById('atClienteId').value = a.clienteId || '';
@@ -6713,6 +6873,7 @@
             var db = carregar();
             var q = (document.getElementById('buscaAtend').value || '').toLowerCase().trim();
             var lista = db.atendimentos.slice().filter(function (a) {
+                if (a && a.tipoServico === 'seguro') return false;
                 if (!q) return true;
                 var nome = nomeAtendimento(db, a);
                 return [nome, a.carro, a.placa, a.status, a.servicos, a.agendadoPara, fmtData(a.agendadoPara)]
@@ -7341,28 +7502,77 @@
                 return;
             }
 
+            var modoRaw = prompt(
+                'Modo de impressão das etiquetas:\n\n' +
+                '1 = Folha A4 / livre (várias etiquetas por página — escolha a impressora no diálogo)\n' +
+                '2 = Térmica Elgin L42 (50×30 mm, 2 por linha)\n\n' +
+                'Digite 1 ou 2:',
+                '1'
+            );
+            if (modoRaw == null) return;
+            var modo = String(modoRaw).trim();
+            var modoTermica = (modo === '2' || /^t/i.test(modo) || /elgin/i.test(modo));
+
             var qtdCopias = prompt('Quantas cópias de CADA ETIQUETA você deseja imprimir?', '1');
             if (qtdCopias == null) return;
             qtdCopias = parseInt(qtdCopias, 10);
             if (!qtdCopias || qtdCopias <= 0 || isNaN(qtdCopias)) return;
 
-            var htmlEtiquetas =
-                '<html><head><title>Impressão Elgin L42 Pro — HM Automotivo</title>' +
-                '<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>' +
-                '<style>' +
+            var cssA4 =
+                '* { margin: 0; padding: 0; box-sizing: border-box; }' +
+                '@page { size: auto; margin: 8mm; }' +
+                'html, body { font-family: Arial, sans-serif; background: #fff; color: #000; margin: 0; padding: 0; }' +
+                'body { padding: 8mm; padding-top: 12mm; }' +
+                '.folha-etiquetas { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2mm 3mm; width: 100%; max-width: 100%; }' +
+                '.etiqueta { width: 50mm; height: 30mm; padding: 1.5mm; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; border: 0.3pt dashed #bbb; page-break-inside: avoid; break-inside: avoid; }' +
+                '.etq-nome { font-size: 7pt; font-weight: bold; line-height: 1.1; margin-bottom: 2px; text-align: center; width: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }' +
+                '.etq-preco { font-size: 12pt; font-weight: 900; margin-bottom: 2px; text-align: center; }' +
+                '.etq-barcode-container { width: 100%; text-align: center; }' +
+                '.etq-barcode-container svg { max-width: 48mm; height: 42px !important; }' +
+                '.barra-print { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 12px; background: #162233; }' +
+                '.barra-print button { flex: 1 1 140px; min-height: 42px; border: 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }' +
+                '.barra-print .btn-ok { background: #27ae60; color: #fff; }' +
+                '.barra-print .btn-fechar { background: #e74c3c; color: #fff; }' +
+                '.hint-print { margin: 0 0 10px; font-size: 12px; color: #444; }' +
+                '@media print { .barra-print, .hint-print { display: none !important; } body { padding: 0; } .etiqueta { border-color: transparent; } }';
+
+            var cssTermica =
                 '* { margin: 0; padding: 0; box-sizing: border-box; }' +
                 '@page { size: 104mm 30mm; margin: 0mm !important; }' +
-                'body { font-family: Arial, sans-serif; background: #fff; width: 104mm; height: 30mm; margin: 0; padding: 0; color: #000; overflow: hidden; }' +
+                'body { font-family: Arial, sans-serif; background: #fff; width: 104mm; margin: 0; padding: 0; color: #000; }' +
+                '.folha-etiquetas { display: block; width: 104mm; }' +
                 '.linha-etiquetas { display: flex; flex-direction: row; width: 104mm; height: 30mm; page-break-inside: avoid; page-break-after: always; justify-content: space-between; align-items: center; }' +
                 '.etiqueta { width: 50mm; height: 30mm; padding: 1.5mm; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }' +
                 '.etq-nome { font-size: 7pt; font-weight: bold; line-height: 1.1; margin-bottom: 2px; text-align: center; width: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }' +
                 '.etq-preco { font-size: 12pt; font-weight: 900; margin-bottom: 2px; text-align: center; }' +
                 '.etq-barcode-container { width: 100%; text-align: center; }' +
                 '.etq-barcode-container svg { max-width: 48mm; height: 42px !important; }' +
-                '@media print { .btn-imprimir { display: none !important; } }' +
-                '.btn-imprimir { position: fixed; bottom: 20px; right: 20px; background: #27ae60; color: white; border: none; padding: 15px 20px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; }' +
-                '</style></head><body>' +
-                '<button class="btn-imprimir" onclick="window.print()">🖨️ IMPRIMIR NA ELGIN</button>';
+                '.barra-print { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 12px; background: #162233; }' +
+                '.barra-print button { flex: 1 1 140px; min-height: 42px; border: 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }' +
+                '.barra-print .btn-ok { background: #27ae60; color: #fff; }' +
+                '.barra-print .btn-fechar { background: #e74c3c; color: #fff; }' +
+                '.hint-print { margin: 40px 0 8px; font-size: 12px; color: #444; padding: 0 4px; }' +
+                '@media print { .barra-print, .hint-print { display: none !important; } }';
+
+            var titulo = modoTermica
+                ? 'Etiquetas térmicas Elgin — HM Automotivo'
+                : 'Etiquetas A4 — HM Automotivo';
+            var htmlEtiquetas =
+                '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">' +
+                '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+                '<title>' + titulo + '</title>' +
+                '<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>' +
+                '<style>' + (modoTermica ? cssTermica : cssA4) + '</style></head><body>' +
+                '<div class="barra-print">' +
+                '<button type="button" class="btn-ok" onclick="window.print()">🖨️ Imprimir</button>' +
+                '<button type="button" class="btn-fechar" onclick="try{window.close();}catch(e){}">✕ Fechar</button>' +
+                '</div>' +
+                '<p class="hint-print">' +
+                (modoTermica
+                    ? 'Modo térmico Elgin (2 por linha). No diálogo de impressão, selecione a impressora de etiquetas.'
+                    : 'Modo A4 / livre — as etiquetas preenchem a folha. No diálogo, escolha a impressora e o tamanho do papel (A4, etc.).') +
+                '</p>' +
+                '<div class="folha-etiquetas">';
 
             var arrayEtiquetas = [];
             checkboxes.forEach(function (chk) {
@@ -7392,18 +7602,22 @@
                 }
             });
 
-            var j;
-            for (j = 0; j < arrayEtiquetas.length; j += 2) {
-                var etq1 = arrayEtiquetas[j];
-                var etq2 = arrayEtiquetas[j + 1]
-                    ? arrayEtiquetas[j + 1]
-                    : '<div class="etiqueta" style="border:none;visibility:hidden"></div>';
-                htmlEtiquetas +=
-                    '<div class="linha-etiquetas">' + etq1 + etq2 + '</div>';
+            if (modoTermica) {
+                var j;
+                for (j = 0; j < arrayEtiquetas.length; j += 2) {
+                    var etq1 = arrayEtiquetas[j];
+                    var etq2 = arrayEtiquetas[j + 1]
+                        ? arrayEtiquetas[j + 1]
+                        : '<div class="etiqueta" style="border:none;visibility:hidden"></div>';
+                    htmlEtiquetas +=
+                        '<div class="linha-etiquetas">' + etq1 + etq2 + '</div>';
+                }
+            } else {
+                htmlEtiquetas += arrayEtiquetas.join('');
             }
 
             htmlEtiquetas +=
-                '<script>' +
+                '</div><script>' +
                 'window.onload = function () {' +
                 '  function initBc() { if (typeof JsBarcode !== "undefined") JsBarcode(".barcode").init(); }' +
                 '  initBc();' +
@@ -7411,7 +7625,7 @@
                 '};' +
                 '<\/script></body></html>';
 
-            var janela = window.open('', '', 'width=800,height=600');
+            var janela = window.open('', '', 'width=900,height=700');
             if (!janela) {
                 alert('Permita pop-ups neste site para abrir a impressão de etiquetas.');
                 return;
@@ -7515,8 +7729,8 @@
         }
 
         /* Responsável da OS = funcionário do cadastro interno (para fechar lucro depois) */
-        function preencherSelectResponsavelOs(selecionadoId, nomeLegado) {
-            var sel = document.getElementById('atResponsavelId');
+        function preencherSelectResponsavelOs(selecionadoId, nomeLegado, selectId) {
+            var sel = document.getElementById(selectId || 'atResponsavelId');
             if (!sel) return;
             var db = obterDbFuncionarios();
             var funcs = listarFuncionariosOrdenados(db, false);
@@ -7545,8 +7759,8 @@
             }
         }
 
-        function obterResponsavelOsDoForm() {
-            var sel = document.getElementById('atResponsavelId');
+        function obterResponsavelOsDoForm(selectId) {
+            var sel = document.getElementById(selectId || 'atResponsavelId');
             var id = sel ? String(sel.value || '').trim() : '';
             if (!id) return { responsavelId: '', responsavel: '' };
             var db = obterDbFuncionarios();
@@ -8164,6 +8378,438 @@
             });
         }
 
+        /* ---------- Serviço de Seguro (Modo Interno) ---------- */
+        function ehServicoSeguro(a) {
+            return !!(a && a.tipoServico === 'seguro');
+        }
+
+        function somaItensSeguroPorTipo(tipo) {
+            return itensSeguroTemp.reduce(function (s, it) {
+                return s + ((it.tipo || 'peca') === tipo ? (Number(it.valor) || 0) : 0);
+            }, 0);
+        }
+
+        function valorFranquiaSeguroForm() {
+            return parseMoeda((document.getElementById('ssFranquia') || {}).value) || 0;
+        }
+
+        function calcTotalSeguro() {
+            var pecas = somaItensSeguroPorTipo('peca');
+            var mao = somaItensSeguroPorTipo('mao');
+            var franquia = valorFranquiaSeguroForm();
+            var elP = document.getElementById('ssSubPecas');
+            var elM = document.getElementById('ssSubMao');
+            var elF = document.getElementById('ssSubFranquia');
+            var elT = document.getElementById('ssTotalCliente');
+            if (elP) elP.textContent = moeda(pecas);
+            if (elM) elM.textContent = moeda(mao);
+            if (elF) elF.textContent = moeda(franquia);
+            if (elT) elT.textContent = moeda(pecas + mao);
+        }
+
+        function renderItensSeguro() {
+            var box = document.getElementById('listaItensSeguro');
+            if (!box) return;
+            if (!itensSeguroTemp.length) {
+                box.innerHTML = '<p class="muted">Nenhuma peça ou mão de obra adicionada.</p>';
+            } else {
+                box.innerHTML = itensSeguroTemp.map(function (it, idx) {
+                    var tipo = it.tipo || 'peca';
+                    var tag = tipo === 'mao'
+                        ? '<span style="display:inline-block;margin-right:8px;padding:2px 8px;border-radius:999px;font-size:0.7rem;font-weight:700;background:rgba(47,158,107,0.2);color:#8fe0b8;border:1px solid rgba(47,158,107,0.45)">MÃO DE OBRA</span>'
+                        : '<span style="display:inline-block;margin-right:8px;padding:2px 8px;border-radius:999px;font-size:0.7rem;font-weight:700;background:rgba(61,160,232,0.15);color:#9fd3ff;border:1px solid rgba(61,160,232,0.4)">PEÇA</span>';
+                    return '<div class="row" style="margin-bottom:6px;align-items:center">' +
+                        '<div class="col" style="flex:2">' + tag + esc(it.desc) + '</div>' +
+                        '<div class="col">' + moeda(it.valor) + '</div>' +
+                        '<div class="col" style="flex:0.5"><button type="button" class="btn btn-danger" data-ss-rm="' + idx + '">×</button></div>' +
+                        '</div>';
+                }).join('');
+                box.querySelectorAll('[data-ss-rm]').forEach(function (b) {
+                    b.addEventListener('click', function () {
+                        itensSeguroTemp.splice(Number(b.getAttribute('data-ss-rm')), 1);
+                        renderItensSeguro();
+                    });
+                });
+            }
+            calcTotalSeguro();
+        }
+
+        function addLinhaValorSeguro(tipo, descId, valorId, msgVazio) {
+            var desc = document.getElementById(descId).value.trim();
+            var valor = parseMoeda(document.getElementById(valorId).value);
+            if (!desc) { toast(msgVazio); return; }
+            itensSeguroTemp.push({ tipo: tipo, desc: desc, valor: valor });
+            document.getElementById(descId).value = '';
+            document.getElementById(valorId).value = '';
+            renderItensSeguro();
+        }
+
+        function atualizarStatusClienteSeguro() {
+            var db = carregarMain();
+            var texto = (document.getElementById('ssClienteBusca') || {}).value;
+            texto = String(texto || '').trim();
+            var status = document.getElementById('ssClienteStatus');
+            var hid = document.getElementById('ssClienteId');
+            var card = document.getElementById('ssClienteCard');
+            if (!status || !hid || !card) return;
+            if (!texto) {
+                hid.value = '';
+                status.innerHTML = 'Digite o nome: se existir no cadastro, aparece na busca; se não, fica como cliente avulso.';
+                card.style.display = 'none';
+                card.innerHTML = '';
+                return;
+            }
+            var r = resolverClienteAtendimento(db, texto);
+            if (!r.clienteAvulso) {
+                hid.value = r.clienteId;
+                status.innerHTML = '<span style="color:#8fe0b8;font-weight:700">Cliente cadastrado</span> — dados do cadastro carregados abaixo.';
+                card.innerHTML = htmlCardClienteOs(snapshotClienteCadastro(db, r));
+                card.style.display = '';
+            } else {
+                hid.value = '';
+                status.innerHTML = '<span style="color:#9fd3ff;font-weight:700">Cliente avulso</span> — será salvo só com este nome.';
+                card.style.display = 'none';
+                card.innerHTML = '';
+            }
+        }
+
+        function limparServicoSeguro() {
+            var form = document.getElementById('formServicoSeguro');
+            if (form) form.reset();
+            document.getElementById('ssId').value = '';
+            document.getElementById('ssClienteId').value = '';
+            document.getElementById('ssClienteBusca').value = '';
+            document.getElementById('ssEntrada').value = hojeISO();
+            document.getElementById('ssStatus').value = 'Em andamento';
+            document.getElementById('ssFranquia').value = '';
+            preencherSelectResponsavelOs('', '', 'ssResponsavelId');
+            itensSeguroTemp = [];
+            renderItensSeguro();
+            atualizarStatusClienteSeguro();
+        }
+
+        function prepararPainelServicoSeguro() {
+            preencherListaClientesSeguro(carregarMain());
+            preencherSelectResponsavelOs(
+                (document.getElementById('ssResponsavelId') || {}).value || '',
+                '',
+                'ssResponsavelId'
+            );
+            if (!document.getElementById('ssEntrada').value) {
+                document.getElementById('ssEntrada').value = hojeISO();
+            }
+            renderItensSeguro();
+            renderListaServicosSeguro();
+        }
+
+        function montarPayloadServicoSeguro() {
+            var main = carregarMain();
+            var resolvido = resolverClienteAtendimento(main, document.getElementById('ssClienteBusca').value);
+            if (!resolvido.ok) {
+                toast('Informe pelo menos o nome do cliente.');
+                return null;
+            }
+            var resp = obterResponsavelOsDoForm('ssResponsavelId');
+            var pecas = somaItensSeguroPorTipo('peca');
+            var mao = somaItensSeguroPorTipo('mao');
+            var franquia = valorFranquiaSeguroForm();
+            var id = document.getElementById('ssId').value;
+            return {
+                id: id || uid(),
+                tipoServico: 'seguro',
+                clienteId: resolvido.clienteId,
+                clienteNome: resolvido.clienteNome,
+                clienteAvulso: resolvido.clienteAvulso,
+                clienteCadastro: snapshotClienteCadastro(main, resolvido),
+                responsavelId: resp.responsavelId,
+                responsavel: resp.responsavel,
+                carro: document.getElementById('ssCarro').value.trim(),
+                placa: (document.getElementById('ssPlaca').value || '').toUpperCase().trim(),
+                cidadePlaca: document.getElementById('ssCidadePlaca').value.trim(),
+                cor: document.getElementById('ssCor').value.trim(),
+                anoFabricacao: document.getElementById('ssAnoFabricacao').value.trim(),
+                anoModelo: document.getElementById('ssAnoModelo').value.trim(),
+                km: document.getElementById('ssKm').value,
+                seguradora: document.getElementById('ssSeguradora').value.trim(),
+                sinistro: document.getElementById('ssSinistro').value.trim(),
+                entrada: document.getElementById('ssEntrada').value,
+                saida: '',
+                status: document.getElementById('ssStatus').value,
+                servicos: document.getElementById('ssServicos').value.trim(),
+                itens: itensSeguroTemp.slice(),
+                franquia: franquia,
+                maoObra: mao,
+                totalPecas: pecas,
+                total: pecas + mao,
+                fotos: [],
+                atualizadoEm: new Date().toISOString()
+            };
+        }
+
+        async function salvarServicoSeguro(e) {
+            if (e) e.preventDefault();
+            var payload = montarPayloadServicoSeguro();
+            if (!payload) return;
+            var id = document.getElementById('ssId').value;
+            var db = carregarMain();
+            if (id) {
+                var i = db.atendimentos.findIndex(function (a) { return a.id === id; });
+                if (i >= 0) {
+                    payload.criadoEm = db.atendimentos[i].criadoEm || payload.atualizadoEm;
+                    db.atendimentos[i] = Object.assign({}, db.atendimentos[i], payload);
+                } else {
+                    payload.criadoEm = payload.atualizadoEm;
+                    db.atendimentos.push(payload);
+                }
+            } else {
+                payload.criadoEm = payload.atualizadoEm;
+                db.atendimentos.push(payload);
+            }
+            limparExcluido(db, 'atendimentos', payload.id);
+            salvarMain(db);
+            agendarSyncAutomatico('salvar');
+
+            if (usuarioNuvemLogado()) {
+                try {
+                    await enviarAtendimentoNuvem(payload);
+                } catch (err) { /* offline */ }
+            }
+
+            document.getElementById('ssId').value = payload.id;
+            toast('Serviço de seguro salvo.');
+            renderListaServicosSeguro();
+            renderHistorico();
+            atualizarKPIs(carregar());
+        }
+
+        function editarServicoSeguro(id) {
+            var db = carregarMain();
+            var a = (db.atendimentos || []).find(function (x) { return x.id === id && ehServicoSeguro(x); });
+            if (!a) {
+                toast('Serviço de seguro não encontrado.');
+                return;
+            }
+            abrirPainel('painelServicoSeguro');
+            document.getElementById('ssId').value = a.id;
+            document.getElementById('ssClienteId').value = a.clienteId || '';
+            document.getElementById('ssClienteBusca').value = a.clienteAvulso
+                ? (a.clienteNome || '')
+                : (a.clienteNome || nomeCliente(db, a.clienteId));
+            atualizarStatusClienteSeguro();
+            preencherSelectResponsavelOs(a.responsavelId || '', a.responsavel || '', 'ssResponsavelId');
+            document.getElementById('ssCarro').value = a.carro || '';
+            document.getElementById('ssPlaca').value = a.placa || '';
+            document.getElementById('ssCidadePlaca').value = a.cidadePlaca || '';
+            document.getElementById('ssCor').value = a.cor || '';
+            document.getElementById('ssAnoFabricacao').value = a.anoFabricacao || '';
+            document.getElementById('ssAnoModelo').value = a.anoModelo || '';
+            document.getElementById('ssKm').value = a.km || '';
+            document.getElementById('ssSeguradora').value = a.seguradora || '';
+            document.getElementById('ssSinistro').value = a.sinistro || '';
+            document.getElementById('ssEntrada').value = a.entrada || '';
+            document.getElementById('ssStatus').value = a.status || 'Em andamento';
+            document.getElementById('ssServicos').value = a.servicos || '';
+            document.getElementById('ssFranquia').value = a.franquia != null && a.franquia !== ''
+                ? String(a.franquia).replace('.', ',')
+                : '';
+            itensSeguroTemp = (a.itens || []).map(function (it) {
+                return { tipo: it.tipo || 'peca', desc: it.desc || '', valor: Number(it.valor) || 0 };
+            });
+            renderItensSeguro();
+            toast('Serviço de seguro carregado para edição.');
+        }
+
+        function obterServicoSeguroAtual() {
+            var id = document.getElementById('ssId').value;
+            if (id) {
+                var db = carregarMain();
+                var a = (db.atendimentos || []).find(function (x) { return x.id === id && ehServicoSeguro(x); });
+                if (a) return a;
+            }
+            return montarPayloadServicoSeguro();
+        }
+
+        function htmlItensNotaSeguro(itens, opts) {
+            opts = opts || {};
+            var lista = itens || [];
+            var pecas = lista.reduce(function (s, it) {
+                return s + ((it.tipo || 'peca') === 'peca' ? (Number(it.valor) || 0) : 0);
+            }, 0);
+            var mao = lista.reduce(function (s, it) {
+                return s + (it.tipo === 'mao' ? (Number(it.valor) || 0) : 0);
+            }, 0);
+            var franquia = Number(opts.franquia) || 0;
+            var interno = !!opts.interno;
+            if (!lista.length && !(interno && franquia > 0)) {
+                return '<p style="color:#000;font-size:0.85rem;">Sem itens lançados.</p>';
+            }
+            var rows = lista.map(function (it) {
+                var tipo = (it.tipo === 'mao') ? 'Mão de obra' : 'Peça';
+                return '<tr><td>' + esc(tipo) + '</td><td>' + esc(it.desc || '') + '</td><td>' + moeda(it.valor) + '</td></tr>';
+            }).join('');
+            if (interno && franquia > 0) {
+                rows += '<tr><td>Franquia</td><td>Franquia do seguro</td><td>' + moeda(franquia) + '</td></tr>';
+            }
+            var html = '<table class="nota-itens compacta"><thead><tr><th>Tipo</th><th>Descrição</th><th>Valor</th></tr></thead><tbody>' +
+                rows + '</tbody></table>';
+            if (interno) {
+                html += '<div class="nota-subtotais compacto">Peças: <strong>' + moeda(pecas) +
+                    '</strong> · Mão de obra: <strong>' + moeda(mao) +
+                    '</strong> · Franquia: <strong>' + moeda(franquia) + '</strong></div>' +
+                    '<div class="nota-total compacto">Total serviço (cliente): ' + moeda(pecas + mao) + '</div>' +
+                    (franquia > 0 ? '<div class="nota-subtotais compacto" style="margin-top:4px">Franquia (controle interno — não vai ao cliente): <strong>' + moeda(franquia) + '</strong></div>' : '');
+            } else {
+                html += '<div class="nota-subtotais compacto">Peças: <strong>' + moeda(pecas) +
+                    '</strong> · Mão de obra: <strong>' + moeda(mao) + '</strong></div>' +
+                    '<div class="nota-total compacto">Total: ' + moeda(pecas + mao) + '</div>';
+            }
+            return html;
+        }
+
+        function htmlNotaServicoSeguro(db, a, opts) {
+            opts = opts || {};
+            var interno = !!opts.interno;
+            var emp = getEmpresa(db);
+            var cad = dadosClienteDoAtendimento(db, a);
+            var nome = cad.nome || nomeAtendimento(db, a);
+            var titulo = interno
+                ? 'SERVIÇO DE SEGURO — USO INTERNO'
+                : 'ORÇAMENTO / SERVIÇO DE SEGURO';
+            var sub = interno
+                ? 'Interno · mão de obra, peças, franquia e responsável'
+                : 'Documento para o cliente · sem valor de franquia';
+            var blocoResp = interno
+                ? ('<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' +
+                    esc(nomeResponsavelOs(a)) + '</span></div>')
+                : '';
+            return '<div class="nota-espelho" id="notaServicoSeguro">' +
+                htmlCabecalhoNotaEmpresa(emp,
+                    '<div class="nota-sub nota-titulo-espelho"' + (interno ? ' style="color:#c0392b"' : '') + '>' + titulo + '</div>' +
+                    '<div class="nota-sub nota-registro">' + esc(sub) + ' · ' +
+                    esc(fmtData(a.entrada || a.criadoEm)) +
+                    (a.id ? ' · ID ' + esc(String(a.id).slice(-6)) : '') + '</div>'
+                ) +
+                '<div class="nota-bloco compacto"><div class="tit azul">Cliente / Veículo</div><div class="nota-grid nota-grid-compacta">' +
+                '<div class="nota-campo full"><span class="nota-label">Cliente</span><span class="nota-valor">' + esc(nome) + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Veículo</span><span class="nota-valor">' + esc(a.carro || '—') + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Placa</span><span class="nota-valor" style="font-weight:800;letter-spacing:1px">' +
+                esc((a.placa || '—').toUpperCase()) + '</span></div>' +
+                '<div class="nota-campo"><span class="nota-label">Status</span><span class="nota-valor">' + esc(a.status || '—') + '</span></div>' +
+                blocoResp +
+                (a.seguradora ? '<div class="nota-campo"><span class="nota-label">Seguradora</span><span class="nota-valor">' + esc(a.seguradora) + '</span></div>' : '') +
+                (a.sinistro && interno ? '<div class="nota-campo"><span class="nota-label">Sinistro</span><span class="nota-valor">' + esc(a.sinistro) + '</span></div>' : '') +
+                (a.servicos ? '<div class="nota-campo full"><span class="nota-label">Serviços</span><span class="nota-valor">' + esc(a.servicos) + '</span></div>' : '') +
+                '</div></div>' +
+                '<div class="nota-bloco compacto"><div class="tit verde">Valores</div><div class="nota-valores-pad compacto">' +
+                htmlItensNotaSeguro(a.itens, { interno: interno, franquia: a.franquia }) +
+                '</div></div>' +
+                '<div class="nota-sigs compacto">' +
+                '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">' +
+                (interno ? 'Responsável / Funcionário' : 'Assinatura do Responsável') + '</div></div>' +
+                '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Assinatura do Cliente</div></div>' +
+                '</div></div>';
+        }
+
+        function imprimirServicoSeguro(modoInterno, atendimentoId) {
+            var a = null;
+            if (atendimentoId) {
+                var dbFind = carregarMain();
+                a = (dbFind.atendimentos || []).find(function (x) {
+                    return x.id === atendimentoId && ehServicoSeguro(x);
+                });
+            }
+            if (!a) a = obterServicoSeguroAtual();
+            if (!a) return;
+            if (!a.clienteNome && !a.clienteId) {
+                toast('Informe o cliente antes de imprimir.');
+                return;
+            }
+            var db = carregarMain();
+            var html = htmlNotaServicoSeguro(db, a, { interno: !!modoInterno });
+            var titulo = (modoInterno ? 'Seguro interno — ' : 'Seguro cliente — ') +
+                ((a.placa || '').toUpperCase() || a.clienteNome || 'OS');
+            _htmlNotaImpressaoAtual = html;
+            _tituloNotaImpressao = titulo;
+            if (ehCelular()) {
+                abrirViewerPdf(html, titulo);
+                toast(modoInterno
+                    ? 'Impressão interna (com franquia). Use Fechar para sair.'
+                    : 'Impressão cliente (sem franquia). Use Fechar para sair.');
+                return;
+            }
+            executarImpressaoHtml(html);
+            toast(modoInterno ? 'Impressão interna pronta.' : 'Impressão cliente pronta (sem franquia).');
+        }
+
+        function renderListaServicosSeguro() {
+            var tb = document.getElementById('tabelaServicoSeguro');
+            var vazio = document.getElementById('listaServicoSeguroVazia');
+            if (!tb) return;
+            var db = carregarMain();
+            var q = (document.getElementById('buscaServicoSeguro') || {}).value || '';
+            q = String(q).toLowerCase().trim();
+            var lista = (db.atendimentos || []).filter(function (a) {
+                if (!ehServicoSeguro(a)) return false;
+                if (!q) return true;
+                var nome = nomeAtendimento(db, a);
+                return [nome, a.placa, a.carro, a.seguradora, a.responsavel, a.sinistro, a.status]
+                    .join(' ').toLowerCase().indexOf(q) > -1;
+            }).sort(function (a, b) {
+                return String(b.entrada || b.criadoEm || '').localeCompare(String(a.entrada || a.criadoEm || ''));
+            });
+            tb.innerHTML = '';
+            if (!lista.length) {
+                if (vazio) vazio.style.display = '';
+                return;
+            }
+            if (vazio) vazio.style.display = 'none';
+            lista.forEach(function (a) {
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + esc(fmtData(a.entrada || a.criadoEm)) + '</td>' +
+                    '<td>' + esc(nomeAtendimento(db, a)) + '</td>' +
+                    '<td>' + esc(a.carro || '—') + ' · <strong>' + esc((a.placa || '—').toUpperCase()) + '</strong></td>' +
+                    '<td>' + esc(nomeResponsavelOs(a)) + '</td>' +
+                    '<td>' + moeda(a.franquia) + '</td>' +
+                    '<td><strong>' + moeda(a.total) + '</strong></td>' +
+                    '<td class="actions">' +
+                    '<button type="button" class="btn btn-secondary" data-ss-ed="' + esc(a.id) + '">Editar</button> ' +
+                    '<button type="button" class="btn btn-pdf" data-ss-int="' + esc(a.id) + '">📄 Interno</button> ' +
+                    '<button type="button" class="btn btn-ok" data-ss-cli="' + esc(a.id) + '">🖨️ Cliente</button> ' +
+                    '<button type="button" class="btn btn-danger" data-ss-ex="' + esc(a.id) + '">Excluir</button>' +
+                    '</td>';
+                tb.appendChild(tr);
+            });
+            tb.querySelectorAll('[data-ss-ed]').forEach(function (b) {
+                b.addEventListener('click', function () { editarServicoSeguro(b.getAttribute('data-ss-ed')); });
+            });
+            tb.querySelectorAll('[data-ss-int]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    imprimirServicoSeguro(true, b.getAttribute('data-ss-int'));
+                });
+            });
+            tb.querySelectorAll('[data-ss-cli]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    imprimirServicoSeguro(false, b.getAttribute('data-ss-cli'));
+                });
+            });
+            tb.querySelectorAll('[data-ss-ex]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    if (!confirm('Excluir este serviço de seguro?')) return;
+                    var idEx = b.getAttribute('data-ss-ex');
+                    var db2 = carregarMain();
+                    marcarExcluido(db2, 'atendimentos', idEx);
+                    db2.atendimentos = (db2.atendimentos || []).filter(function (x) { return x.id !== idEx; });
+                    salvarMain(db2);
+                    agendarSyncAutomatico('salvar');
+                    if (document.getElementById('ssId').value === idEx) limparServicoSeguro();
+                    toast('Serviço de seguro excluído.');
+                    renderListaServicosSeguro();
+                    renderHistorico();
+                });
+            });
+        }
+
         /* ---------- Despesas por OS (Modo Interno) ---------- */
         var despesaOsSelecionadaId = null;
 
@@ -8497,7 +9143,7 @@
                 var tr = document.createElement('tr');
                 tr.innerHTML =
                     '<td>' + esc(fmtData(a.entrada || a.criadoEm)) + '</td>' +
-                    '<td>' + esc(nome) + '</td>' +
+                    '<td>' + esc(nome) + (ehServicoSeguro(a) ? ' <span style="font-size:0.68rem;font-weight:700;color:#e67e22">SEGURO</span>' : '') + '</td>' +
                     '<td>' + esc(a.carro || '—') + ' · <strong>' + esc((a.placa || '—').toUpperCase()) + '</strong></td>' +
                     '<td>' + esc(nomeResponsavelOs(a)) + '</td>' +
                     '<td>' + esc(a.status || '—') + '</td>' +
@@ -8637,6 +9283,25 @@
                 toast('Despesa salva aqui, mas falhou na nuvem: ' + (err.message || err.code || 'tente Sincronizar agora'));
             });
         }
+
+        document.getElementById('btnSsAddItem').addEventListener('click', function () {
+            addLinhaValorSeguro('peca', 'ssItemDesc', 'ssItemValor', 'Informe a descrição da peça/item.');
+        });
+        document.getElementById('btnSsAddMao').addEventListener('click', function () {
+            addLinhaValorSeguro('mao', 'ssMaoDesc', 'ssMaoValor', 'Informe a descrição da mão de obra.');
+        });
+        document.getElementById('ssFranquia').addEventListener('input', calcTotalSeguro);
+        document.getElementById('ssClienteBusca').addEventListener('input', atualizarStatusClienteSeguro);
+        document.getElementById('ssClienteBusca').addEventListener('change', atualizarStatusClienteSeguro);
+        document.getElementById('formServicoSeguro').addEventListener('submit', salvarServicoSeguro);
+        document.getElementById('btnLimparSeguro').addEventListener('click', limparServicoSeguro);
+        document.getElementById('btnPrintSeguroInterno').addEventListener('click', function () {
+            imprimirServicoSeguro(true);
+        });
+        document.getElementById('btnPrintSeguroCliente').addEventListener('click', function () {
+            imprimirServicoSeguro(false);
+        });
+        document.getElementById('buscaServicoSeguro').addEventListener('input', renderListaServicosSeguro);
 
         document.getElementById('formDespesaOs').addEventListener('submit', lancarDespesaOs);
         document.getElementById('btnCancelarDespesaOs').addEventListener('click', fecharBoxDespesaOs);
@@ -8899,6 +9564,11 @@
                 (document.getElementById('atResponsavelId') || {}).value || '',
                 ''
             );
+            preencherSelectResponsavelOs(
+                (document.getElementById('ssResponsavelId') || {}).value || '',
+                '',
+                'ssResponsavelId'
+            );
             preencherFiltroFuncionarioDos();
         });
 
@@ -9008,6 +9678,11 @@
             preencherSelectResponsavelOs(
                 (document.getElementById('atResponsavelId') || {}).value || '',
                 ''
+            );
+            preencherSelectResponsavelOs(
+                (document.getElementById('ssResponsavelId') || {}).value || '',
+                '',
+                'ssResponsavelId'
             );
             preencherFiltroFuncionarioDos();
         });
@@ -10570,6 +11245,15 @@
             if (document.getElementById('painelDespesasOs') &&
                 document.getElementById('painelDespesasOs').classList.contains('active')) {
                 renderDespesasOs();
+            }
+            if (document.getElementById('painelServicoSeguro') &&
+                document.getElementById('painelServicoSeguro').classList.contains('active')) {
+                renderListaServicosSeguro();
+                preencherSelectResponsavelOs(
+                    (document.getElementById('ssResponsavelId') || {}).value || '',
+                    '',
+                    'ssResponsavelId'
+                );
             }
             if (document.getElementById('painelFuncionarios') &&
                 document.getElementById('painelFuncionarios').classList.contains('active')) {
