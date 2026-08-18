@@ -525,6 +525,30 @@
             border-left: 3px solid #3498db;
             font-size: 0.92rem;
         }
+        .pasta-cx-dia {
+            cursor: pointer;
+            font-weight: 700;
+            user-select: none;
+            background: #243447;
+            color: #d5e8d4;
+            padding: 8px 12px 8px 44px;
+            border-left: 3px solid #27ae60;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            font-size: 0.92rem;
+        }
+        .pasta-cx-dia-conteudo {
+            padding: 8px 12px 8px 56px;
+            background: rgba(0, 0, 0, 0.22);
+            border-left: 3px solid #27ae60;
+            margin-bottom: 6px;
+        }
+        .pasta-cx-item .acoes-fin {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            flex-shrink: 0;
+        }
         .pasta-cx-mes-acoes {
             display: flex;
             flex-wrap: wrap;
@@ -2077,6 +2101,13 @@
             </div>
         </div>
 
+        <div class="menu-grupo" data-grupo="finalizados">
+            <button type="button" class="menu-grupo-btn" data-toggle-grupo="finalizados">✅ Serviço finalizado</button>
+            <div class="submenu-lateral">
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelServicoFinalizado" data-canal="interno">📁 Pastas (Ano → Mês → Dia)</button>
+            </div>
+        </div>
+
         <div class="menu-grupo" data-grupo="sistema">
             <button type="button" class="menu-grupo-btn" data-toggle-grupo="sistema">⚙️ Sistema</button>
             <div class="submenu-lateral">
@@ -2923,6 +2954,26 @@
             </div>
         </section>
 
+        <!-- SERVIÇO FINALIZADO (Modo Interno) -->
+        <section id="painelServicoFinalizado" class="panel">
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card" style="background:#27ae60"><div class="k">Serviços finalizados</div><div class="v" id="finQtdOs">0</div></div>
+                <div class="card"><div class="k">Bruto</div><div class="v" id="finBruto">R$ 0</div></div>
+                <div class="card" style="background:#e74c3c"><div class="k">Despesas</div><div class="v" id="finDespesas">R$ 0</div></div>
+                <div class="card" style="background:#2980b9"><div class="k">Lucro</div><div class="v" id="finLucro">R$ 0</div></div>
+            </div>
+            <div class="box">
+                <h2>✅ Serviço finalizado</h2>
+                <p class="hint">Carros marcados como <strong>FINALIZADO</strong> em Despesas por OS. Pastas por <strong>Ano → Mês → Dia</strong> da data em que o serviço foi finalizado. Cada arquivo tem <strong>visualizar</strong> e <strong>imprimir</strong> a folha interna de novo.</p>
+                <div class="toolbar">
+                    <input type="search" id="buscaServicoFinalizado" class="search" placeholder="Buscar cliente, placa, veículo, responsável...">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarServicoFinalizado">🔄 Atualizar</button>
+                </div>
+                <div id="arvorePastasServicoFinalizado" class="arvore-pastas-caixa" style="margin-top:12px">
+                    <div class="muted" style="padding:8px;text-align:center">Carregando pastas…</div>
+                </div>
+            </div>
+        </section>
 
         <!-- CADASTRO DE FUNCIONÁRIOS (Modo Interno — vendas internas) -->
         <section id="painelFuncionarios" class="panel">
@@ -3339,6 +3390,7 @@
             painelPendentes: ['Contas a Receber', 'Pastas mensais · a receber'],
             painelRelatorioCaixa: ['Relatório Caixa', 'Pastas mensais · entradas · saídas · relatório geral'],
             painelDespesasOs: ['Despesas por OS', 'Pastas mensais · bruto · despesas · lucro'],
+            painelServicoFinalizado: ['Serviço finalizado', 'Pastas Ano → Mês → Dia · visualizar e imprimir'],
             painelFuncionarios: ['Cadastro de Funcionários', 'Quem pode comprar no modo interno'],
             painelPagFuncionarios: ['Pagamento funcionários', 'Controle semanal interno · sem impressão'],
             painelConfig: ['Config / Empresa', 'Empresa, logo, endereço e backup']
@@ -4513,7 +4565,7 @@
             } else {
                 var gBtn = btn.closest('.menu-grupo');
                 var gNome = gBtn ? gBtn.getAttribute('data-grupo') : '';
-                if (gNome === 'interno') canalVendas = 'interno';
+                if (gNome === 'interno' || gNome === 'finalizados') canalVendas = 'interno';
                 else if (gNome === 'vendas' || gNome === 'caixa') canalVendas = 'normal';
                 else canalVendas = 'normal';
             }
@@ -4580,6 +4632,16 @@
                     }).catch(function () { /* offline */ });
                 }
             }
+            if (id === 'painelServicoFinalizado') {
+                canalVendas = 'interno';
+                atualizarBadgeCanal();
+                renderServicosFinalizados();
+                if (usuarioNuvemLogado()) {
+                    sincronizarTodosNuvem({ silencioso: true, mostrarToast: true }).then(function () {
+                        renderServicosFinalizados();
+                    }).catch(function () { /* offline */ });
+                }
+            }
             if (id === 'painelFuncionarios') {
                 canalVendas = 'interno';
                 atualizarBadgeCanal();
@@ -4602,6 +4664,7 @@
 
         var PAINEIS_CANAL = {
             painelDespesasOs: true,
+            painelServicoFinalizado: true,
             painelFuncionarios: true,
             painelPagFuncionarios: true,
             painelProdutos: true,
@@ -8706,6 +8769,186 @@
             toast('Folha interna pronta para imprimir (despesas + lucro).');
         }
 
+        function osFinalizadaInterno(a) {
+            return !!(a && (a.finalizadoInterno === true || a.finalizadoInterno === 'true'));
+        }
+
+        function dataIsoServicoFinalizado(a) {
+            if (!a) return hojeISO();
+            var raw = a.finalizadoEm || a.saida || a.entrada || a.criadoEm || hojeISO();
+            var s = String(raw);
+            if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+            return hojeISO();
+        }
+
+        function partesDataFinalizado(iso) {
+            var s = String(iso || hojeISO()).slice(0, 10);
+            var p = s.split('-');
+            if (p.length !== 3) p = hojeISO().split('-');
+            return { ano: p[0], mes: p[1], dia: p[2], iso: p[0] + '-' + p[1] + '-' + p[2] };
+        }
+
+        function listarServicosFinalizados() {
+            var main = carregarMain();
+            return (main.atendimentos || []).filter(osFinalizadaInterno).sort(function (a, b) {
+                return String(dataIsoServicoFinalizado(b)).localeCompare(String(dataIsoServicoFinalizado(a)));
+            });
+        }
+
+        function finalizarCarroOsInterno(atendimentoId) {
+            if (!atendimentoId) return;
+            if (!confirm('CARRO FINALIZADO?')) return;
+            var db = carregar();
+            var i = (db.atendimentos || []).findIndex(function (x) { return x.id === atendimentoId; });
+            if (i < 0) {
+                toast('OS não encontrada.');
+                return;
+            }
+            var agora = new Date().toISOString();
+            db.atendimentos[i] = Object.assign({}, db.atendimentos[i], {
+                finalizadoInterno: true,
+                finalizadoEm: agora,
+                atualizadoEm: agora
+            });
+            salvar(db);
+            var a = db.atendimentos[i];
+            if (usuarioNuvemLogado()) {
+                enviarAtendimentoNuvem(a).catch(function () { /* offline */ });
+            }
+            if (despesaOsSelecionadaId === atendimentoId) fecharBoxDespesaOs();
+            toast('Carro finalizado — foi para Serviço finalizado.');
+            renderDespesasOs();
+            renderServicosFinalizados();
+            abrirPainel('painelServicoFinalizado');
+        }
+
+        function visualizarServicoFinalizado(atendimentoId) {
+            var main = carregarMain();
+            var a = (main.atendimentos || []).find(function (x) { return x.id === atendimentoId; });
+            if (!a) {
+                toast('Serviço finalizado não encontrado.');
+                return;
+            }
+            var html = htmlNotaInternaLucroOs(main, a);
+            var titulo = 'Finalizado — ' + ((a.placa || '').toUpperCase() || nomeAtendimento(main, a));
+            _htmlNotaImpressaoAtual = html;
+            _tituloNotaImpressao = titulo;
+            abrirViewerPdf(html, titulo);
+        }
+
+        function montarArvoreServicosFinalizados(lista) {
+            var arvore = {};
+            (lista || []).forEach(function (a) {
+                var d = partesDataFinalizado(dataIsoServicoFinalizado(a));
+                var mesNome = MES_NOMES_CX[d.mes] || d.mes;
+                if (!arvore[d.ano]) arvore[d.ano] = {};
+                if (!arvore[d.ano][d.mes]) {
+                    arvore[d.ano][d.mes] = { mesNome: mesNome, mesNum: d.mes, dias: {} };
+                }
+                if (!arvore[d.ano][d.mes].dias[d.dia]) arvore[d.ano][d.mes].dias[d.dia] = [];
+                arvore[d.ano][d.mes].dias[d.dia].push(a);
+            });
+            return arvore;
+        }
+
+        function renderServicosFinalizados() {
+            var panel = document.getElementById('painelServicoFinalizado');
+            if (!panel) return;
+            var main = carregarMain();
+            var q = (document.getElementById('buscaServicoFinalizado') || {}).value || '';
+            q = String(q).toLowerCase().trim();
+            var lista = listarServicosFinalizados();
+            if (q) {
+                lista = lista.filter(function (a) {
+                    var nome = nomeAtendimento(main, a);
+                    return [nome, a.placa, a.carro, a.responsavel, nomeResponsavelOs(a), a.status]
+                        .join(' ').toLowerCase().indexOf(q) > -1;
+                });
+            }
+            var totB = 0, totD = 0;
+            lista.forEach(function (a) {
+                var r = resumoLucroOs(a);
+                totB += r.bruto;
+                totD += r.despesas;
+            });
+            var elQ = document.getElementById('finQtdOs');
+            var elB = document.getElementById('finBruto');
+            var elD = document.getElementById('finDespesas');
+            var elL = document.getElementById('finLucro');
+            if (elQ) elQ.textContent = String(lista.length);
+            if (elB) elB.textContent = moeda(totB);
+            if (elD) elD.textContent = moeda(totD);
+            if (elL) elL.textContent = moeda(totB - totD);
+
+            var el = document.getElementById('arvorePastasServicoFinalizado');
+            if (!el) return;
+            var arvore = montarArvoreServicosFinalizados(lista);
+            var anos = Object.keys(arvore).sort().reverse();
+            if (!anos.length) {
+                el.innerHTML = '<div class="muted" style="padding:12px;text-align:center">Nenhum serviço finalizado' +
+                    (q ? ' nesta busca' : '') + '. Use <strong>Finalizado</strong> em Despesas por OS.</div>';
+                return;
+            }
+            var html = '';
+            var idc = 0;
+            anos.forEach(function (ano) {
+                idc++;
+                var idAno = 'pasta_fin_ano_' + idc;
+                html += '<div class="pasta-cx-ano" onclick="togglePastaCaixa(\'' + idAno + '\')">📁 Ano: ' + esc(ano) + '</div>';
+                html += '<div id="' + idAno + '" style="display:none">';
+                Object.keys(arvore[ano]).sort().reverse().forEach(function (mesNum) {
+                    var bucket = arvore[ano][mesNum];
+                    idc++;
+                    var idMes = 'pasta_fin_mes_' + idc;
+                    var qtdMes = 0;
+                    Object.keys(bucket.dias).forEach(function (dia) { qtdMes += bucket.dias[dia].length; });
+                    html += '<div class="pasta-cx-mes" onclick="togglePastaCaixa(\'' + idMes + '\')">📂 Mês: ' +
+                        esc(bucket.mesNome) + ' <small style="font-weight:500;opacity:.85">(' + qtdMes + ' serviço' +
+                        (qtdMes === 1 ? '' : 's') + ')</small></div>';
+                    html += '<div id="' + idMes + '" style="display:none">';
+                    Object.keys(bucket.dias).sort().reverse().forEach(function (dia) {
+                        var itens = bucket.dias[dia];
+                        idc++;
+                        var idDia = 'pasta_fin_dia_' + idc;
+                        html += '<div class="pasta-cx-dia" onclick="togglePastaCaixa(\'' + idDia + '\')">📅 Dia: ' +
+                            esc(dia + '/' + mesNum + '/' + ano) + ' <small style="font-weight:500;opacity:.85">(' +
+                            itens.length + ')</small></div>';
+                        html += '<div id="' + idDia + '" class="pasta-cx-dia-conteudo" style="display:none">';
+                        itens.forEach(function (a) {
+                            var r = resumoLucroOs(a);
+                            var nome = nomeAtendimento(main, a);
+                            html += '<div class="pasta-cx-item">' +
+                                '<span><strong>' + esc((a.placa || '—').toUpperCase()) + '</strong> · ' +
+                                esc(a.carro || '—') + '<br>' +
+                                '<small>' + esc(nome) + ' · ' + esc(nomeResponsavelOs(a)) +
+                                (ehServicoSeguro(a) ? ' · SEGURO' : '') +
+                                ' · lucro ' + moeda(r.lucro) + '</small></span>' +
+                                '<span class="acoes-fin">' +
+                                '<button type="button" class="btn btn-ver" data-fin-ver="' + esc(a.id) + '">👁️ Ver</button>' +
+                                '<button type="button" class="btn btn-pdf" data-fin-print="' + esc(a.id) + '">🖨️ Imprimir</button>' +
+                                '</span></div>';
+                        });
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                });
+                html += '</div>';
+            });
+            el.innerHTML = html;
+            el.querySelectorAll('[data-fin-ver]').forEach(function (b) {
+                b.addEventListener('click', function (ev) {
+                    ev.stopPropagation();
+                    visualizarServicoFinalizado(b.getAttribute('data-fin-ver'));
+                });
+            });
+            el.querySelectorAll('[data-fin-print]').forEach(function (b) {
+                b.addEventListener('click', function (ev) {
+                    ev.stopPropagation();
+                    imprimirNotaInternaOs(b.getAttribute('data-fin-print'));
+                });
+            });
+        }
+
         var produtoDespesaOsSelecionado = null;
 
         function preencherListaProdutosDespesaOs() {
@@ -8874,7 +9117,9 @@
             var main = carregarMain();
             var q = (document.getElementById('buscaDespesasOs').value || '').toLowerCase().trim();
             var filtroFunc = (document.getElementById('filtroFuncionarioDos') || {}).value || '';
-            var lista = (main.atendimentos || []).slice().sort(function (a, b) {
+            var lista = (main.atendimentos || []).slice().filter(function (a) {
+                return !osFinalizadaInterno(a);
+            }).sort(function (a, b) {
                 return String(b.entrada || b.criadoEm || '').localeCompare(String(a.entrada || a.criadoEm || ''));
             });
             if (filtroFunc === '__sem__') {
@@ -8936,7 +9181,8 @@
                     '<td><strong>' + moeda(r.lucro) + '</strong></td>' +
                     '<td class="actions">' +
                     '<button type="button" class="btn btn-primary" data-dos-abrir="' + esc(a.id) + '">Despesas</button> ' +
-                    '<button type="button" class="btn btn-pdf" data-dos-print="' + esc(a.id) + '">📄 Folha interna</button>' +
+                    '<button type="button" class="btn btn-pdf" data-dos-print="' + esc(a.id) + '">📄 Folha interna</button> ' +
+                    '<button type="button" class="btn btn-ok" data-dos-fin="' + esc(a.id) + '">✅ Finalizado</button>' +
                     '</td>';
                 tb.appendChild(tr);
             });
@@ -8948,6 +9194,11 @@
             tb.querySelectorAll('[data-dos-print]').forEach(function (b) {
                 b.addEventListener('click', function () {
                     imprimirNotaInternaOs(b.getAttribute('data-dos-print'));
+                });
+            });
+            tb.querySelectorAll('[data-dos-fin]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    finalizarCarroOsInterno(b.getAttribute('data-dos-fin'));
                 });
             });
 
@@ -9100,6 +9351,19 @@
         document.getElementById('buscaDespesasOs').addEventListener('input', renderDespesasOs);
         var filtroFuncDos = document.getElementById('filtroFuncionarioDos');
         if (filtroFuncDos) filtroFuncDos.addEventListener('change', renderDespesasOs);
+        document.getElementById('buscaServicoFinalizado').addEventListener('input', renderServicosFinalizados);
+        document.getElementById('btnAtualizarServicoFinalizado').addEventListener('click', function () {
+            toast('Atualizando serviços finalizados…');
+            if (usuarioNuvemLogado()) {
+                sincronizarTodosNuvem({ silencioso: false, mostrarToast: true }).then(function () {
+                    renderServicosFinalizados();
+                }).catch(function () {
+                    renderServicosFinalizados();
+                });
+            } else {
+                renderServicosFinalizados();
+            }
+        });
         document.getElementById('btnAtualizarPastasDos').addEventListener('click', function () {
             if (typeof gerarArvorePastasDespesasOs === 'function') gerarArvorePastasDespesasOs();
             toast('Pastas de despesas atualizadas.');
@@ -10306,7 +10570,7 @@
         function listarOsDoMes(mesAno) {
             var main = carregarMain();
             return (main.atendimentos || []).filter(function (a) {
-                return mesAnoDeIso(a.entrada || a.criadoEm) === mesAno;
+                return !osFinalizadaInterno(a) && mesAnoDeIso(a.entrada || a.criadoEm) === mesAno;
             }).map(function (a) {
                 var r = resumoLucroOs(a);
                 var despesas = listarDespesasInternasPorOs(a.id);
@@ -10338,6 +10602,7 @@
             var main = carregarMain();
             var arvore = {};
             (main.atendimentos || []).forEach(function (a) {
+                if (osFinalizadaInterno(a)) return;
                 var ma = mesAnoDeIso(a.entrada || a.criadoEm);
                 if (!ma) return;
                 var p = ma.split('/');
@@ -11000,6 +11265,10 @@
             if (document.getElementById('painelDespesasOs') &&
                 document.getElementById('painelDespesasOs').classList.contains('active')) {
                 renderDespesasOs();
+            }
+            if (document.getElementById('painelServicoFinalizado') &&
+                document.getElementById('painelServicoFinalizado').classList.contains('active')) {
+                renderServicosFinalizados();
             }
             if (document.getElementById('painelFuncionarios') &&
                 document.getElementById('painelFuncionarios').classList.contains('active')) {
