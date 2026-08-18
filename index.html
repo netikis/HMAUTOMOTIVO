@@ -723,8 +723,32 @@
 
         tr:hover td { background: rgba(61, 160, 232, 0.05); }
 
-        .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
         .actions .btn { padding: 6px 10px; font-size: 0.75rem; }
+        #tabelaDespesasOs td { vertical-align: middle; }
+        #tabelaDespesasOs td.actions {
+            display: table-cell;
+            width: 1%;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        #tabelaDespesasOs .acoes-linha {
+            display: inline-flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 5px;
+        }
+        #tabelaDespesasOs .acoes-linha .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            white-space: nowrap;
+            padding: 5px 8px;
+            font-size: 0.72rem;
+            line-height: 1.2;
+            min-height: 0;
+        }
 
         .muted { color: var(--muted); font-size: 0.85rem; }
         .hint {
@@ -1835,6 +1859,7 @@
             }
 
             .actions .btn { min-height: 36px; }
+            #tabelaDespesasOs .acoes-linha .btn { min-height: 32px; padding: 4px 7px; }
 
             th, td { padding: 8px 6px; font-size: 0.8rem; }
 
@@ -2883,7 +2908,8 @@
                     <p class="hint" style="margin:0 0 8px">Soma das OS em que o funcionário é o <strong>responsável</strong> (bruto − despesas internas).</p>
                     <div id="resumoLucroPorFuncionario" class="muted">Nenhuma OS com responsável vinculado.</div>
                 </div>
-                <table>
+                <div class="table-wrap">
+                    <table>
                     <thead>
                         <tr>
                             <th>Data</th>
@@ -2898,7 +2924,8 @@
                         </tr>
                     </thead>
                     <tbody id="tabelaDespesasOs"></tbody>
-                </table>
+                    </table>
+                </div>
                 <div id="listaDespesasOsVazia" class="empty" style="display:none;margin-top:12px">Nenhuma OS oficial encontrada.</div>
             </div>
 
@@ -9179,11 +9206,11 @@
                     '<td>' + moeda(r.bruto) + '</td>' +
                     '<td>' + moeda(r.despesas) + '</td>' +
                     '<td><strong>' + moeda(r.lucro) + '</strong></td>' +
-                    '<td class="actions">' +
-                    '<button type="button" class="btn btn-primary" data-dos-abrir="' + esc(a.id) + '">Despesas</button> ' +
-                    '<button type="button" class="btn btn-pdf" data-dos-print="' + esc(a.id) + '">📄 Folha interna</button> ' +
-                    '<button type="button" class="btn btn-ok" data-dos-fin="' + esc(a.id) + '">✅ Finalizado</button>' +
-                    '</td>';
+                    '<td class="actions"><span class="acoes-linha">' +
+                    '<button type="button" class="btn btn-primary" data-dos-abrir="' + esc(a.id) + '">Despesas</button>' +
+                    '<button type="button" class="btn btn-pdf" data-dos-print="' + esc(a.id) + '">Folha interna</button>' +
+                    '<button type="button" class="btn btn-ok" data-dos-fin="' + esc(a.id) + '">✓ Finalizado</button>' +
+                    '</span></td>';
                 tb.appendChild(tr);
             });
             tb.querySelectorAll('[data-dos-abrir]').forEach(function (b) {
