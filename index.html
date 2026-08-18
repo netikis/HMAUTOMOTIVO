@@ -974,6 +974,20 @@
         .modal-box h3 { margin-bottom: 12px; font-size: 1.15rem; }
         .modal-acoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
         .modal-acoes .btn { flex: 1 1 auto; min-width: 120px; }
+        #modalPergunta { z-index: 160; }
+        #modalPergunta .modal-box { width: min(460px, 100%); text-align: center; }
+        #modalPerguntaTitulo {
+            font-size: 1.35rem;
+            letter-spacing: 0.04em;
+            margin-bottom: 10px;
+        }
+        #modalPerguntaTexto {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #e8eef5;
+            margin: 0;
+            white-space: pre-wrap;
+        }
 
         /* Viewer PDF mobile / compartilhar */
         #viewerPdfNota {
@@ -3249,6 +3263,14 @@
 
     <div class="toast" id="toast"></div>
 
+    <div class="modal-overlay" id="modalPergunta">
+        <div class="modal-box">
+            <h3 id="modalPerguntaTitulo"></h3>
+            <p id="modalPerguntaTexto"></p>
+            <div class="modal-acoes" id="modalPerguntaAcoes"></div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modalReceberOs">
         <div class="modal-box" style="width:min(480px,100%)">
             <h3>💰 Receber pagamento da OS</h3>
@@ -3879,6 +3901,62 @@
             el.classList.add('show');
             clearTimeout(toast._t);
             toast._t = setTimeout(function () { el.classList.remove('show'); }, 2600);
+        }
+
+        var MSG_BAIXA_OS = 'VÁ ATÉ DESPESAS DE O.S NO MODO INTERNO E CLIQUE EM "CARRO FINALIZADO" PARA A BAIXA DO SERVIÇO REALIZADO.';
+
+        function abrirModalPergunta(titulo, texto, botoesHtml) {
+            var overlay = document.getElementById('modalPergunta');
+            document.getElementById('modalPerguntaTitulo').textContent = titulo || '';
+            var p = document.getElementById('modalPerguntaTexto');
+            p.textContent = texto || '';
+            p.style.display = texto ? '' : 'none';
+            document.getElementById('modalPerguntaAcoes').innerHTML = botoesHtml;
+            overlay.classList.add('aberto');
+            return overlay;
+        }
+
+        function fecharModalPergunta() {
+            var overlay = document.getElementById('modalPergunta');
+            if (overlay) overlay.classList.remove('aberto');
+        }
+
+        function perguntarSimNao(titulo, texto) {
+            return new Promise(function (resolve) {
+                var overlay = abrirModalPergunta(
+                    titulo,
+                    texto || '',
+                    '<button type="button" class="btn btn-ok" id="btnPerguntaSim">SIM</button>' +
+                    '<button type="button" class="btn btn-secondary" id="btnPerguntaNao">NÃO</button>'
+                );
+                function fechar(v) {
+                    fecharModalPergunta();
+                    resolve(v);
+                }
+                document.getElementById('btnPerguntaSim').onclick = function () { fechar(true); };
+                document.getElementById('btnPerguntaNao').onclick = function () { fechar(false); };
+                overlay.onclick = function (ev) {
+                    ev.stopPropagation();
+                };
+            });
+        }
+
+        function avisarMensagem(titulo, texto) {
+            return new Promise(function (resolve) {
+                var overlay = abrirModalPergunta(
+                    titulo,
+                    texto || '',
+                    '<button type="button" class="btn btn-primary" id="btnPerguntaOk">OK</button>'
+                );
+                function fechar() {
+                    fecharModalPergunta();
+                    resolve();
+                }
+                document.getElementById('btnPerguntaOk').onclick = fechar;
+                overlay.onclick = function (ev) {
+                    if (ev.target === overlay) fechar();
+                };
+            });
         }
 
         /* Impressão limpa via iframe (evita tela branca no Android / iOS) */
@@ -4753,7 +4831,9 @@
             /* KPIs do painel sempre do balcão oficial (não misturar com interno) */
             db = carregarMain();
             document.getElementById('kpiClientes').textContent = db.clientes.length;
-            document.getElementById('kpiAtend').textContent = db.atendimentos.length;
+            document.getElementById('kpiAtend').textContent = (db.atendimentos || []).filter(function (a) {
+                return !osFinalizadaInterno(a);
+            }).length;
             document.getElementById('kpiProd').textContent = db.produtos.length;
             var cfg = db.caixaConfig || { inicialBalcao: 0, inicialBanco: 0 };
             var entradas = (db.caixa || []).filter(function (x) { return x.tipo === 'entrada'; })
@@ -6182,7 +6262,23 @@
         }
 
         document.getElementById('btnLimparAt').addEventListener('click', limparAtendimento);
-        document.getElementById('atStatus').addEventListener('change', atualizarCampoAgendamentoUI);
+        document.getElementById('atStatus').addEventListener('focus', function () {
+            this.setAttribute('data-status-antes', this.value);
+        });
+        document.getElementById('atStatus').addEventListener('change', function () {
+            var sel = this;
+            var antes = sel.getAttribute('data-status-antes') || '';
+            atualizarCampoAgendamentoUI();
+            if (sel.value !== 'Entregue' || antes === 'Entregue') return;
+            perguntarSimNao('CARRO FINALIZADO?').then(function (sim) {
+                if (!sim) {
+                    sel.value = antes;
+                    atualizarCampoAgendamentoUI();
+                    return;
+                }
+                return avisarMensagem('Baixa do serviço', MSG_BAIXA_OS);
+            });
+        });
         document.getElementById('atTipoOrcamento').addEventListener('change', atualizarUITipoOrcamento);
         document.getElementById('atFranquia').addEventListener('input', calcTotal);
 
@@ -6394,28 +6490,52 @@
             var i = db.atendimentos.findIndex(function (a) { return a.id === id; });
             if (i < 0) return;
             var a = db.atendimentos[i];
-            if (novoStatus === 'Agendado') {
-                var sugestao = a.agendadoPara || hojeISO();
-                var d = prompt('Data do agendamento (ex.: segunda-feira).\nDigite no formato AAAA-MM-DD:', sugestao);
-                if (d === null) {
-                    renderHistorico();
-                    return;
+            var statusAntes = a.status || '';
+
+            function aplicarStatus() {
+                db = carregar();
+                i = db.atendimentos.findIndex(function (x) { return x.id === id; });
+                if (i < 0) return;
+                a = db.atendimentos[i];
+                if (novoStatus === 'Agendado') {
+                    var sugestao = a.agendadoPara || hojeISO();
+                    var d = prompt('Data do agendamento (ex.: segunda-feira).\nDigite no formato AAAA-MM-DD:', sugestao);
+                    if (d === null) {
+                        renderHistorico();
+                        return;
+                    }
+                    d = String(d || '').trim();
+                    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+                        toast('Data inválida. Use AAAA-MM-DD (ex.: 2026-08-03).');
+                        renderHistorico();
+                        return;
+                    }
+                    a.agendadoPara = d;
                 }
-                d = String(d || '').trim();
-                if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) {
-                    toast('Data inválida. Use AAAA-MM-DD (ex.: 2026-08-03).');
-                    renderHistorico();
-                    return;
+                a.status = novoStatus;
+                a.atualizadoEm = new Date().toISOString();
+                salvar(db);
+                if (usuarioNuvemLogado()) {
+                    enviarAtendimentoNuvem(a).catch(function () { /* offline */ });
                 }
-                a.agendadoPara = d;
+                toast(novoStatus === 'Agendado'
+                    ? 'Agendado para ' + fmtData(a.agendadoPara)
+                    : 'Status: ' + novoStatus);
+                renderHistorico();
             }
-            a.status = novoStatus;
-            a.atualizadoEm = new Date().toISOString();
-            salvar(db);
-            toast(novoStatus === 'Agendado'
-                ? 'Agendado para ' + fmtData(a.agendadoPara)
-                : 'Status: ' + novoStatus);
-            renderHistorico();
+
+            if (novoStatus === 'Entregue' && statusAntes !== 'Entregue') {
+                perguntarSimNao('CARRO FINALIZADO?').then(function (sim) {
+                    if (!sim) {
+                        renderHistorico();
+                        return;
+                    }
+                    aplicarStatus();
+                    return avisarMensagem('Baixa do serviço', MSG_BAIXA_OS);
+                });
+                return;
+            }
+            aplicarStatus();
         }
 
         /* ---------- Nota / PDF / Assinatura (base do relatório de veículos) ---------- */
@@ -7029,6 +7149,7 @@
             var db = carregar();
             var q = (document.getElementById('buscaAtend').value || '').toLowerCase().trim();
             var lista = db.atendimentos.slice().filter(function (a) {
+                if (osFinalizadaInterno(a)) return false;
                 if (!q) return true;
                 var nome = nomeAtendimento(db, a);
                 return [nome, a.carro, a.placa, a.status, a.servicos, a.agendadoPara, fmtData(a.agendadoPara), a.tipoServico, a.seguradora]
@@ -8824,29 +8945,34 @@
 
         function finalizarCarroOsInterno(atendimentoId) {
             if (!atendimentoId) return;
-            if (!confirm('CARRO FINALIZADO?')) return;
-            var db = carregar();
-            var i = (db.atendimentos || []).findIndex(function (x) { return x.id === atendimentoId; });
-            if (i < 0) {
-                toast('OS não encontrada.');
-                return;
-            }
-            var agora = new Date().toISOString();
-            db.atendimentos[i] = Object.assign({}, db.atendimentos[i], {
-                finalizadoInterno: true,
-                finalizadoEm: agora,
-                atualizadoEm: agora
+            perguntarSimNao('CARRO FINALIZADO?').then(function (sim) {
+                if (!sim) return;
+                var db = carregar();
+                var i = (db.atendimentos || []).findIndex(function (x) { return x.id === atendimentoId; });
+                if (i < 0) {
+                    toast('OS não encontrada.');
+                    return;
+                }
+                var agora = new Date().toISOString();
+                db.atendimentos[i] = Object.assign({}, db.atendimentos[i], {
+                    status: 'Entregue',
+                    finalizadoInterno: true,
+                    finalizadoEm: agora,
+                    atualizadoEm: agora
+                });
+                salvar(db);
+                var a = db.atendimentos[i];
+                if (usuarioNuvemLogado()) {
+                    enviarAtendimentoNuvem(a).catch(function () { /* offline */ });
+                }
+                if (despesaOsSelecionadaId === atendimentoId) fecharBoxDespesaOs();
+                toast('Carro finalizado — arquivado em Serviço finalizado.');
+                renderDespesasOs();
+                renderServicosFinalizados();
+                renderHistorico();
+                atualizarKPIs(db);
+                abrirPainel('painelServicoFinalizado');
             });
-            salvar(db);
-            var a = db.atendimentos[i];
-            if (usuarioNuvemLogado()) {
-                enviarAtendimentoNuvem(a).catch(function () { /* offline */ });
-            }
-            if (despesaOsSelecionadaId === atendimentoId) fecharBoxDespesaOs();
-            toast('Carro finalizado — foi para Serviço finalizado.');
-            renderDespesasOs();
-            renderServicosFinalizados();
-            abrirPainel('painelServicoFinalizado');
         }
 
         function visualizarServicoFinalizado(atendimentoId) {
@@ -9209,7 +9335,7 @@
                     '<td class="actions"><span class="acoes-linha">' +
                     '<button type="button" class="btn btn-primary" data-dos-abrir="' + esc(a.id) + '">Despesas</button>' +
                     '<button type="button" class="btn btn-pdf" data-dos-print="' + esc(a.id) + '">Folha interna</button>' +
-                    '<button type="button" class="btn btn-ok" data-dos-fin="' + esc(a.id) + '">✓ Finalizado</button>' +
+                    '<button type="button" class="btn btn-ok" data-dos-fin="' + esc(a.id) + '">CARRO FINALIZADO</button>' +
                     '</span></td>';
                 tb.appendChild(tr);
             });
