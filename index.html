@@ -9063,6 +9063,46 @@
             abrirViewerPdf(html, titulo);
         }
 
+        function excluirServicoFinalizado(atendimentoId) {
+            if (!atendimentoId) return;
+            var main = carregarMain();
+            var a = (main.atendimentos || []).find(function (x) { return x.id === atendimentoId; });
+            if (!a || !osFinalizadaInterno(a)) {
+                toast('Serviço finalizado não encontrado.');
+                renderServicosFinalizados();
+                return;
+            }
+            var placa = (a.placa || '—').toUpperCase();
+            var nome = nomeAtendimento(main, a);
+            if (!confirm(
+                'Excluir este serviço finalizado?\n\n' +
+                placa + ' · ' + nome +
+                '\n\nA OS sai do arquivo e do sistema (despesas internas desta OS também).'
+            )) return;
+
+            var db = carregar();
+            marcarExcluido(db, 'atendimentos', atendimentoId);
+            db.atendimentos = (db.atendimentos || []).filter(function (x) { return x.id !== atendimentoId; });
+            salvar(db);
+
+            comCanalInterno(function () {
+                var dbInt = carregar();
+                listarDespesasInternasPorOs(atendimentoId).forEach(function (d) {
+                    if (d && d.id) marcarExcluido(dbInt, 'caixa', d.id);
+                });
+                dbInt.caixa = (dbInt.caixa || []).filter(function (x) {
+                    return !(x && x.atendimentoId === atendimentoId);
+                });
+                salvar(dbInt);
+            });
+
+            toast('Serviço finalizado excluído.');
+            renderServicosFinalizados();
+            renderDespesasOs();
+            renderHistorico();
+            atualizarKPIs(carregar());
+        }
+
         function montarArvoreServicosFinalizados(lista) {
             var arvore = {};
             (lista || []).forEach(function (a) {
@@ -9153,6 +9193,7 @@
                                 '<span class="acoes-fin">' +
                                 '<button type="button" class="btn btn-ver" data-fin-ver="' + esc(a.id) + '">👁️ Ver</button>' +
                                 '<button type="button" class="btn btn-pdf" data-fin-print="' + esc(a.id) + '">🖨️ Imprimir</button>' +
+                                '<button type="button" class="btn btn-danger" data-fin-ex="' + esc(a.id) + '">Excluir</button>' +
                                 '</span></div>';
                         });
                         html += '</div>';
@@ -9172,6 +9213,12 @@
                 b.addEventListener('click', function (ev) {
                     ev.stopPropagation();
                     imprimirNotaInternaOs(b.getAttribute('data-fin-print'));
+                });
+            });
+            el.querySelectorAll('[data-fin-ex]').forEach(function (b) {
+                b.addEventListener('click', function (ev) {
+                    ev.stopPropagation();
+                    excluirServicoFinalizado(b.getAttribute('data-fin-ex'));
                 });
             });
         }
