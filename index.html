@@ -3569,9 +3569,24 @@
 
         function marcarExcluido(db, colecao, id) {
             if (!db || !colecao || !id) return;
+            /* Atendimentos, clientes e produtos ficam sempre no banco oficial */
+            if (colecao === 'atendimentos' || colecao === 'clientes' || colecao === 'produtos') {
+                marcarExcluidoMain(colecao, id);
+                return;
+            }
             var ex = canalVendas === 'interno' ? garantirExcluidosInterno(db) : garantirExcluidos(db);
             if (!ex[colecao]) ex[colecao] = {};
             ex[colecao][id] = new Date().toISOString();
+        }
+
+        function marcarExcluidoMain(colecao, id) {
+            if (!colecao || !id) return;
+            var main = carregarMain();
+            var ex = garantirExcluidos(main);
+            if (!ex[colecao]) ex[colecao] = {};
+            ex[colecao][id] = new Date().toISOString();
+            main.excluidos = ex;
+            salvarMain(main);
         }
 
         function marcarExcluidoInterno(intDb, colecao, id) {
@@ -5836,6 +5851,15 @@
             return apagados;
         }
 
+        async function apagarAtendimentoNuvem(atendimentoId) {
+            if (!atendimentoId) return false;
+            var sessao = await obterSessaoFirebase();
+            await sessao.fsMod.deleteDoc(
+                sessao.fsMod.doc(sessao.dbFs, 'hm_automotivo_atendimentos', atendimentoId)
+            );
+            return true;
+        }
+
         /* Cada despesa de OS também vai em documento próprio (mais confiável entre PCs) */
         async function baixarDespesasOsNuvem() {
             var sessao = await obterSessaoFirebase();
@@ -6526,13 +6550,19 @@
 
         function excluirAtendimento(id) {
             if (!confirm('Excluir este atendimento?')) return;
-            var db = carregar();
-            marcarExcluido(db, 'atendimentos', id);
-            db.atendimentos = db.atendimentos.filter(function (a) { return a.id !== id; });
-            salvar(db);
+            var main = carregarMain();
+            marcarExcluidoMain('atendimentos', id);
+            main = carregarMain();
+            main.atendimentos = (main.atendimentos || []).filter(function (a) { return a.id !== id; });
+            salvarMain(main);
+            if (usuarioNuvemLogado()) {
+                apagarAtendimentoNuvem(id).catch(function () { /* offline */ });
+            }
+            agendarSyncAutomatico('excluir-atendimento');
             toast('Atendimento excluído.');
             renderHistorico();
-            atualizarKPIs(db);
+            renderServicosFinalizados();
+            atualizarKPIs(main);
         }
 
         function opcoesStatusAt(atual) {
@@ -7218,7 +7248,8 @@
             sincronizarAssinaturasNoDb();
             var db = carregar();
             var q = (document.getElementById('buscaAtend').value || '').toLowerCase().trim();
-            var lista = db.atendimentos.slice().filter(function (a) {
+            var exAt = garantirExcluidos(db).atendimentos || {};
+            var lista = aplicarExcluidosNaLista(db.atendimentos.slice(), exAt).filter(function (a) {
                 if (osFinalizadaInterno(a)) return false;
                 if (!q) return true;
                 var nome = nomeAtendimento(db, a);
@@ -9012,7 +9043,9 @@
 
         function listarServicosFinalizados() {
             var main = carregarMain();
-            return (main.atendimentos || []).filter(osFinalizadaInterno).sort(function (a, b) {
+            var exAt = garantirExcluidos(main).atendimentos || {};
+            return aplicarExcluidosNaLista((main.atendimentos || []).filter(osFinalizadaInterno), exAt)
+                .sort(function (a, b) {
                 return String(dataIsoServicoFinalizado(b)).localeCompare(String(dataIsoServicoFinalizado(a)));
             });
         }
@@ -9080,27 +9113,31 @@
                 '\n\nA OS sai do arquivo e do sistema (despesas internas desta OS também).'
             )) return;
 
-            var db = carregar();
-            marcarExcluido(db, 'atendimentos', atendimentoId);
-            db.atendimentos = (db.atendimentos || []).filter(function (x) { return x.id !== atendimentoId; });
-            salvar(db);
+            marcarExcluidoMain('atendimentos', atendimentoId);
+            main = carregarMain();
+            main.atendimentos = (main.atendimentos || []).filter(function (x) { return x.id !== atendimentoId; });
+            salvarMain(main);
 
-            comCanalInterno(function () {
-                var dbInt = carregar();
-                listarDespesasInternasPorOs(atendimentoId).forEach(function (d) {
-                    if (d && d.id) marcarExcluido(dbInt, 'caixa', d.id);
-                });
-                dbInt.caixa = (dbInt.caixa || []).filter(function (x) {
-                    return !(x && x.atendimentoId === atendimentoId);
-                });
-                salvar(dbInt);
+            var intRaw = carregarInternoRaw();
+            listarDespesasInternasPorOs(atendimentoId).forEach(function (d) {
+                if (d && d.id) marcarExcluidoInterno(intRaw, 'caixa', d.id);
             });
+            intRaw.caixa = (intRaw.caixa || []).filter(function (x) {
+                return !(x && x.atendimentoId === atendimentoId);
+            });
+            salvarInternoRaw(intRaw);
+
+            if (usuarioNuvemLogado()) {
+                apagarAtendimentoNuvem(atendimentoId).catch(function () { /* offline */ });
+                apagarDespesasExcluidasNuvem(intRaw).catch(function () { /* offline */ });
+            }
+            agendarSyncAutomatico('excluir-servico-finalizado');
 
             toast('Serviço finalizado excluído.');
             renderServicosFinalizados();
             renderDespesasOs();
             renderHistorico();
-            atualizarKPIs(carregar());
+            atualizarKPIs(carregarMain());
         }
 
         function montarArvoreServicosFinalizados(lista) {
