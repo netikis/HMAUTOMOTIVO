@@ -143,13 +143,16 @@
 
         function excluirProd(id) {
             if (!confirm('Excluir produto? (some nos dois modos — estoque unificado)')) return;
-            var db = carregar();
-            marcarExcluido(db, 'produtos', id);
-            db.produtos = db.produtos.filter(function (p) { return p.id !== id; });
-            salvar(db);
+            marcarExcluidoMain('produtos', id);
+            var main = carregarMain();
+            main.produtos = (main.produtos || []).filter(function (p) { return p.id !== id; });
+            salvarMain(main);
+            if (usuarioNuvemLogado()) {
+                agendarSyncAutomatico('excluir-produto');
+            }
             toast('Produto excluído dos dois modos.');
             renderProdutos();
-            atualizarKPIs(db);
+            atualizarKPIs(main);
         }
 
         var ordemProdutos = { campo: 'nome', dir: 'asc' }; /* nome | qtd */
@@ -167,7 +170,8 @@
         function renderProdutos() {
             var db = carregar();
             var q = (document.getElementById('buscaProd').value || '').toLowerCase().trim();
-            var lista = db.produtos.filter(function (p) {
+            var exProd = garantirExcluidos(carregarMain()).produtos || {};
+            var lista = aplicarExcluidosNaLista(db.produtos || [], exProd).filter(function (p) {
                 if (!q) return true;
                 return [p.nome, p.codigo, p.categoria].join(' ').toLowerCase().indexOf(q) > -1;
             });

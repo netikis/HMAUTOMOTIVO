@@ -744,7 +744,8 @@
             var busca = document.getElementById('atClienteBusca');
             var atual = busca ? busca.value : '';
             lista.innerHTML = '';
-            db.clientes.slice().sort(function (a, b) {
+            var exCli = garantirExcluidos(carregarMain()).clientes || {};
+            aplicarExcluidosNaLista(db.clientes || [], exCli).slice().sort(function (a, b) {
                 return a.nome.localeCompare(b.nome, 'pt-BR');
             }).forEach(function (c) {
                 var opt = document.createElement('option');
@@ -948,11 +949,18 @@
         function atualizarKPIs(db) {
             /* KPIs do painel sempre do balcão oficial (não misturar com interno) */
             db = carregarMain();
-            document.getElementById('kpiClientes').textContent = db.clientes.length;
-            document.getElementById('kpiAtend').textContent = (db.atendimentos || []).filter(function (a) {
-                return !osFinalizadaInterno(a);
-            }).length;
-            document.getElementById('kpiProd').textContent = db.produtos.length;
+            var ex = garantirExcluidos(db);
+            document.getElementById('kpiClientes').textContent = String(
+                aplicarExcluidosNaLista(db.clientes || [], ex.clientes).length
+            );
+            document.getElementById('kpiAtend').textContent = String(
+                aplicarExcluidosNaLista(db.atendimentos || [], ex.atendimentos).filter(function (a) {
+                    return !osFinalizadaInterno(a);
+                }).length
+            );
+            document.getElementById('kpiProd').textContent = String(
+                aplicarExcluidosNaLista(db.produtos || [], ex.produtos).length
+            );
             var cfg = db.caixaConfig || { inicialBalcao: 0, inicialBanco: 0 };
             var entradas = (db.caixa || []).filter(function (x) { return x.tipo === 'entrada'; })
                 .reduce(function (s, x) { return s + (Number(x.valor) || 0); }, 0);
@@ -966,7 +974,8 @@
             var listaCli = document.getElementById('listaClientesVenda');
             if (listaCli) {
                 listaCli.innerHTML = '';
-                db.clientes.slice().sort(function (a, b) {
+                var exCli = garantirExcluidos(carregarMain()).clientes || {};
+                aplicarExcluidosNaLista(db.clientes || [], exCli).slice().sort(function (a, b) {
                     return a.nome.localeCompare(b.nome, 'pt-BR');
                 }).forEach(function (c) {
                     var opt = document.createElement('option');
@@ -981,7 +990,8 @@
             var lista = document.getElementById('listaProdutosVenda');
             if (!lista) return;
             lista.innerHTML = '';
-            (db.produtos || []).forEach(function (p) {
+            var exProd = garantirExcluidos(carregarMain()).produtos || {};
+            aplicarExcluidosNaLista(db.produtos || [], exProd).forEach(function (p) {
                 var opt = document.createElement('option');
                 opt.value = p.nome + (p.codigo ? ' [' + p.codigo + ']' : '');
                 lista.appendChild(opt);

@@ -65,10 +65,13 @@
 
         function excluirCliente(id) {
             if (!confirm('Excluir este cliente do banco HM?')) return;
-            var db = carregar();
-            marcarExcluido(db, 'clientes', id);
-            db.clientes = db.clientes.filter(function (c) { return c.id !== id; });
-            salvar(db);
+            marcarExcluidoMain('clientes', id);
+            var main = carregarMain();
+            main.clientes = (main.clientes || []).filter(function (c) { return c.id !== id; });
+            salvarMain(main);
+            if (usuarioNuvemLogado()) {
+                agendarSyncAutomatico('excluir-cliente');
+            }
             toast('Cliente excluído.');
             renderTudo();
         }
@@ -76,7 +79,8 @@
         function renderClientes() {
             var db = carregar();
             var q = (document.getElementById('buscaCliente').value || '').toLowerCase().trim();
-            var lista = db.clientes.filter(function (c) {
+            var exCli = garantirExcluidos(carregarMain()).clientes || {};
+            var lista = aplicarExcluidosNaLista(db.clientes || [], exCli).filter(function (c) {
                 if (!q) return true;
                 return [c.nome, c.cpf, c.cnpj, c.telefone, c.cidade].join(' ').toLowerCase().indexOf(q) > -1;
             }).sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); });

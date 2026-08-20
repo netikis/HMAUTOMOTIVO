@@ -116,7 +116,13 @@
             if (!db || !colecao || !id) return;
             /* Atendimentos, clientes e produtos ficam sempre no banco oficial */
             if (colecao === 'atendimentos' || colecao === 'clientes' || colecao === 'produtos') {
-                marcarExcluidoMain(colecao, id);
+                var quando = marcarExcluidoMain(colecao, id);
+                if (db) {
+                    var exDb = garantirExcluidos(db);
+                    if (!exDb[colecao]) exDb[colecao] = {};
+                    exDb[colecao][id] = quando;
+                    db.excluidos = exDb;
+                }
                 return;
             }
             var ex = canalVendas === 'interno' ? garantirExcluidosInterno(db) : garantirExcluidos(db);
@@ -125,13 +131,15 @@
         }
 
         function marcarExcluidoMain(colecao, id) {
-            if (!colecao || !id) return;
+            if (!colecao || !id) return '';
             var main = carregarMain();
             var ex = garantirExcluidos(main);
             if (!ex[colecao]) ex[colecao] = {};
-            ex[colecao][id] = new Date().toISOString();
+            var quando = new Date().toISOString();
+            ex[colecao][id] = quando;
             main.excluidos = ex;
             salvarMain(main);
+            return quando;
         }
 
         function marcarExcluidoInterno(intDb, colecao, id) {
@@ -143,7 +151,21 @@
 
         function limparExcluido(db, colecao, id) {
             if (!db || !colecao || !id) return;
-            var ex = garantirExcluidos(db);
+            /* Coleções oficiais: limpa no banco main (não só no objeto em memória) */
+            if (colecao === 'atendimentos' || colecao === 'clientes' || colecao === 'produtos') {
+                var main = carregarMain();
+                var exM = garantirExcluidos(main);
+                if (exM[colecao] && exM[colecao][id]) {
+                    delete exM[colecao][id];
+                    main.excluidos = exM;
+                    salvarMain(main);
+                }
+                if (db.excluidos && db.excluidos[colecao] && db.excluidos[colecao][id]) {
+                    delete db.excluidos[colecao][id];
+                }
+                return;
+            }
+            var ex = canalVendas === 'interno' ? garantirExcluidosInterno(db) : garantirExcluidos(db);
             if (ex[colecao] && ex[colecao][id]) delete ex[colecao][id];
         }
 
@@ -403,6 +425,9 @@
 
         function salvar(db) {
             if (canalVendas !== 'interno') {
+                /* Nunca perder exclusões já gravadas (ex.: delete + salvar com objeto antigo) */
+                var atualOff = carregarMain();
+                db.excluidos = mesclarExcluidos(atualOff.excluidos, db.excluidos);
                 salvarMain(db);
             } else {
                 var intAtual = carregarInternoRaw();
@@ -427,6 +452,7 @@
                 main.clientes = db.clientes || main.clientes;
                 main.atendimentos = db.atendimentos || main.atendimentos;
                 main.produtos = db.produtos || [];
+                /* Mantém excluidos oficiais já salvos (clientes/OS/produtos) */
                 salvarMain(main);
             }
             agendarSyncAutomatico('salvar');
