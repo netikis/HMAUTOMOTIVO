@@ -1,0 +1,31 @@
+HM AUTOMOTIVO — ESTRUTURA MODULAR (igual Joninha / M3)
+======================================================
+
+O index.html ficou só com HTML (menus, telas, modais).
+CSS e JavaScript estão em arquivos separados.
+
+ONDE MEXER (sem abrir o index):
+-------------------------------
+  Precisa ajeitar visual / cores / layout  →  css/app.css
+
+  Caixa / Banco / Pendentes / Relatórios   →  js/caixa.js
+  Venda / Orçamento                        →  js/orcamento.js
+  Ordem de Serviço / Histórico / PDF       →  js/os.js
+  Produtos / estoque / etiquetas           →  js/produtos.js
+  Despesas por OS / Funcionários / Finalizado →  js/interno.js
+  Clientes                                 →  js/clientes.js
+  Login Firebase                           →  js/auth.js
+  Sync nuvem / pasta PC                    →  js/nuvem.js
+  Toast / menu / navegação / KPIs          →  js/ui.js
+  carregar/salvar localStorage             →  js/storage.js
+  Chaves STORAGE / títulos dos painéis     →  js/config.js
+  Empresa / backup / boot do sistema       →  js/app.js
+
+ORDEM DOS SCRIPTS (não mudar a ordem):
+--------------------------------------
+  config → storage → ui → nuvem → auth → clientes →
+  os → produtos → orcamento → interno → caixa → app
+
+BACKUP DO INDEX ANTIGO:
+-----------------------
+  _origem/index-monolito-antes-split.html

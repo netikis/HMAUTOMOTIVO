@@ -1,0 +1,731 @@
+'use strict';
+/* HM Automotivo — venda / orcamento */
+
+        /* ---------- Venda / Orçamento (modelo FH Control) ---------- */
+        function formaPagamentoEhDigital(formaPag) {
+            var f = String(formaPag || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            return f.indexOf('pix') > -1 || f.indexOf('cartao') > -1 || f.indexOf('debito') > -1 ||
+                f.indexOf('credito') > -1 || f.indexOf('boleto') > -1 || f.indexOf('transfer') > -1;
+        }
+
+        function proximoNumeroVenda(db) {
+            var max = 1000;
+            (db.orcamentos || []).forEach(function (o) {
+                var n = Number(o.numero) || 0;
+                if (n > max) max = n;
+            });
+            return max + 1;
+        }
+
+        function prepararVendaForm() {
+            var db = carregar();
+            document.getElementById('vdNumero').value = proximoNumeroVenda(db);
+            document.getElementById('vdEmissao').value = hojeISO();
+            document.getElementById('vdVenc').value = hojeISO();
+            preencherListaProdutosVenda(db);
+            atualizarUIVendaPorCanal();
+        }
+
+        function atualizarUIVendaPorCanal() {
+            var interno = canalVendas === 'interno';
+            var wrapN = document.getElementById('wrapVdClienteNormal');
+            var wrapI = document.getElementById('wrapVdClienteInterno');
+            var titulo = document.querySelector('#painelOrcamento .venda-form .box h2');
+            var hint = document.querySelector('#painelOrcamento .venda-form .box > .hint');
+            if (wrapN) wrapN.style.display = interno ? 'none' : '';
+            if (wrapI) wrapI.style.display = interno ? '' : 'none';
+            if (titulo) {
+                titulo.textContent = interno
+                    ? '🛒 Venda interna — somente para funcionário'
+                    : '🛒 Lançar venda — balcão / serviço imediato';
+            }
+            if (hint) {
+                hint.innerHTML = interno
+                    ? 'No modo interno a venda é <strong>só para funcionário cadastrado</strong>. Baixa o estoque unificado; dinheiro → caixa interno; PIX/cartão → banco interno.'
+                    : 'Venda baixa estoque; <strong>Dinheiro</strong> → Caixa Balcão; <strong>PIX/Cartão/Boleto</strong> → Caixa do Banco; <strong>Pendente</strong> → Contas a Receber.';
+            }
+            if (interno) preencherSelectFuncionariosVenda();
+        }
+
+        function listarFuncionariosOrdenados(db, soAtivos) {
+            var int = carregarInternoRaw();
+            var exFunc = garantirExcluidosInterno(int).funcionarios || {};
+            return aplicarExcluidosNaLista(db.funcionarios || [], exFunc).filter(function (f) {
+                if (!f) return false;
+                if (soAtivos && f.ativo === false) return false;
+                return true;
+            }).sort(function (a, b) {
+                return String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR');
+            });
+        }
+
+        /* Funcionários sempre no banco interno — disponível também na OS do balcão */
+        function obterDbFuncionarios() {
+            if (canalVendas === 'interno') return carregar();
+            var int = carregarInternoRaw();
+            return { funcionarios: (int && int.funcionarios) || [] };
+        }
+
+        function preencherSelectFuncionariosVenda() {
+            var sel = document.getElementById('vdFuncionarioId');
+            if (!sel) return;
+            var db = carregar();
+            var funcs = listarFuncionariosOrdenados(db, true);
+            var atual = sel.value;
+            sel.innerHTML = '<option value="">Selecione o funcionário...</option>' + funcs.map(function (f) {
+                var extra = f.cargo ? ' · ' + f.cargo : '';
+                return '<option value="' + esc(f.id) + '">' + esc(f.nome + extra) + '</option>';
+            }).join('');
+            if (atual && funcs.some(function (f) { return f.id === atual; })) sel.value = atual;
+        }
+
+        /* Responsável da OS = funcionário do cadastro interno (para fechar lucro depois) */
+        function preencherSelectResponsavelOs(selecionadoId, nomeLegado, selectId) {
+            var sel = document.getElementById(selectId || 'atResponsavelId');
+            if (!sel) return;
+            var db = obterDbFuncionarios();
+            var funcs = listarFuncionariosOrdenados(db, false);
+            var ativos = funcs.filter(function (f) { return f.ativo !== false; });
+            var atual = selecionadoId != null ? String(selecionadoId || '') : (sel.value || '');
+            var html = '<option value="">Selecione o funcionário...</option>';
+            ativos.forEach(function (f) {
+                var extra = f.cargo ? ' · ' + f.cargo : '';
+                html += '<option value="' + esc(f.id) + '">' + esc(f.nome + extra) + '</option>';
+            });
+            /* Mantém inativo se já estava na OS */
+            if (atual) {
+                var inativo = funcs.find(function (f) { return f.id === atual && f.ativo === false; });
+                if (inativo) {
+                    html += '<option value="' + esc(inativo.id) + '">' + esc((inativo.nome || 'Funcionário') + ' (inativo)') + '</option>';
+                }
+            }
+            sel.innerHTML = html;
+            if (atual && Array.prototype.some.call(sel.options, function (o) { return o.value === atual; })) {
+                sel.value = atual;
+            } else if (!atual && nomeLegado) {
+                var porNome = funcs.find(function (f) {
+                    return String(f.nome || '').trim().toLowerCase() === String(nomeLegado).trim().toLowerCase();
+                });
+                if (porNome) sel.value = porNome.id;
+            }
+        }
+
+        function obterResponsavelOsDoForm(selectId) {
+            var sel = document.getElementById(selectId || 'atResponsavelId');
+            var id = sel ? String(sel.value || '').trim() : '';
+            if (!id) return { responsavelId: '', responsavel: '' };
+            var db = obterDbFuncionarios();
+            var func = (db.funcionarios || []).find(function (f) { return f.id === id; });
+            var nome = func ? String(func.nome || '').trim() : '';
+            if (!nome && sel && sel.selectedIndex >= 0) {
+                nome = String(sel.options[sel.selectedIndex].text || '').replace(/\s*·.*$/, '').replace(/\s*\(inativo\)\s*$/i, '').trim();
+            }
+            return { responsavelId: id, responsavel: nome };
+        }
+
+        function nomeResponsavelOs(a) {
+            if (!a) return '—';
+            if (a.responsavel) return a.responsavel;
+            if (a.responsavelId) {
+                var db = obterDbFuncionarios();
+                var f = (db.funcionarios || []).find(function (x) { return x.id === a.responsavelId; });
+                if (f && f.nome) return f.nome;
+            }
+            return '—';
+        }
+
+        function preencherFiltroFuncionarioDos() {
+            var sel = document.getElementById('filtroFuncionarioDos');
+            if (!sel) return;
+            var db = obterDbFuncionarios();
+            var funcs = listarFuncionariosOrdenados(db, false);
+            var atual = sel.value;
+            sel.innerHTML = '<option value="">Todos os funcionários</option>' +
+                '<option value="__sem__">Sem responsável</option>' +
+                funcs.map(function (f) {
+                    var extra = f.cargo ? ' · ' + f.cargo : '';
+                    var tag = f.ativo === false ? ' (inativo)' : '';
+                    return '<option value="' + esc(f.id) + '">' + esc(f.nome + extra + tag) + '</option>';
+                }).join('');
+            if (atual && Array.prototype.some.call(sel.options, function (o) { return o.value === atual; })) {
+                sel.value = atual;
+            }
+        }
+
+        function renderResumoLucroPorFuncionario(listaOs) {
+            var el = document.getElementById('resumoLucroPorFuncionario');
+            if (!el) return;
+            var por = {};
+            (listaOs || []).forEach(function (a) {
+                var key = a.responsavelId || ('nome:' + String(a.responsavel || '').trim().toLowerCase());
+                var nome = nomeResponsavelOs(a);
+                if (!a.responsavelId && (!a.responsavel || !String(a.responsavel).trim())) {
+                    key = '__sem__';
+                    nome = 'Sem responsável';
+                }
+                if (!por[key]) por[key] = { nome: nome, qtd: 0, bruto: 0, despesas: 0, lucro: 0 };
+                var r = resumoLucroOs(a);
+                por[key].qtd += 1;
+                por[key].bruto += r.bruto;
+                por[key].despesas += r.despesas;
+                por[key].lucro += r.lucro;
+            });
+            var rows = Object.keys(por).map(function (k) { return por[k]; }).sort(function (a, b) {
+                if (a.nome === 'Sem responsável') return 1;
+                if (b.nome === 'Sem responsável') return -1;
+                return String(a.nome).localeCompare(String(b.nome), 'pt-BR');
+            });
+            if (!rows.length) {
+                el.innerHTML = '<span class="muted">Nenhuma OS com responsável vinculado.</span>';
+                return;
+            }
+            el.innerHTML = '<table style="margin:0;width:100%"><thead><tr>' +
+                '<th>Funcionário</th><th>OS</th><th>Bruto</th><th>Despesas</th><th>Lucro limpo</th>' +
+                '</tr></thead><tbody>' + rows.map(function (r) {
+                    return '<tr><td><strong>' + esc(r.nome) + '</strong></td><td>' + r.qtd +
+                        '</td><td>' + moeda(r.bruto) + '</td><td>' + moeda(r.despesas) +
+                        '</td><td><strong style="color:#1e8449">' + moeda(r.lucro) + '</strong></td></tr>';
+                }).join('') + '</tbody></table>';
+        }
+
+        function encontrarProdutoPorBusca(texto) {
+            var db = carregar();
+            var t = String(texto || '').trim().toLowerCase();
+            if (!t) return null;
+            var cod = t.replace(/^.*\[/, '').replace(/\].*$/, '').trim();
+            var porCod = db.produtos.find(function (p) {
+                return p.codigo && String(p.codigo).toLowerCase() === cod;
+            });
+            if (porCod) return porCod;
+            var nome = t.replace(/\s*\[.*$/, '').trim();
+            return db.produtos.find(function (p) {
+                return String(p.nome || '').toLowerCase() === nome ||
+                    String(p.nome || '').toLowerCase().indexOf(nome) === 0 ||
+                    (p.codigo && String(p.codigo).toLowerCase() === t);
+            }) || null;
+        }
+
+        function atualizarTotalLinhaEstoque() {
+            var qtd = parseMoeda(document.getElementById('vdProdQtd').value) || 0;
+            var venda = Number(document.getElementById('vdProdVenda').value) || 0;
+            document.getElementById('vdProdTotal').value = (qtd * venda).toFixed(2);
+        }
+
+        function atualizarTotalLinhaAvulso() {
+            var qtd = parseMoeda(document.getElementById('vdAvQtd').value) || 0;
+            var venda = Number(document.getElementById('vdAvVenda').value) || 0;
+            document.getElementById('vdAvTotal').value = (qtd * venda).toFixed(2);
+        }
+
+        function recalcVendaDeCusto(custoId, margemId, vendaId, totalFn) {
+            var custo = Number(document.getElementById(custoId).value) || 0;
+            var margem = Number(document.getElementById(margemId).value) || 0;
+            document.getElementById(vendaId).value = (custo * (1 + margem / 100)).toFixed(2);
+            totalFn();
+        }
+
+        function recalcMargemDeVenda(custoId, margemId, vendaId, totalFn) {
+            var custo = Number(document.getElementById(custoId).value) || 0;
+            var venda = Number(document.getElementById(vendaId).value) || 0;
+            if (custo > 0) document.getElementById(margemId).value = (((venda / custo) - 1) * 100).toFixed(1);
+            totalFn();
+        }
+
+        function fmtQtdEstoque(n, un) {
+            var v = Math.round((Number(n) || 0) * 1000) / 1000;
+            var txt = (Math.abs(v - Math.round(v)) < 1e-9) ? String(Math.round(v)) : String(v);
+            return txt + ' ' + (un || 'un');
+        }
+
+        function calcularDisponivelEstoqueVenda(p) {
+            var cadastro = Number(p && p.qtd) || 0;
+            var reservado = qtdReservadaCarrinho(p && p.id);
+            var livre = Math.round((cadastro - reservado) * 1000) / 1000;
+            return { cadastro: cadastro, reservado: reservado, livre: livre };
+        }
+
+        function qtdReservadaCarrinho(produtoId) {
+            return carrinhoVenda.reduce(function (s, it) {
+                return s + (it.produtoId === produtoId ? (Number(it.qtd) || 0) : 0);
+            }, 0);
+        }
+
+        function atualizarResumoEstoqueVenda() {
+            var info = document.getElementById('vdEstoqueInfo');
+            if (!info) return;
+            var p = produtoVendaSelecionado;
+            if (!p) {
+                info.style.display = 'none';
+                info.className = 'estoque-resumo';
+                info.innerHTML = '';
+                return;
+            }
+            var tipoDoc = document.getElementById('vdTipo').value;
+            var un = document.getElementById('vdProdUn').value || p.unidade || 'un';
+            var disp = calcularDisponivelEstoqueVenda(p);
+            var qCampo = parseMoeda(document.getElementById('vdProdQtd').value) || 0;
+            var livre = Math.max(0, disp.livre);
+            var html = '<strong>Estoque disponível do produto</strong> ' + esc(p.nome) +
+                ': <strong style="color:#f1c40f;font-size:1.05em">' + esc(fmtQtdEstoque(livre, un)) + '</strong>';
+            html += '<br><span style="opacity:0.9">No cadastro: <strong>' + esc(fmtQtdEstoque(disp.cadastro, un)) +
+                '</strong> · No carrinho: <strong>' + esc(fmtQtdEstoque(disp.reservado, un)) + '</strong>';
+            if (p.codigo) html += ' · Cód: <strong>' + esc(p.codigo) + '</strong>';
+            html += '</span>';
+
+            if (tipoDoc === 'ORCAMENTO') {
+                info.className = 'estoque-resumo estoque-orcamento';
+                html += '<br><span style="color:#d2b4de">📄 Orçamento: pode lançar qualquer quantidade (não baixa estoque).</span>';
+            } else if (livre <= 0) {
+                info.className = 'estoque-resumo estoque-zero';
+                html += '<br><span style="color:#ff6b6b;font-weight:800">⚠ Estoque 0 — venda direta bloqueada para este produto. Use Orçamento ou reponha o estoque.</span>';
+            } else {
+                info.className = 'estoque-resumo';
+                if (qCampo > 0) {
+                    var depois = livre - qCampo;
+                    if (depois < -1e-9) {
+                        html += '<br><span style="color:#e74c3c;font-weight:700">⚠ Quantidade no campo (' +
+                            esc(fmtQtdEstoque(qCampo, un)) + ') passa do disponível (' +
+                            esc(fmtQtdEstoque(livre, un)) + ').</span>';
+                    } else {
+                        html += '<br><span style="color:#95a5a6">Se incluir esta qtd, saldo ficaria: <strong>' +
+                            esc(fmtQtdEstoque(Math.max(0, depois), un)) + '</strong>.</span>';
+                    }
+                }
+            }
+            info.innerHTML = html;
+            info.style.display = 'block';
+        }
+
+        function preencherCamposProdutoEstoque() {
+            var p = encontrarProdutoPorBusca(document.getElementById('vdProdBusca').value);
+            produtoVendaSelecionado = p;
+            if (!p) {
+                atualizarResumoEstoqueVenda();
+                return;
+            }
+            document.getElementById('vdProdCusto').value = p.custo || 0;
+            document.getElementById('vdProdVenda').value = p.venda || 0;
+            var margem = (p.custo > 0) ? (((p.venda / p.custo) - 1) * 100) : 0;
+            document.getElementById('vdProdMargem').value = margem.toFixed(1);
+            document.getElementById('vdProdUn').value = p.unidade || '';
+            document.getElementById('vdProdQtd').value = '1';
+            atualizarTotalLinhaEstoque();
+            atualizarResumoEstoqueVenda();
+            var disp = calcularDisponivelEstoqueVenda(p);
+            var un = p.unidade || 'un';
+            var tipoDoc = document.getElementById('vdTipo').value;
+            if (tipoDoc === 'VENDA' && disp.livre <= 0) {
+                toast('Estoque disponível do produto ' + p.nome + ': 0 ' + un + ' — venda bloqueada.');
+            } else {
+                toast('Estoque disponível do produto ' + p.nome + ': ' + fmtQtdEstoque(Math.max(0, disp.livre), un));
+            }
+        }
+
+        function calcTotaisVenda() {
+            var sub = carrinhoVenda.reduce(function (s, it) { return s + (Number(it.total) || 0); }, 0);
+            var descR = Number(document.getElementById('vdDescReais').value) || 0;
+            var descP = Number(document.getElementById('vdDescPerc').value) || 0;
+            var total = Math.max(0, sub - descR - (sub * descP / 100));
+            var recebido = Number(document.getElementById('vdRecebido').value) || 0;
+            var troco = Math.max(0, recebido - total);
+            document.getElementById('vdSubtotalTxt').textContent = moeda(sub);
+            document.getElementById('vdTotalTxt').textContent = 'TOTAL: ' + moeda(total);
+            document.getElementById('vdTrocoTxt').textContent = 'Troco: ' + moeda(troco);
+            return { subtotal: sub, total: total, troco: troco, descontoReais: descR, descontoPerc: descP, valorRecebido: recebido };
+        }
+
+        function renderCarrinhoVenda() {
+            var box = document.getElementById('vdCarrinhoLista');
+            if (!carrinhoVenda.length) {
+                box.innerHTML = '<p class="muted">Nenhum item.</p>';
+            } else {
+                box.innerHTML = carrinhoVenda.map(function (it, idx) {
+                    var tag = it.origem === 'estoque' ? 'ESTOQUE' : (it.origem === 'mao' ? 'MÃO DE OBRA' : 'AVULSO');
+                    var cor = it.origem === 'mao' ? '#8fe0b8' : (it.origem === 'estoque' ? '#9fd3ff' : '#ffb4a8');
+                    return '<div class="row" style="margin-bottom:8px;align-items:center;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px">' +
+                        '<div class="col" style="flex:2"><span style="color:' + cor + ';font-size:0.7rem;font-weight:700;margin-right:6px">' + tag + '</span>' +
+                        esc(it.desc) + ' <span class="muted">(' + esc(String(it.qtd)) + ' ' + esc(it.unidade || 'un') + ' × ' + moeda(it.venda) + ')</span></div>' +
+                        '<div class="col">' + moeda(it.total) + '</div>' +
+                        '<div class="col" style="flex:0.4"><button type="button" class="btn btn-danger" data-vd-rm="' + idx + '">×</button></div></div>';
+                }).join('');
+                box.querySelectorAll('[data-vd-rm]').forEach(function (b) {
+                    b.addEventListener('click', function () {
+                        carrinhoVenda.splice(Number(b.getAttribute('data-vd-rm')), 1);
+                        renderCarrinhoVenda();
+                        atualizarResumoEstoqueVenda();
+                    });
+                });
+            }
+            calcTotaisVenda();
+            atualizarResumoEstoqueVenda();
+        }
+
+        function addItemCarrinho(item) {
+            carrinhoVenda.push(item);
+            renderCarrinhoVenda();
+        }
+
+        document.getElementById('vdProdBusca').addEventListener('change', preencherCamposProdutoEstoque);
+        document.getElementById('vdProdBusca').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                preencherCamposProdutoEstoque();
+            }
+        });
+        ['vdProdQtd', 'vdProdVenda'].forEach(function (id) {
+            document.getElementById(id).addEventListener('input', function () {
+                atualizarTotalLinhaEstoque();
+                if (id === 'vdProdQtd') atualizarResumoEstoqueVenda();
+            });
+        });
+        document.getElementById('vdProdUn').addEventListener('change', atualizarResumoEstoqueVenda);
+        document.getElementById('vdProdCusto').addEventListener('input', function () {
+            recalcVendaDeCusto('vdProdCusto', 'vdProdMargem', 'vdProdVenda', atualizarTotalLinhaEstoque);
+        });
+        document.getElementById('vdProdMargem').addEventListener('input', function () {
+            recalcVendaDeCusto('vdProdCusto', 'vdProdMargem', 'vdProdVenda', atualizarTotalLinhaEstoque);
+        });
+        document.getElementById('vdProdVenda').addEventListener('input', function () {
+            recalcMargemDeVenda('vdProdCusto', 'vdProdMargem', 'vdProdVenda', atualizarTotalLinhaEstoque);
+        });
+
+        document.getElementById('btnVdAddEstoque').addEventListener('click', function () {
+            if (!produtoVendaSelecionado) preencherCamposProdutoEstoque();
+            var p = produtoVendaSelecionado;
+            if (!p) { toast('Selecione um produto do estoque (nome ou código).'); return; }
+            var qtd = parseMoeda(document.getElementById('vdProdQtd').value);
+            var venda = Number(document.getElementById('vdProdVenda').value) || 0;
+            if (qtd <= 0) { toast('Informe a quantidade.'); return; }
+            var tipoDoc = document.getElementById('vdTipo').value;
+            var un = document.getElementById('vdProdUn').value || p.unidade || 'un';
+            var disp = calcularDisponivelEstoqueVenda(p);
+            var livre = disp.livre;
+
+            /* Venda direta: só o que tem no estoque. Orçamento: liberado. */
+            if (tipoDoc === 'VENDA') {
+                if (livre <= 0) {
+                    toast('Estoque disponível do produto ' + p.nome + ': 0 ' + un + ' — venda bloqueada.');
+                    atualizarResumoEstoqueVenda();
+                    return;
+                }
+                if (qtd > livre + 0.0001) {
+                    toast('Quantidade acima do disponível. Produto: ' + p.nome +
+                        ' · Disponível: ' + fmtQtdEstoque(livre, un) +
+                        ' · Você tentou: ' + fmtQtdEstoque(qtd, un));
+                    atualizarResumoEstoqueVenda();
+                    return;
+                }
+            }
+
+            addItemCarrinho({
+                origem: 'estoque',
+                produtoId: p.id,
+                codigo: p.codigo || '',
+                desc: p.nome,
+                qtd: qtd,
+                unidade: un,
+                custo: Number(document.getElementById('vdProdCusto').value) || 0,
+                margem: Number(document.getElementById('vdProdMargem').value) || 0,
+                venda: venda,
+                total: qtd * venda,
+                baixaEstoque: tipoDoc === 'VENDA'
+            });
+            document.getElementById('vdProdBusca').value = '';
+            produtoVendaSelecionado = null;
+            atualizarResumoEstoqueVenda();
+            document.getElementById('vdProdQtd').value = '1';
+            document.getElementById('vdProdBusca').focus();
+            if (tipoDoc === 'VENDA') {
+                toast('Item adicionado. Estoque será baixado ao finalizar a venda.');
+            } else {
+                toast('Item no orçamento (sem baixa de estoque).');
+            }
+        });
+
+        document.getElementById('vdTipo').addEventListener('change', function () {
+            atualizarResumoEstoqueVenda();
+            var tipo = this.value;
+            if (tipo === 'ORCAMENTO') {
+                toast('Modo Orçamento: quantidade livre — não baixa estoque.');
+            } else {
+                toast('Modo Venda Direta: só vende o que tem no estoque — baixa ao finalizar.');
+            }
+        });
+
+        ['vdAvQtd', 'vdAvVenda'].forEach(function (id) {
+            document.getElementById(id).addEventListener('input', atualizarTotalLinhaAvulso);
+        });
+        document.getElementById('vdAvCusto').addEventListener('input', function () {
+            recalcVendaDeCusto('vdAvCusto', 'vdAvMargem', 'vdAvVenda', atualizarTotalLinhaAvulso);
+        });
+        document.getElementById('vdAvMargem').addEventListener('input', function () {
+            recalcVendaDeCusto('vdAvCusto', 'vdAvMargem', 'vdAvVenda', atualizarTotalLinhaAvulso);
+        });
+
+        document.getElementById('btnVdAddAvulso').addEventListener('click', function () {
+            var desc = document.getElementById('vdAvNome').value.trim();
+            var qtd = parseMoeda(document.getElementById('vdAvQtd').value) || 0;
+            var venda = Number(document.getElementById('vdAvVenda').value) || 0;
+            if (!desc) { toast('Informe a descrição do item avulso.'); return; }
+            if (qtd <= 0 || venda < 0) { toast('Qtd e valor de venda inválidos.'); return; }
+            addItemCarrinho({
+                origem: 'avulso',
+                produtoId: null,
+                desc: desc,
+                qtd: qtd,
+                unidade: document.getElementById('vdAvUn').value || 'un',
+                custo: Number(document.getElementById('vdAvCusto').value) || 0,
+                margem: Number(document.getElementById('vdAvMargem').value) || 0,
+                venda: venda,
+                total: qtd * venda
+            });
+            document.getElementById('vdAvNome').value = '';
+            document.getElementById('vdAvQtd').value = '1';
+            document.getElementById('vdAvVenda').value = '';
+            document.getElementById('vdAvTotal').value = '';
+            document.getElementById('vdAvNome').focus();
+        });
+
+        document.getElementById('btnVdAddMao').addEventListener('click', function () {
+            var desc = document.getElementById('vdMaoDesc').value.trim();
+            var valor = parseMoeda(document.getElementById('vdMaoValor').value);
+            if (!desc) { toast('Informe a descrição da mão de obra.'); return; }
+            addItemCarrinho({
+                origem: 'mao',
+                produtoId: null,
+                desc: desc,
+                qtd: 1,
+                unidade: 'serv',
+                custo: 0,
+                margem: 0,
+                venda: valor,
+                total: valor
+            });
+            document.getElementById('vdMaoDesc').value = '';
+            document.getElementById('vdMaoValor').value = '';
+            document.getElementById('vdMaoDesc').focus();
+        });
+
+        ['vdDescReais', 'vdDescPerc', 'vdRecebido'].forEach(function (id) {
+            document.getElementById(id).addEventListener('input', calcTotaisVenda);
+        });
+
+        function limparVendaForm() {
+            carrinhoVenda = [];
+            produtoVendaSelecionado = null;
+            document.getElementById('vdCliente').value = '';
+            document.getElementById('vdPlaca').value = '';
+            var placaInt = document.getElementById('vdPlacaInterno');
+            if (placaInt) placaInt.value = '';
+            var selFunc = document.getElementById('vdFuncionarioId');
+            if (selFunc) selFunc.value = '';
+            document.getElementById('vdProdBusca').value = '';
+            document.getElementById('vdObs').value = '';
+            document.getElementById('vdDescReais').value = '0';
+            document.getElementById('vdDescPerc').value = '0';
+            document.getElementById('vdRecebido').value = '';
+            document.getElementById('vdTipo').value = 'VENDA';
+            document.getElementById('vdStatus').value = 'PAGO';
+            document.getElementById('vdForma').value = 'Dinheiro';
+            prepararVendaForm();
+            renderCarrinhoVenda();
+            atualizarResumoEstoqueVenda();
+        }
+
+        document.getElementById('btnVdLimpar').addEventListener('click', function () {
+            limparVendaForm();
+            toast('Venda limpa.');
+        });
+
+        document.getElementById('btnVdFinalizar').addEventListener('click', function () {
+            var db = carregar();
+            var interno = canalVendas === 'interno';
+            var clienteNome = '';
+            var resolvido = { ok: false, clienteAvulso: true, clienteId: null };
+            var funcionarioId = null;
+            var funcionarioNome = '';
+            var placa = '';
+
+            if (interno) {
+                funcionarioId = document.getElementById('vdFuncionarioId').value;
+                var func = (db.funcionarios || []).find(function (f) { return f.id === funcionarioId; });
+                if (!func || func.ativo === false) {
+                    toast('Selecione um funcionário ativo. Cadastre em Modo interno → Cadastro de Funcionários.');
+                    return;
+                }
+                funcionarioNome = func.nome;
+                clienteNome = func.nome;
+                placa = (document.getElementById('vdPlacaInterno').value || '').toUpperCase().trim();
+            } else {
+                clienteNome = document.getElementById('vdCliente').value.trim();
+                if (!clienteNome) { toast('Informe o cliente (cadastrado ou avulso).'); return; }
+                resolvido = resolverClienteAtendimento(db, clienteNome);
+                placa = (document.getElementById('vdPlaca').value || '').toUpperCase().trim();
+            }
+            if (!carrinhoVenda.length) { toast('Adicione itens ao carrinho.'); return; }
+
+            var totais = calcTotaisVenda();
+            var tipo = document.getElementById('vdTipo').value;
+            var status = document.getElementById('vdStatus').value;
+            var forma = document.getElementById('vdForma').value;
+            var numero = Number(document.getElementById('vdNumero').value) || proximoNumeroVenda(db);
+
+            /* Baixa de estoque — só em VENDA (orçamento não mexe). Igual FH Control. */
+            if (tipo === 'VENDA') {
+                var necessidade = {};
+                for (var i = 0; i < carrinhoVenda.length; i++) {
+                    var it = carrinhoVenda[i];
+                    if (!it.produtoId) continue;
+                    necessidade[it.produtoId] = (necessidade[it.produtoId] || 0) + (Number(it.qtd) || 0);
+                }
+                var ids = Object.keys(necessidade);
+                for (var j = 0; j < ids.length; j++) {
+                    var pid = ids[j];
+                    var pi = db.produtos.findIndex(function (p) { return p.id === pid; });
+                    if (pi < 0) {
+                        toast('Produto do carrinho não encontrado no estoque.');
+                        return;
+                    }
+                    var prod = db.produtos[pi];
+                    var tem = Number(prod.qtd) || 0;
+                    var precisa = necessidade[pid];
+                    if (precisa > tem + 0.0001) {
+                        toast('Estoque disponível do produto ' + (prod.nome || '') + ': ' +
+                            fmtQtdEstoque(tem, prod.unidade || 'un') +
+                            ' — insuficiente para finalizar (precisa ' + fmtQtdEstoque(precisa, prod.unidade || 'un') + ').');
+                        return;
+                    }
+                }
+                for (var k = 0; k < ids.length; k++) {
+                    var pid2 = ids[k];
+                    var pi2 = db.produtos.findIndex(function (p) { return p.id === pid2; });
+                    var novo = (Number(db.produtos[pi2].qtd) || 0) - necessidade[pid2];
+                    db.produtos[pi2].qtd = Math.round(Math.max(0, novo) * 1000) / 1000;
+                    db.produtos[pi2].atualizadoEm = new Date().toISOString();
+                }
+            }
+
+            var doc = {
+                id: uid(),
+                numero: numero,
+                tipo: tipo,
+                clienteId: !interno && resolvido.ok && !resolvido.clienteAvulso ? resolvido.clienteId : null,
+                clienteNome: clienteNome,
+                clienteAvulso: interno ? false : !(resolvido.ok && !resolvido.clienteAvulso),
+                vendaFuncionario: interno,
+                funcionarioId: funcionarioId,
+                funcionarioNome: funcionarioNome,
+                placa: placa,
+                statusPagamento: status,
+                formaPagamento: forma,
+                dataEmissao: document.getElementById('vdEmissao').value,
+                dataVencimento: document.getElementById('vdVenc').value,
+                itens: carrinhoVenda.slice(),
+                subtotal: totais.subtotal,
+                descontoReais: totais.descontoReais,
+                descontoPerc: totais.descontoPerc,
+                valor: totais.total,
+                valorRecebido: totais.valorRecebido,
+                troco: totais.troco,
+                observacao: document.getElementById('vdObs').value.trim(),
+                descricao: carrinhoVenda.map(function (x) { return x.desc; }).join(', '),
+                criadoEm: new Date().toISOString()
+            };
+            if (!db.orcamentos) db.orcamentos = [];
+            db.orcamentos.push(doc);
+
+            /* Destino financeiro — igual FH */
+            if (tipo === 'VENDA' || tipo === 'ORCAMENTO') {
+                if (status === 'PAGO' && tipo === 'VENDA') {
+                    var lanc = {
+                        id: uid(),
+                        tipo: 'entrada',
+                        descricao: 'Venda Nº ' + numero + ' — ' + clienteNome,
+                        valor: totais.total,
+                        forma: forma,
+                        vendaId: doc.id,
+                        criadoEm: new Date().toISOString()
+                    };
+                    if (formaPagamentoEhDigital(forma)) {
+                        if (!db.caixaBanco) db.caixaBanco = [];
+                        lanc.conta = 'banco';
+                        db.caixaBanco.push(lanc);
+                    } else {
+                        if (!db.caixa) db.caixa = [];
+                        lanc.conta = 'balcao';
+                        db.caixa.push(lanc);
+                    }
+                } else if (status === 'PENDENTE' && tipo === 'VENDA') {
+                    if (!db.pendentes) db.pendentes = [];
+                    db.pendentes.push({
+                        id: uid(),
+                        cliente: clienteNome,
+                        descricao: 'Venda Nº ' + numero + ' — ' + (doc.descricao || 'Venda'),
+                        valor: totais.total,
+                        vencimento: doc.dataVencimento || hojeISO(),
+                        status: 'aberto',
+                        vendaId: doc.id,
+                        formaPrevista: forma,
+                        criadoEm: new Date().toISOString()
+                    });
+                }
+            }
+
+            salvar(db);
+            var msg = tipo === 'ORCAMENTO'
+                ? 'Orçamento Nº ' + numero + ' salvo (sem baixa de estoque).'
+                : (status === 'PAGO'
+                    ? ('Venda Nº ' + numero + ' salva. Estoque baixado. ' +
+                        (formaPagamentoEhDigital(forma) ? 'Valor no Caixa do Banco (PIX/cartão).' : 'Valor no Caixa Balcão (dinheiro).'))
+                    : ('Venda Nº ' + numero + ' salva. Estoque baixado. Valor em Contas a Receber.'));
+            toast(interno
+                ? (msg + ' Funcionário: ' + funcionarioNome + '.')
+                : msg);
+            limparVendaForm();
+            renderOrcamentos();
+            renderProdutos();
+            renderCaixa();
+            renderCaixaBanco();
+            renderPendentes();
+            atualizarKPIs(db);
+        });
+
+        function renderOrcamentos() {
+            var db = carregar();
+            var tb = document.getElementById('tabelaOrc');
+            tb.innerHTML = '';
+            if (!(db.orcamentos || []).length) {
+                tb.innerHTML = '<tr><td colspan="7" class="muted">Nenhum documento.</td></tr>';
+                return;
+            }
+            db.orcamentos.slice().reverse().forEach(function (o) {
+                var nome = o.funcionarioNome || o.clienteNome || nomeCliente(db, o.clienteId) || '—';
+                var tagAvulso = o.clienteAvulso ? ' <span style="font-size:0.68rem;font-weight:700;color:#8fe0b8">AVULSO</span>' : '';
+                var tagFunc = o.vendaFuncionario || o.funcionarioId
+                    ? ' <span style="font-size:0.68rem;font-weight:700;color:#f1c40f">FUNCIONÁRIO</span>'
+                    : '';
+                var pgto = (o.statusPagamento || '—') + (o.formaPagamento ? ' / ' + o.formaPagamento : '');
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + esc(o.numero || '—') + '</td>' +
+                    '<td>' + esc(fmtData(o.dataEmissao || o.criadoEm)) + '</td>' +
+                    '<td>' + esc(o.tipo || '—') + '</td>' +
+                    '<td>' + esc(nome) + tagFunc + tagAvulso + '</td>' +
+                    '<td>' + esc(pgto) + '</td>' +
+                    '<td>' + moeda(o.valor) + '</td>' +
+                    '<td class="actions"><button type="button" class="btn btn-danger" data-ex="' + o.id + '">Excluir</button></td>';
+                tb.appendChild(tr);
+            });
+            tb.querySelectorAll('[data-ex]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    if (!confirm('Excluir documento? (não estorna estoque automaticamente)')) return;
+                    var db2 = carregar();
+                    var idEx = b.getAttribute('data-ex');
+                    marcarExcluido(db2, 'orcamentos', idEx);
+                    db2.orcamentos = db2.orcamentos.filter(function (x) { return x.id !== idEx; });
+                    salvar(db2);
+                    renderOrcamentos();
+                });
+            });
+        }
+

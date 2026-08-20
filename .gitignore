@@ -35,3 +35,7 @@ desktop.ini
 .idea/
 .vscode/
 *.swp
+
+# Backup do index monolítico e script de split (só local)
+_origem/
+_split_hm.js

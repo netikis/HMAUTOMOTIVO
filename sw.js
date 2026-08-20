@@ -1,14 +1,28 @@
 /* HM Centro Automotivo — PWA com atualização automática (PC + celular) */
-var CACHE = 'hm-auto-v8';
+var CACHE = 'hm-auto-v9';
 var ASSETS = [
   './',
   './index.html',
-  './manifest.webmanifest?v=8',
-  './logo-hm.png?v=8',
-  './icon-192.png?v=8',
-  './icon-512.png?v=8',
-  './apple-touch-icon.png?v=8',
-  './assinar-hm.html'
+  './css/app.css',
+  './js/config.js',
+  './js/storage.js',
+  './js/ui.js',
+  './js/nuvem.js',
+  './js/auth.js',
+  './js/clientes.js',
+  './js/os.js',
+  './js/produtos.js',
+  './js/orcamento.js',
+  './js/interno.js',
+  './js/caixa.js',
+  './js/app.js',
+  './manifest.webmanifest?v=9',
+  './logo-hm.png?v=9',
+  './icon-192.png?v=9',
+  './icon-512.png?v=9',
+  './apple-touch-icon.png?v=9',
+  './assinar-hm.html',
+  './firebase-config.js'
 ];
 
 self.addEventListener('install', function (event) {
@@ -41,7 +55,9 @@ function isDocumento(request, url) {
   return path.endsWith('/') ||
     path.endsWith('.html') ||
     path.endsWith('sw.js') ||
-    path.endsWith('manifest.webmanifest');
+    path.endsWith('manifest.webmanifest') ||
+    path.indexOf('/js/') >= 0 ||
+    path.indexOf('/css/') >= 0;
 }
 
 self.addEventListener('fetch', function (event) {
@@ -49,7 +65,7 @@ self.addEventListener('fetch', function (event) {
   var url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
 
-  /* HTML / navegação: rede primeiro → celular e PC pegam a versão nova */
+  /* HTML / CSS / JS / navegação: rede primeiro → celular e PC pegam a versão nova */
   if (isDocumento(event.request, url)) {
     event.respondWith(
       fetch(event.request).then(function (res) {
