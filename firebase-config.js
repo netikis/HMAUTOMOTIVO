@@ -1,6 +1,9 @@
 /**
  * Configuração pública do Firebase (cliente).
- * Pode ir no GitHub Pages — a proteção dos dados é o login + regras do Firestore.
+ * Esta chave identifica o projeto; a proteção real é:
+ *   1) login no Authentication
+ *   2) regras em firestore.rules e storage.rules
+ *   3) restrição de domínio da chave no Google Cloud
  * NÃO coloque senha aqui.
  */
 window.HM_FIREBASE_CONFIG = {
