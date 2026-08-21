@@ -71,6 +71,7 @@
             <div class="submenu-lateral">
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelProdutos" data-canal="normal">🏷️ Cadastro de Produtos</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamento" data-canal="normal">🧾 Venda / Orçamento</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelVendasRealizadas" data-canal="normal">📋 Vendas realizadas</button>
             </div>
         </div>
 
@@ -100,6 +101,7 @@
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelPagFuncionarios" data-canal="interno">💰 Pagamento funcionários</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelProdutos" data-canal="interno">🏷️ Cadastro de Produtos</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamento" data-canal="interno">🧾 Venda p/ Funcionário</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelVendasRealizadas" data-canal="interno">📋 Vendas realizadas</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixa" data-canal="interno">💰 Caixa / Balcão</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixaBanco" data-canal="interno">🏦 Caixa do Banco (PIX / Cartões)</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelPendentes" data-canal="interno">⏳ Contas a Receber</button>
@@ -609,13 +611,22 @@
                     </div>
                 </aside>
             </div>
+        </section>
 
-            <div class="box" style="margin-top:14px">
-                <h2>Documentos salvos</h2>
+        <section id="painelVendasRealizadas" class="panel">
+            <div class="box">
+                <h2>📋 Vendas realizadas</h2>
+                <p class="hint" style="margin-top:0">Documentos salvos do balcão (vendas e orçamentos). Use <strong>Ver</strong> para visualizar e <strong>PDF</strong> para imprimir / encaminhar — no estilo do FH Control.</p>
+                <div class="toolbar">
+                    <input type="search" id="buscaVendasRealizadas" class="search" placeholder="Buscar nº, cliente, funcionário, tipo, pagamento...">
+                </div>
                 <table>
-                    <thead><tr><th>Nº</th><th>Data</th><th>Tipo</th><th>Cliente</th><th>Pgto</th><th>Total</th><th>Ações</th></tr></thead>
-                    <tbody id="tabelaOrc"></tbody>
+                    <thead>
+                        <tr><th>Nº</th><th>Data</th><th>Tipo</th><th>Cliente</th><th>Pgto</th><th>Total</th><th>Ações</th></tr>
+                    </thead>
+                    <tbody id="tabelaVendasRealizadas"></tbody>
                 </table>
+                <div id="listaVendasRealizadasVazia" class="empty" style="display:none;margin-top:12px">Nenhuma venda ou orçamento salvo.</div>
             </div>
         </section>
 

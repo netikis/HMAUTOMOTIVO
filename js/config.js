@@ -17,6 +17,7 @@
             painelHistorico: ['Histórico de Atendimentos', 'Veículos e serviços registrados'],
             painelProdutos: ['Cadastro de Produtos', 'Estoque local simplificado'],
             painelOrcamento: ['Venda / Orçamento', 'Documentos do balcão local'],
+            painelVendasRealizadas: ['Vendas realizadas', 'Ver, imprimir e excluir vendas / orçamentos'],
             painelCaixa: ['Caixa / Balcão', 'Pastas mensais · entradas · saídas'],
             painelCaixaBanco: ['Caixa do Banco', 'Pastas mensais · PIX · cartões'],
             painelPendentes: ['Contas a Receber', 'Pastas mensais · a receber'],

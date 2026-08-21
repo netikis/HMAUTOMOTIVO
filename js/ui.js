@@ -837,6 +837,9 @@
                 prepararVendaForm();
                 renderCarrinhoVenda();
             }
+            if (id === 'painelVendasRealizadas') {
+                renderOrcamentos();
+            }
             if (id === 'painelVeiculo') {
                 preencherSelectResponsavelOs(
                     (document.getElementById('atResponsavelId') || {}).value || '',
@@ -893,6 +896,7 @@
             painelPagFuncionarios: true,
             painelProdutos: true,
             painelOrcamento: true,
+            painelVendasRealizadas: true,
             painelCaixa: true,
             painelCaixaBanco: true,
             painelPendentes: true,

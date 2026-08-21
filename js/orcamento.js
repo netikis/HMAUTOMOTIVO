@@ -690,16 +690,120 @@
             atualizarKPIs(db);
         });
 
-        function renderOrcamentos() {
+        function nomeDocVenda(db, o) {
+            return o.funcionarioNome || o.clienteNome || nomeCliente(db, o.clienteId) || '—';
+        }
+
+        function htmlNotaVenda(db, o) {
+            var emp = getEmpresa(db);
+            var nome = nomeDocVenda(db, o);
+            var tipoLabel = (o.tipo === 'ORCAMENTO') ? 'ORÇAMENTO' : 'VENDA / CUPOM';
+            var itens = o.itens || [];
+            var rows = itens.length
+                ? itens.map(function (it, i) {
+                    var qtd = Number(it.qtd) || 0;
+                    var venda = Number(it.venda) || 0;
+                    var totalLinha = it.total != null ? Number(it.total) : (qtd * venda);
+                    return '<tr>' +
+                        '<td>' + (i + 1) + '</td>' +
+                        '<td>' + esc(it.desc || '—') +
+                        (it.codigo ? '<div style="font-size:0.75rem;color:#666">' + esc(it.codigo) + '</div>' : '') +
+                        '</td>' +
+                        '<td style="text-align:center">' + esc(fmtQtdEstoque(qtd, it.unidade || 'un')) + '</td>' +
+                        '<td style="text-align:right">' + moeda(venda) + '</td>' +
+                        '<td style="text-align:right">' + moeda(totalLinha) + '</td>' +
+                        '</tr>';
+                }).join('')
+                : '<tr><td colspan="5" style="padding:10px;color:#666">Sem itens.</td></tr>';
+
+            return '<div class="nota-espelho" id="notaVendaHtml">' +
+                htmlCabecalhoNotaEmpresa(emp,
+                    '<div class="nota-sub nota-titulo-espelho">' + esc(tipoLabel) + '</div>' +
+                    '<div class="nota-sub nota-registro">Nº ' + esc(String(o.numero || '—')) +
+                    ' · ' + esc(fmtData(o.dataEmissao || o.criadoEm)) +
+                    (o.id ? ' · ID ' + esc(String(o.id).slice(-6)) : '') + '</div>'
+                ) +
+                '<div class="nota-bloco compacto"><div class="tit azul">Cliente / Destino</div><div class="nota-grid nota-grid-compacta">' +
+                '<div class="nota-campo full"><span class="nota-label">' +
+                (o.vendaFuncionario || o.funcionarioId ? 'Funcionário' : 'Cliente') +
+                '</span><span class="nota-valor">' + esc(nome) +
+                (o.clienteAvulso ? ' (avulso)' : '') + '</span></div>' +
+                (o.placa ? '<div class="nota-campo"><span class="nota-label">Placa</span><span class="nota-valor">' + esc((o.placa || '').toUpperCase()) + '</span></div>' : '') +
+                '<div class="nota-campo"><span class="nota-label">Pagamento</span><span class="nota-valor">' +
+                esc((o.statusPagamento || '—') + (o.formaPagamento ? ' / ' + o.formaPagamento : '')) + '</span></div>' +
+                (o.dataVencimento ? '<div class="nota-campo"><span class="nota-label">Vencimento</span><span class="nota-valor">' + esc(fmtData(o.dataVencimento)) + '</span></div>' : '') +
+                '</div></div>' +
+                '<div class="nota-bloco compacto"><div class="tit verde">Itens</div>' +
+                '<div class="nota-tabela-wrap"><table class="nota-itens compacta">' +
+                '<thead><tr><th>#</th><th>Descrição</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead>' +
+                '<tbody>' + rows + '</tbody></table></div></div>' +
+                '<div class="nota-bloco compacto"><div class="tit escuro">Totais</div>' +
+                '<div class="nota-valores-pad compacto">' +
+                '<div>Subtotal: <strong>' + moeda(o.subtotal != null ? o.subtotal : o.valor) + '</strong></div>' +
+                ((Number(o.descontoReais) > 0 || Number(o.descontoPerc) > 0)
+                    ? '<div>Desconto: <strong>' + moeda(o.descontoReais || 0) +
+                      (Number(o.descontoPerc) > 0 ? ' (' + o.descontoPerc + '%)' : '') + '</strong></div>'
+                    : '') +
+                '<div class="nota-total compacto">TOTAL: ' + moeda(o.valor) + '</div>' +
+                (Number(o.valorRecebido) > 0
+                    ? '<div>Recebido: <strong>' + moeda(o.valorRecebido) + '</strong> · Troco: <strong>' + moeda(o.troco || 0) + '</strong></div>'
+                    : '') +
+                (o.observacao ? '<div style="margin-top:8px"><span class="nota-label">Obs.</span> ' + esc(o.observacao) + '</div>' : '') +
+                '</div></div>' +
+                '<div class="nota-sigs compacto" style="margin-top:18px">' +
+                '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Assinatura do cliente</div></div>' +
+                '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Visto do responsável</div></div>' +
+                '</div></div>';
+        }
+
+        function abrirNotaVenda(id, modoPdf) {
             var db = carregar();
-            var tb = document.getElementById('tabelaOrc');
-            tb.innerHTML = '';
-            if (!(db.orcamentos || []).length) {
-                tb.innerHTML = '<tr><td colspan="7" class="muted">Nenhum documento.</td></tr>';
+            var o = (db.orcamentos || []).find(function (x) { return x.id === id; });
+            if (!o) {
+                toast('Documento não encontrado.');
                 return;
             }
-            db.orcamentos.slice().reverse().forEach(function (o) {
-                var nome = o.funcionarioNome || o.clienteNome || nomeCliente(db, o.clienteId) || '—';
+            var html = htmlNotaVenda(db, o);
+            var titulo = (o.tipo === 'ORCAMENTO' ? 'Orçamento' : 'Venda') + ' Nº ' + (o.numero || '');
+            _htmlNotaImpressaoAtual = html;
+            _tituloNotaImpressao = titulo;
+            if (modoPdf || ehCelular()) {
+                abrirViewerPdf(html, titulo);
+                toast(modoPdf ? 'PDF aberto — use Imprimir ou Encaminhar.' : 'Nota aberta. Use Fechar para sair.');
+                return;
+            }
+            executarImpressaoHtml(html);
+            toast('Documento pronto para imprimir.');
+        }
+
+        function filtrarOrcamentosLista(lista, termo) {
+            var t = String(termo || '').trim().toLowerCase();
+            if (!t) return lista;
+            return lista.filter(function (o) {
+                var nome = (o.funcionarioNome || o.clienteNome || '').toLowerCase();
+                var blob = [
+                    o.numero, o.tipo, nome, o.statusPagamento, o.formaPagamento,
+                    o.placa, o.descricao, o.observacao
+                ].join(' ').toLowerCase();
+                return blob.indexOf(t) >= 0;
+            });
+        }
+
+        function renderOrcamentos() {
+            var db = carregar();
+            var tb = document.getElementById('tabelaVendasRealizadas');
+            var vazio = document.getElementById('listaVendasRealizadasVazia');
+            if (!tb) return;
+            var termo = (document.getElementById('buscaVendasRealizadas') || {}).value || '';
+            var lista = filtrarOrcamentosLista((db.orcamentos || []).slice().reverse(), termo);
+            tb.innerHTML = '';
+            if (!lista.length) {
+                if (vazio) vazio.style.display = '';
+                return;
+            }
+            if (vazio) vazio.style.display = 'none';
+            lista.forEach(function (o) {
+                var nome = nomeDocVenda(db, o);
                 var tagAvulso = o.clienteAvulso ? ' <span style="font-size:0.68rem;font-weight:700;color:#8fe0b8">AVULSO</span>' : '';
                 var tagFunc = o.vendaFuncionario || o.funcionarioId
                     ? ' <span style="font-size:0.68rem;font-weight:700;color:#f1c40f">FUNCIONÁRIO</span>'
@@ -713,19 +817,39 @@
                     '<td>' + esc(nome) + tagFunc + tagAvulso + '</td>' +
                     '<td>' + esc(pgto) + '</td>' +
                     '<td>' + moeda(o.valor) + '</td>' +
-                    '<td class="actions"><button type="button" class="btn btn-danger" data-ex="' + o.id + '">Excluir</button></td>';
+                    '<td class="actions">' +
+                    '<button type="button" class="btn btn-ver" data-ver-venda="' + o.id + '">Ver</button> ' +
+                    '<button type="button" class="btn btn-pdf" data-pdf-venda="' + o.id + '">PDF</button> ' +
+                    '<button type="button" class="btn btn-danger" data-ex-venda="' + o.id + '">Excluir</button>' +
+                    '</td>';
                 tb.appendChild(tr);
             });
-            tb.querySelectorAll('[data-ex]').forEach(function (b) {
+            tb.querySelectorAll('[data-ver-venda]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    abrirNotaVenda(b.getAttribute('data-ver-venda'), false);
+                });
+            });
+            tb.querySelectorAll('[data-pdf-venda]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    abrirNotaVenda(b.getAttribute('data-pdf-venda'), true);
+                });
+            });
+            tb.querySelectorAll('[data-ex-venda]').forEach(function (b) {
                 b.addEventListener('click', function () {
                     if (!confirm('Excluir documento? (não estorna estoque automaticamente)')) return;
                     var db2 = carregar();
-                    var idEx = b.getAttribute('data-ex');
+                    var idEx = b.getAttribute('data-ex-venda');
                     marcarExcluido(db2, 'orcamentos', idEx);
                     db2.orcamentos = db2.orcamentos.filter(function (x) { return x.id !== idEx; });
                     salvar(db2);
                     renderOrcamentos();
+                    atualizarKPIs(db2);
                 });
             });
+        }
+
+        var buscaVr = document.getElementById('buscaVendasRealizadas');
+        if (buscaVr) {
+            buscaVr.addEventListener('input', function () { renderOrcamentos(); });
         }
 
