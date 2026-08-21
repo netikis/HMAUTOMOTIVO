@@ -118,7 +118,12 @@
             <button type="button" class="menu-grupo-btn" data-toggle-grupo="sistema">⚙️ Sistema</button>
             <div class="submenu-lateral">
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelConfig" data-canal="normal">⚙️ Config / Empresa</button>
+                <button type="button" class="nav-btn submenu-btn btn-sair-menu" id="btnMenuSairSistema">🚪 Sair do sistema</button>
             </div>
+        </div>
+
+        <div class="sidebar-sair">
+            <button type="button" class="btn-sair-sistema" id="btnMenuSair" title="Encerrar sessão e voltar ao login">🚪 Sair do sistema</button>
         </div>
     </aside>
 
@@ -1164,8 +1169,9 @@
                 <p class="hint" style="margin-top:8px">Com login, a sincronização é <strong>automática</strong> (ao salvar, ao abrir o app e a cada minuto): balcão oficial <strong>e modo interno</strong> (despesas por OS, funcionários, caixa interno). O botão abaixo força na hora.</p>
                 <div class="row" style="margin-top:12px">
                     <button type="button" class="btn btn-primary" id="btnSyncNuvem">☁ Sincronizar agora</button>
-                    <button type="button" class="btn btn-secondary" id="btnAppSair">Sair da conta</button>
+                    <button type="button" class="btn btn-danger" id="btnAppSair">🚪 Sair do sistema</button>
                 </div>
+                <p class="hint" style="margin-top:8px">Sair encerra o login Firebase e volta para a tela de entrada. Os dados locais no aparelho continuam salvos.</p>
             </div>
 
             <div class="box">

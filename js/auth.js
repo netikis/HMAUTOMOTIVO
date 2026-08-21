@@ -116,11 +116,28 @@
             if (e.key === 'Enter') document.getElementById('loginSenha').focus();
         });
 
-        document.getElementById('btnAppSair').addEventListener('click', async function () {
-            await logoutFirebase();
+        async function sairDoSistema() {
+            try {
+                await logoutFirebase();
+            } catch (err) { /* mesmo offline, bloqueia a tela */ }
             bloquearApp();
-            toast('Saiu da conta.');
-        });
+            if (typeof fecharMenuMobile === 'function') fecharMenuMobile();
+            toast('Saiu do sistema.');
+        }
+
+        function ligarBotoesSair() {
+            ['btnAppSair', 'btnMenuSair', 'btnMenuSairSistema'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (!el || el.getAttribute('data-sair-ok')) return;
+                el.setAttribute('data-sair-ok', '1');
+                el.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sairDoSistema();
+                });
+            });
+        }
+        ligarBotoesSair();
 
         function somaPorTipo(tipo) {
             return itensTemp.reduce(function (s, it) {

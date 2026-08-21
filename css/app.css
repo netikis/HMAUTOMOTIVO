@@ -81,6 +81,41 @@
 
         .menu-grupo { margin-bottom: 2px; }
 
+        .sidebar-sair {
+            margin-top: auto;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .btn-sair-sistema {
+            appearance: none;
+            width: 100%;
+            border: 1px solid rgba(231, 76, 60, 0.55);
+            background: rgba(231, 76, 60, 0.18);
+            color: #ffb4a8;
+            border-radius: 10px;
+            padding: 11px 12px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .btn-sair-sistema:hover {
+            background: rgba(231, 76, 60, 0.32);
+            color: #fff;
+            border-color: rgba(231, 76, 60, 0.85);
+        }
+
+        .submenu-btn.btn-sair-menu {
+            color: #ffb4a8 !important;
+        }
+
+        .submenu-btn.btn-sair-menu:hover {
+            color: #fff !important;
+            background: rgba(231, 76, 60, 0.25) !important;
+        }
+
         .menu-grupo-btn {
             appearance: none;
             width: 100%;

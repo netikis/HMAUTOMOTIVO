@@ -933,7 +933,9 @@
 
         document.querySelectorAll('.nav-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                abrirPainel(btn.getAttribute('data-panel'), btn);
+                var panel = btn.getAttribute('data-panel');
+                if (!panel) return;
+                abrirPainel(panel, btn);
             });
         });
 
