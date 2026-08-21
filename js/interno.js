@@ -1699,6 +1699,171 @@
             );
         });
 
+        /* ---------- Relatório unificado (oficial + interno) ---------- */
+        function resumoCanalCaixa(dbCanal) {
+            var cfg = getCaixaConfig(dbCanal);
+            var balEnt = somarLista(dbCanal.caixa, 'entrada');
+            var balSai = somarLista(dbCanal.caixa, 'saida');
+            var banEnt = somarLista(dbCanal.caixaBanco, 'entrada');
+            var banSai = somarLista(dbCanal.caixaBanco, 'saida');
+            var pend = (dbCanal.pendentes || []).reduce(function (s, p) {
+                return s + (Number(p.valor) || 0);
+            }, 0);
+            var salBal = (Number(cfg.inicialBalcao) || 0) + balEnt - balSai;
+            var salBan = (Number(cfg.inicialBanco) || 0) + banEnt - banSai;
+            return {
+                balcaoEntradas: balEnt,
+                balcaoSaidas: balSai,
+                balcaoSaldo: salBal,
+                bancoEntradas: banEnt,
+                bancoSaidas: banSai,
+                bancoSaldo: salBan,
+                pendentes: pend,
+                saldoCaixa: salBal + salBan
+            };
+        }
+
+        function montarResumoUnificado() {
+            var main = carregarMain();
+            var intDb = carregarInternoRaw();
+            var off = resumoCanalCaixa(main);
+            var inn = resumoCanalCaixa(intDb);
+            var totBruto = 0, totCusto = 0, totLucro = 0, qtdOs = 0;
+            var linhasOs = [];
+            (main.atendimentos || []).forEach(function (a) {
+                if (!a) return;
+                var r = resumoLucroOs(a);
+                if (r.bruto <= 0 && r.despesas <= 0) return;
+                qtdOs++;
+                totBruto += r.bruto;
+                totCusto += r.despesas;
+                totLucro += r.lucro;
+                linhasOs.push({
+                    data: fmtData(a.entrada || a.criadoEm),
+                    cliente: nomeAtendimento(main, a),
+                    placa: (a.placa || '—').toUpperCase(),
+                    bruto: r.bruto,
+                    custoPecas: r.custoPecas || 0,
+                    desp: r.despesasLancadas != null ? r.despesasLancadas : (r.despesas - (r.custoPecas || 0)),
+                    lucro: r.lucro
+                });
+            });
+            return {
+                oficial: off,
+                interno: inn,
+                pendentesTotal: off.pendentes + inn.pendentes,
+                totalUnificado: off.saldoCaixa + inn.saldoCaixa,
+                os: {
+                    qtd: qtdOs,
+                    bruto: totBruto,
+                    custos: totCusto,
+                    lucro: totLucro,
+                    linhas: linhasOs
+                }
+            };
+        }
+
+        function renderRelatorioUnificado() {
+            var elDet = document.getElementById('relUnifDetalhe');
+            if (!elDet) return;
+            var r = montarResumoUnificado();
+            document.getElementById('relUnifOficial').textContent = moeda(r.oficial.saldoCaixa);
+            document.getElementById('relUnifInterno').textContent = moeda(r.interno.saldoCaixa);
+            document.getElementById('relUnifPend').textContent = moeda(r.pendentesTotal);
+            document.getElementById('relUnifTotal').textContent = moeda(r.totalUnificado);
+            document.getElementById('relUnifBrutoOs').textContent = moeda(r.os.bruto);
+            document.getElementById('relUnifCustoOs').textContent = moeda(r.os.custos);
+            document.getElementById('relUnifLucroOs').textContent = moeda(r.os.lucro);
+
+            function blocoCanal(titulo, c) {
+                return '<div class="nota-bloco compacto" style="margin-bottom:12px">' +
+                    '<div class="tit escuro" style="padding:8px 10px;font-weight:800">' + esc(titulo) + '</div>' +
+                    '<table style="width:100%;margin-top:8px"><thead><tr>' +
+                    '<th>Conta</th><th>Entradas</th><th>Saídas</th><th>Saldo</th></tr></thead><tbody>' +
+                    '<tr><td>Balcão</td><td>' + moeda(c.balcaoEntradas) + '</td><td>' + moeda(c.balcaoSaidas) +
+                    '</td><td><strong>' + moeda(c.balcaoSaldo) + '</strong></td></tr>' +
+                    '<tr><td>Banco (PIX/cartão)</td><td>' + moeda(c.bancoEntradas) + '</td><td>' + moeda(c.bancoSaidas) +
+                    '</td><td><strong>' + moeda(c.bancoSaldo) + '</strong></td></tr>' +
+                    '<tr><td>Pendentes</td><td colspan="2">A receber</td><td><strong>' + moeda(c.pendentes) + '</strong></td></tr>' +
+                    '<tr><td colspan="3"><strong>Saldo do canal</strong></td><td><strong style="color:#27ae60">' +
+                    moeda(c.saldoCaixa) + '</strong></td></tr>' +
+                    '</tbody></table></div>';
+            }
+
+            var htmlOs = '';
+            if (r.os.linhas.length) {
+                htmlOs =
+                    '<div class="nota-bloco compacto" style="margin-top:14px">' +
+                    '<div class="tit verde" style="padding:8px 10px;font-weight:800">Lucro das OS (bruto − despesas − custo peças)</div>' +
+                    '<p class="hint" style="margin:8px 0">' + r.os.qtd + ' OS · Bruto ' + moeda(r.os.bruto) +
+                    ' · Custos ' + moeda(r.os.custos) + ' · Lucro <strong>' + moeda(r.os.lucro) + '</strong></p>' +
+                    '<table><thead><tr><th>Data</th><th>Cliente</th><th>Placa</th><th>Bruto</th><th>Desp.</th><th>Custo peças</th><th>Lucro</th></tr></thead><tbody>' +
+                    r.os.linhas.map(function (l) {
+                        return '<tr><td>' + esc(l.data) + '</td><td>' + esc(l.cliente) + '</td><td>' + esc(l.placa) +
+                            '</td><td>' + moeda(l.bruto) + '</td><td>' + moeda(l.desp) + '</td><td>' +
+                            moeda(l.custoPecas) + '</td><td><strong>' + moeda(l.lucro) + '</strong></td></tr>';
+                    }).join('') +
+                    '</tbody></table></div>';
+            } else {
+                htmlOs = '<p class="muted" style="margin-top:12px">Nenhuma OS com valores para lucro ainda.</p>';
+            }
+
+            elDet.innerHTML =
+                '<p class="hint">Oficial = balcão/banco do menu Caixa. Interno = vendas p/ funcionário e despesas lançadas no modo interno.</p>' +
+                blocoCanal('Caixa oficial', r.oficial) +
+                blocoCanal('Caixa interno', r.interno) +
+                '<div style="padding:12px;border:2px solid #27ae60;border-radius:10px;margin:12px 0">' +
+                '<strong>Total unificado (oficial + interno):</strong> ' +
+                '<span style="font-size:1.25rem;font-weight:800;color:#2ecc71">' + moeda(r.totalUnificado) + '</span>' +
+                '<div class="muted" style="margin-top:6px">Pendentes somados (não entram no saldo de caixa): ' +
+                moeda(r.pendentesTotal) + '</div></div>' +
+                htmlOs;
+        }
+
+        function imprimirRelatorioUnificado() {
+            renderRelatorioUnificado();
+            var main = carregarMain();
+            var emp = getEmpresa(main);
+            var r = montarResumoUnificado();
+            var html =
+                '<div class="nota-espelho">' +
+                htmlCabecalhoNotaEmpresa(emp,
+                    '<div class="nota-sub nota-titulo-espelho">RELATÓRIO UNIFICADO</div>' +
+                    '<div class="nota-sub nota-registro">Oficial + Interno · ' + esc(fmtData(hojeISO())) + '</div>'
+                ) +
+                '<div class="nota-bloco compacto"><div class="tit azul">Resumo</div><div class="nota-valores-pad compacto">' +
+                '<div>Caixa oficial: <strong>' + moeda(r.oficial.saldoCaixa) + '</strong></div>' +
+                '<div>Caixa interno: <strong>' + moeda(r.interno.saldoCaixa) + '</strong></div>' +
+                '<div>Pendentes (oficial+interno): <strong>' + moeda(r.pendentesTotal) + '</strong></div>' +
+                '<div class="nota-total compacto">Total unificado: ' + moeda(r.totalUnificado) + '</div>' +
+                '<div style="margin-top:8px">Bruto OS: <strong>' + moeda(r.os.bruto) +
+                '</strong> · Custos OS: <strong>' + moeda(r.os.custos) +
+                '</strong> · Lucro OS: <strong>' + moeda(r.os.lucro) + '</strong></div>' +
+                '</div></div>' +
+                document.getElementById('relUnifDetalhe').innerHTML +
+                '</div>';
+            _htmlNotaImpressaoAtual = html;
+            _tituloNotaImpressao = 'Relatório unificado';
+            if (ehCelular()) {
+                abrirViewerPdf(html, 'Relatório unificado');
+            } else {
+                executarImpressaoHtml(html);
+            }
+            toast('Relatório unificado pronto.');
+        }
+
+        var btnAtUnif = document.getElementById('btnAtualizarRelUnif');
+        if (btnAtUnif) {
+            btnAtUnif.addEventListener('click', function () {
+                renderRelatorioUnificado();
+                toast('Relatório unificado atualizado.');
+            });
+        }
+        var btnImpUnif = document.getElementById('btnImprimirRelUnif');
+        if (btnImpUnif) {
+            btnImpUnif.addEventListener('click', imprimirRelatorioUnificado);
+        }
+
         document.querySelectorAll('[data-rel-mes]').forEach(function (b) {
             if (b.hasAttribute('data-rel-mes-fixo')) return;
             b.addEventListener('click', function () {

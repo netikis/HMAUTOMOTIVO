@@ -850,6 +850,7 @@
                 );
             }
             if (id === 'painelRelatorioCaixa') renderRelatorioCaixa();
+            if (id === 'painelRelatorioUnificado') renderRelatorioUnificado();
             if (id === 'painelDespesasOs') {
                 canalVendas = 'interno';
                 atualizarBadgeCanal();

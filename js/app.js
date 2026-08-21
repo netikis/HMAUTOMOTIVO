@@ -141,6 +141,11 @@
             renderCaixaBanco();
             renderPendentes();
             renderRelatorioCaixa();
+            if (typeof renderRelatorioUnificado === 'function' &&
+                document.getElementById('painelRelatorioUnificado') &&
+                document.getElementById('painelRelatorioUnificado').classList.contains('active')) {
+                renderRelatorioUnificado();
+            }
             if (document.getElementById('painelDespesasOs') &&
                 document.getElementById('painelDespesasOs').classList.contains('active')) {
                 renderDespesasOs();

@@ -23,6 +23,7 @@
             painelCaixaBanco: ['Caixa do Banco', 'Pastas mensais · PIX · cartões'],
             painelPendentes: ['Contas a Receber', 'Pastas mensais · a receber'],
             painelRelatorioCaixa: ['Relatório Caixa', 'Pastas mensais · entradas · saídas · relatório geral'],
+            painelRelatorioUnificado: ['Relatório unificado', 'Oficial + interno · um caixa no final'],
             painelDespesasOs: ['Despesas por OS', 'Pastas mensais · bruto · despesas · lucro'],
             painelServicoFinalizado: ['Serviço finalizado', 'Pastas Ano → Mês → Dia · visualizar e imprimir'],
             painelFuncionarios: ['Cadastro de Funcionários', 'Quem pode comprar no modo interno'],

@@ -91,6 +91,7 @@
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixaBanco" data-canal="normal">🏦 Caixa do Banco (Digital / PIX / Cartões)</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelPendentes" data-canal="normal">⏳ Contas a Receber (Pendentes)</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioCaixa" data-canal="normal">📄 Relatório Caixa</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioUnificado">📊 Relatório unificado</button>
             </div>
         </div>
 
@@ -108,6 +109,7 @@
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixaBanco" data-canal="interno">🏦 Caixa do Banco (PIX / Cartões)</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelPendentes" data-canal="interno">⏳ Contas a Receber</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioCaixa" data-canal="interno">📄 Relatório Caixa</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioUnificado">📊 Relatório unificado</button>
             </div>
         </div>
 
@@ -885,6 +887,32 @@
                     <thead><tr><th>Origem</th><th>Forma</th><th>Tipo</th><th>Qtd</th><th>Total</th></tr></thead>
                     <tbody id="tabelaRelCx"></tbody>
                 </table>
+            </div>
+        </section>
+
+        <section id="painelRelatorioUnificado" class="panel">
+            <div class="box">
+                <h2>📊 Relatório unificado — Oficial + Interno</h2>
+                <p class="hint" style="margin-top:0">Visão de <strong>um caixa só no final</strong>: soma o balcão/banco <strong>oficial</strong> com o <strong>interno</strong> (venda p/ funcionário, despesas OS) e o lucro das ordens de serviço.</p>
+                <div class="row" style="margin-bottom:12px">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarRelUnif">🔄 Atualizar</button>
+                    <button type="button" class="btn btn-pdf" id="btnImprimirRelUnif">🖨️ Imprimir / PDF</button>
+                </div>
+            </div>
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card" style="background:#2980b9"><div class="k">Caixa oficial</div><div class="v" id="relUnifOficial">R$ 0</div></div>
+                <div class="card" style="background:#8e44ad"><div class="k">Caixa interno</div><div class="v" id="relUnifInterno">R$ 0</div></div>
+                <div class="card" style="background:#e67e22"><div class="k">Pendentes (oficial+int.)</div><div class="v" id="relUnifPend">R$ 0</div></div>
+                <div class="card" style="background:#27ae60"><div class="k">Total unificado</div><div class="v" id="relUnifTotal">R$ 0</div></div>
+            </div>
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card"><div class="k">Bruto OS</div><div class="v" id="relUnifBrutoOs">R$ 0</div></div>
+                <div class="card" style="background:#c0392b"><div class="k">Custos OS (desp.+peças)</div><div class="v" id="relUnifCustoOs">R$ 0</div></div>
+                <div class="card" style="background:#1e8449"><div class="k">Lucro limpo OS</div><div class="v" id="relUnifLucroOs">R$ 0</div></div>
+            </div>
+            <div class="box" id="relUnifConteudo">
+                <h2>Detalhe por canal</h2>
+                <div id="relUnifDetalhe"></div>
             </div>
         </section>
 
