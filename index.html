@@ -266,7 +266,7 @@
                             <input id="atFranquia" inputmode="decimal" placeholder="0,00">
                         </div>
                     </div>
-                    <p class="hint" style="margin-top:8px">No <strong>PDF cliente</strong> você marca o que sai: Franquia, Mão de obra e/ou Peças. Peças só aparecem se você selecionar.</p>
+                    <p class="hint" style="margin-top:8px">A <strong>franquia não soma</strong> no total do serviço (peças + mão). No PDF interno ela aparece à parte; no PDF cliente você marca o que sai.</p>
                 </div>
 
                 <div class="box">
@@ -961,6 +961,7 @@
                 <div class="box" id="boxLucroPorFuncionario" style="margin:12px 0;padding:10px 12px;background:rgba(41,128,185,0.08);border:1px solid rgba(41,128,185,0.25)">
                     <h3 style="margin:0 0 8px;font-size:1rem">👷 Lucro por funcionário (para fechar)</h3>
                     <p class="hint" style="margin:0 0 8px">Soma das OS em que o funcionário é o <strong>responsável</strong> (bruto − despesas internas).</p>
+                    <p class="hint" style="margin:0 0 8px">O responsável leva só a <strong>mão de obra</strong>. Lucro de peça fica da oficina.</p>
                     <div id="resumoLucroPorFuncionario" class="muted">Nenhuma OS com responsável vinculado.</div>
                 </div>
                 <div class="table-wrap">
@@ -973,8 +974,9 @@
                             <th>Responsável</th>
                             <th>Status</th>
                             <th>Bruto OS</th>
+                            <th>Mão (func.)</th>
                             <th>Despesas</th>
-                            <th>Lucro</th>
+                            <th>Lucro oficina</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -1438,7 +1440,7 @@
     <div class="modal-overlay" id="modalItensPdfCliente">
         <div class="modal-box" style="width:min(480px,100%)">
             <h3>PDF cliente — o que exportar?</h3>
-            <p class="hint">Marque o que deve aparecer no PDF do cliente. Pode marcar 1, 2 ou os 3.</p>
+            <p class="hint">Marque o que deve aparecer no PDF do cliente. A <strong>franquia nunca soma</strong> no total do serviço (fica à parte). Pode marcar 1, 2 ou os 3.</p>
             <div style="display:flex;flex-direction:column;gap:12px;margin:14px 0">
                 <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:1.05rem">
                     <input type="checkbox" id="chkPdfFranquia" checked style="width:20px;height:20px">

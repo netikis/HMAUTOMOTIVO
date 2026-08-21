@@ -163,12 +163,12 @@
                     key = '__sem__';
                     nome = 'Sem responsável';
                 }
-                if (!por[key]) por[key] = { nome: nome, qtd: 0, bruto: 0, despesas: 0, lucro: 0 };
+                if (!por[key]) por[key] = { nome: nome, qtd: 0, mao: 0, lucroFunc: 0, lucroOficina: 0 };
                 var r = resumoLucroOs(a);
                 por[key].qtd += 1;
-                por[key].bruto += r.bruto;
-                por[key].despesas += r.despesas;
-                por[key].lucro += r.lucro;
+                por[key].mao += r.maoObra || 0;
+                por[key].lucroFunc += r.lucroFuncionario != null ? r.lucroFuncionario : (r.maoObra || 0);
+                por[key].lucroOficina += r.lucro;
             });
             var rows = Object.keys(por).map(function (k) { return por[k]; }).sort(function (a, b) {
                 if (a.nome === 'Sem responsável') return 1;
@@ -179,12 +179,13 @@
                 el.innerHTML = '<span class="muted">Nenhuma OS com responsável vinculado.</span>';
                 return;
             }
-            el.innerHTML = '<table style="margin:0;width:100%"><thead><tr>' +
-                '<th>Funcionário</th><th>OS</th><th>Bruto</th><th>Despesas</th><th>Lucro limpo</th>' +
+            el.innerHTML = '<p class="hint" style="margin:0 0 8px">Lucro do funcionário = <strong>só mão de obra</strong> (peças ficam da oficina).</p>' +
+                '<table style="margin:0;width:100%"><thead><tr>' +
+                '<th>Funcionário</th><th>OS</th><th>Mão de obra</th><th>Lucro funcionário</th><th>Lucro oficina (ref.)</th>' +
                 '</tr></thead><tbody>' + rows.map(function (r) {
                     return '<tr><td><strong>' + esc(r.nome) + '</strong></td><td>' + r.qtd +
-                        '</td><td>' + moeda(r.bruto) + '</td><td>' + moeda(r.despesas) +
-                        '</td><td><strong style="color:#1e8449">' + moeda(r.lucro) + '</strong></td></tr>';
+                        '</td><td>' + moeda(r.mao) + '</td><td><strong style="color:#2980b9">' + moeda(r.lucroFunc) +
+                        '</strong></td><td>' + moeda(r.lucroOficina) + '</td></tr>';
                 }).join('') + '</tbody></table>';
         }
 

@@ -31,17 +31,45 @@
             }, 0);
         }
 
+        function totalMaoObraOs(atendimento) {
+            if (!atendimento) return 0;
+            var deItens = (atendimento.itens || []).reduce(function (s, it) {
+                return s + (it.tipo === 'mao' ? (Number(it.valor) || 0) : 0);
+            }, 0);
+            if (deItens > 0) return deItens;
+            return Number(atendimento.maoObra) || 0;
+        }
+
+        function totalPecasCobradoOs(atendimento) {
+            if (!atendimento) return 0;
+            if (atendimento.totalPecas != null && atendimento.totalPecas !== '') {
+                return Number(atendimento.totalPecas) || 0;
+            }
+            return (atendimento.itens || []).reduce(function (s, it) {
+                if ((it.tipo || 'peca') !== 'peca') return s;
+                return s + (Number(it.valor) || 0);
+            }, 0);
+        }
+
         function resumoLucroOs(atendimento) {
             var bruto = Number(atendimento && atendimento.total) || 0;
+            var mao = totalMaoObraOs(atendimento);
+            var pecasCobrado = totalPecasCobradoOs(atendimento);
             var custoPecas = totalCustoPecasOs(atendimento);
             var despesasLancadas = totalDespesasInternasPorOs(atendimento && atendimento.id);
             var despesas = despesasLancadas + custoPecas;
+            /* Lucro do responsável = só mão de obra (peças / lucro de peça não vão pro funcionário) */
+            var lucroFuncionario = mao;
             return {
                 bruto: bruto,
+                maoObra: mao,
+                pecasCobrado: pecasCobrado,
                 custoPecas: custoPecas,
                 despesasLancadas: despesasLancadas,
                 despesas: despesas,
-                lucro: bruto - despesas
+                lucro: bruto - despesas,
+                lucroFuncionario: lucroFuncionario,
+                lucroPecas: pecasCobrado - custoPecas
             };
         }
 
@@ -82,13 +110,17 @@
                 (a.servicos ? '<div class="nota-campo full"><span class="nota-label">Serviços</span><span class="nota-valor">' + esc(a.servicos) + '</span></div>' : '') +
                 '</div></div>' +
                 '<div class="nota-bloco compacto"><div class="tit verde">Valores do serviço (bruto)</div>' +
-                '<div class="nota-valores-pad compacto">' + htmlItensNota(a.itens) + '</div></div>' +
-                (resumo.custoPecas > 0
-                    ? '<div class="nota-bloco compacto"><div class="tit escuro">Custo das peças (lançado na OS · sem estoque)</div>' +
+                '<div class="nota-valores-pad compacto">' +
+                (ehServicoSeguro(a)
+                    ? htmlItensNotaSeguro(a.itens, { interno: true, franquia: a.franquia })
+                    : htmlItensNota(a.itens)) +
+                '</div></div>' +
+                (resumo.custoPecas > 0 || resumo.pecasCobrado > 0
+                    ? '<div class="nota-bloco compacto"><div class="tit escuro">Peças (oficina — não vão pro funcionário)</div>' +
                       '<div class="nota-valores-pad compacto">' +
-                      '<div>Custo total das peças: <strong style="color:#c0392b">' + moeda(resumo.custoPecas) + '</strong></div>' +
-                      '<div>Lucro nas peças (cobrado − custo): <strong style="color:#1e8449">' +
-                      moeda((Number(a.totalPecas) || 0) - resumo.custoPecas) + '</strong></div>' +
+                      '<div>Peças cobradas: <strong>' + moeda(resumo.pecasCobrado) + '</strong></div>' +
+                      '<div>Custo das peças: <strong style="color:#c0392b">' + moeda(resumo.custoPecas) + '</strong></div>' +
+                      '<div>Lucro nas peças: <strong style="color:#1e8449">' + moeda(resumo.lucroPecas) + '</strong></div>' +
                       '</div></div>'
                     : '') +
                 '<div class="nota-bloco compacto"><div class="tit vermelho">Despesas internas (modo interno)</div>' +
@@ -100,15 +132,16 @@
                 '<div class="tit escuro">Resumo do lucro</div>' +
                 '<div class="nota-valores-pad compacto">' +
                 '<div class="nota-resumo-lucro">' +
-                '<div>Bruto OS: <strong>' + moeda(resumo.bruto) + '</strong></div>' +
+                '<div>Bruto OS (serviço): <strong>' + moeda(resumo.bruto) + '</strong></div>' +
+                '<div>Mão de obra (responsável): <strong>' + moeda(resumo.maoObra) + '</strong></div>' +
                 (resumo.custoPecas > 0
                     ? '<div>Custo peças: <strong style="color:#c0392b">' + moeda(resumo.custoPecas) + '</strong></div>'
                     : '') +
                 '<div>Despesas lançadas: <strong style="color:#c0392b">' + moeda(resumo.despesasLancadas) + '</strong></div>' +
-                '<div>Total custos: <strong style="color:#c0392b">' + moeda(resumo.despesas) + '</strong></div>' +
-                '<div>Lucro limpo: <strong style="color:#1e8449">' + moeda(resumo.lucro) + '</strong></div>' +
+                '<div>Lucro oficina (bruto − custos): <strong style="color:#1e8449">' + moeda(resumo.lucro) + '</strong></div>' +
+                '<div>Lucro do funcionário (só mão de obra): <strong style="color:#2980b9">' + moeda(resumo.lucroFuncionario) + '</strong></div>' +
                 '</div>' +
-                '<p style="margin:10px 0 0;font-size:0.85rem;color:#555">Folha exclusiva do modo interno — para apresentar ao funcionário / controle da oficina.</p>' +
+                '<p style="margin:10px 0 0;font-size:0.85rem;color:#555">Peças e lucro de peça ficam da oficina — não entram no lucro do responsável. Franquia não soma no total do serviço.</p>' +
                 '</div></div>' +
                 '<div class="nota-sigs compacto" style="margin-top:18px">' +
                 '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Responsável / Funcionário</div></div>' +
@@ -614,6 +647,7 @@
                     '<td>' + esc(nomeResponsavelOs(a)) + '</td>' +
                     '<td>' + esc(a.status || '—') + '</td>' +
                     '<td>' + moeda(r.bruto) + '</td>' +
+                    '<td><strong style="color:#7ec8ff">' + moeda(r.maoObra || r.lucroFuncionario || 0) + '</strong></td>' +
                     '<td>' + moeda(r.despesas) + '</td>' +
                     '<td><strong>' + moeda(r.lucro) + '</strong></td>' +
                     '<td class="actions"><span class="acoes-linha">' +

@@ -1272,6 +1272,7 @@
             var pecas = pecasLista.reduce(function (s, it) { return s + (Number(it.valor) || 0); }, 0);
             var mao = maoLista.reduce(function (s, it) { return s + (Number(it.valor) || 0); }, 0);
             var franquiaShow = showFranquia ? franquia : 0;
+            var soFranquiaCliente = !interno && showFranquia && !showPecas && !showMao;
 
             if (!pecasLista.length && !maoLista.length && !(franquiaShow > 0)) {
                 return '<p style="color:#000;font-size:0.85rem;">Nenhum item selecionado para este PDF.</p>';
@@ -1284,31 +1285,41 @@
             maoLista.forEach(function (it) {
                 rows += '<tr><td>Mão de obra</td><td>' + esc(it.desc || '') + '</td><td>' + moeda(it.valor) + '</td></tr>';
             });
-            if (franquiaShow > 0) {
-                rows += '<tr><td>Franquia</td><td>Franquia do seguro</td><td>' + moeda(franquiaShow) + '</td></tr>';
-            }
+            /* Franquia NÃO entra na tabela de itens somáveis — fica à parte (não soma no total do serviço) */
 
             var html = '<table class="nota-itens compacta"><thead><tr><th>Tipo</th><th>Descrição</th><th>Valor</th></tr></thead><tbody>' +
-                rows + '</tbody></table>';
+                (rows || '<tr><td colspan="3" style="padding:8px;color:#666">Sem peças / mão de obra neste PDF.</td></tr>') +
+                '</tbody></table>';
 
             var partesSub = [];
             if (showPecas) partesSub.push('Peças: <strong>' + moeda(pecas) + '</strong>');
             if (showMao) partesSub.push('Mão de obra: <strong>' + moeda(mao) + '</strong>');
-            if (showFranquia) partesSub.push('Franquia: <strong>' + moeda(franquiaShow) + '</strong>');
             if (partesSub.length) {
                 html += '<div class="nota-subtotais compacto">' + partesSub.join(' · ') + '</div>';
             }
-            var totalVisivel = pecas + mao + franquiaShow;
-            html += '<div class="nota-total compacto">Total: ' + moeda(totalVisivel) + '</div>';
-            if (interno) {
-                var pecasAll = lista.reduce(function (s, it) {
-                    return s + ((it.tipo || 'peca') === 'peca' ? (Number(it.valor) || 0) : 0);
-                }, 0);
-                var maoAll = lista.reduce(function (s, it) {
-                    return s + (it.tipo === 'mao' ? (Number(it.valor) || 0) : 0);
-                }, 0);
-                html += '<div class="nota-subtotais compacto" style="margin-top:4px">Total serviço (peças + mão, sem franquia): <strong>' +
-                    moeda(pecasAll + maoAll) + '</strong></div>';
+
+            /* Total do serviço = peças + mão. Franquia NUNCA soma. */
+            var totalServico = pecas + mao;
+            if (soFranquiaCliente) {
+                html += '<div class="nota-total compacto">Franquia (cliente): ' + moeda(franquiaShow) + '</div>';
+            } else if (showPecas || showMao) {
+                html += '<div class="nota-total compacto">Total serviço: ' + moeda(totalServico) + '</div>';
+            }
+
+            if (franquiaShow > 0 && !soFranquiaCliente) {
+                html += '<div class="nota-subtotais compacto" style="margin-top:6px;padding:6pt;border:1.5pt solid #e67e22;border-radius:4px">' +
+                    'Franquia (não soma no total): <strong style="color:#c0392b">' + moeda(franquiaShow) + '</strong>';
+                if (totalServico > 0) {
+                    var dif = totalServico - franquiaShow;
+                    html += '<br><span style="font-size:9pt">Diferença serviço − franquia: <strong>' + moeda(dif) + '</strong></span>';
+                }
+                html += '</div>';
+            } else if (franquiaShow > 0 && soFranquiaCliente) {
+                /* já mostrado como total */
+            }
+
+            if (interno && franquiaShow > 0) {
+                html += '<div class="nota-subtotais compacto" style="margin-top:4px;color:#555">Uso interno: franquia informativa — o total do serviço permanece peças + mão de obra.</div>';
             }
             return html;
         }
