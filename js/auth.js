@@ -128,6 +128,13 @@
             }, 0);
         }
 
+        function somaCustoPecasTemp() {
+            return itensTemp.reduce(function (s, it) {
+                if ((it.tipo || 'peca') !== 'peca') return s;
+                return s + (Number(it.custo) || 0);
+            }, 0);
+        }
+
         function renderItens() {
             var box = document.getElementById('listaItens');
             if (!itensTemp.length) {
@@ -138,9 +145,16 @@
                     var tag = tipo === 'mao'
                         ? '<span style="display:inline-block;margin-right:8px;padding:2px 8px;border-radius:999px;font-size:0.7rem;font-weight:700;background:rgba(47,158,107,0.2);color:#8fe0b8;border:1px solid rgba(47,158,107,0.45)">MÃO DE OBRA</span>'
                         : '<span style="display:inline-block;margin-right:8px;padding:2px 8px;border-radius:999px;font-size:0.7rem;font-weight:700;background:rgba(61,160,232,0.15);color:#9fd3ff;border:1px solid rgba(61,160,232,0.4)">PEÇA</span>';
+                    var custo = Number(it.custo) || 0;
+                    var detalheValor = tipo === 'peca' && custo > 0
+                        ? '<div style="font-size:0.85rem">' + moeda(it.valor) +
+                          ' <span class="muted">cobrado</span></div>' +
+                          '<div style="font-size:0.8rem;color:#e67e22">Custo ' + moeda(custo) +
+                          ' · lucro ' + moeda((Number(it.valor) || 0) - custo) + '</div>'
+                        : '<div>' + moeda(it.valor) + '</div>';
                     return '<div class="row" style="margin-bottom:6px;align-items:center">' +
                         '<div class="col" style="flex:2">' + tag + esc(it.desc) + '</div>' +
-                        '<div class="col">' + moeda(it.valor) + '</div>' +
+                        '<div class="col">' + detalheValor + '</div>' +
                         '<div class="col" style="flex:0.5"><button type="button" class="btn btn-danger" data-rm="' + idx + '">×</button></div>' +
                         '</div>';
                 }).join('');
@@ -157,10 +171,20 @@
         function calcTotal() {
             var pecas = somaPorTipo('peca');
             var mao = somaPorTipo('mao');
+            var custoPecas = somaCustoPecasTemp();
+            var lucroPecas = pecas - custoPecas;
             var seguro = (document.getElementById('atTipoOrcamento') || {}).value === 'seguro';
             var franquia = seguro ? (parseMoeda((document.getElementById('atFranquia') || {}).value) || 0) : 0;
             document.getElementById('atSubPecas').textContent = moeda(pecas);
             document.getElementById('atSubMao').textContent = moeda(mao);
+            var linhaCusto = document.getElementById('linhaCustoPecasOs');
+            var linhaLucro = document.getElementById('linhaLucroPecasOs');
+            var subCusto = document.getElementById('atSubCustoPecas');
+            var subLucro = document.getElementById('atSubLucroPecas');
+            if (linhaCusto) linhaCusto.style.display = custoPecas > 0 ? '' : 'none';
+            if (linhaLucro) linhaLucro.style.display = custoPecas > 0 ? '' : 'none';
+            if (subCusto) subCusto.textContent = moeda(custoPecas);
+            if (subLucro) subLucro.textContent = moeda(lucroPecas);
             var linhaF = document.getElementById('linhaFranquiaOs');
             var subF = document.getElementById('atSubFranquia');
             var labelT = document.getElementById('labelTotalOs');
@@ -193,18 +217,22 @@
             calcTotal();
         }
 
-        function addLinhaValor(tipo, descId, valorId, msgVazio) {
+        function addLinhaValor(tipo, descId, valorId, msgVazio, custoId) {
             var desc = document.getElementById(descId).value.trim();
             var valor = parseMoeda(document.getElementById(valorId).value);
+            var custo = custoId ? (parseMoeda((document.getElementById(custoId) || {}).value) || 0) : 0;
             if (!desc) { toast(msgVazio); return; }
-            itensTemp.push({ tipo: tipo, desc: desc, valor: valor });
+            var item = { tipo: tipo, desc: desc, valor: valor };
+            if (tipo === 'peca') item.custo = custo;
+            itensTemp.push(item);
             document.getElementById(descId).value = '';
             document.getElementById(valorId).value = '';
+            if (custoId && document.getElementById(custoId)) document.getElementById(custoId).value = '';
             renderItens();
         }
 
         document.getElementById('btnAddItem').addEventListener('click', function () {
-            addLinhaValor('peca', 'itemDesc', 'itemValor', 'Informe a descrição da peça/item.');
+            addLinhaValor('peca', 'itemDesc', 'itemValor', 'Informe a descrição da peça/item.', 'itemCusto');
         });
 
         document.getElementById('btnAddMao').addEventListener('click', function () {
@@ -276,6 +304,7 @@
             var id = document.getElementById('atId').value;
             var pecas = somaPorTipo('peca');
             var mao = somaPorTipo('mao');
+            var custoPecas = somaCustoPecasTemp();
             var resp = obterResponsavelOsDoForm();
             var tipoOrc = (document.getElementById('atTipoOrcamento') || {}).value === 'seguro' ? 'seguro' : 'normal';
             var franquia = tipoOrc === 'seguro'
@@ -313,6 +342,7 @@
                 }).filter(function (f) { return f.data || f.url; }),
                 maoObra: mao,
                 totalPecas: pecas,
+                totalCustoPecas: custoPecas,
                 total: pecas + mao,
                 atualizadoEm: new Date().toISOString()
             };
@@ -410,11 +440,13 @@
             document.getElementById('atEstado').value = a.estado || '';
             document.getElementById('atServicos').value = a.servicos || '';
             itensTemp = (a.itens || []).map(function (it) {
-                return {
+                var row = {
                     tipo: it.tipo || 'peca',
                     desc: it.desc || '',
                     valor: Number(it.valor) || 0
                 };
+                if ((row.tipo || 'peca') === 'peca') row.custo = Number(it.custo) || 0;
+                return row;
             });
             /* Compatibilidade: valor único antigo de mão de obra vira um item */
             var temMaoNaLista = itensTemp.some(function (it) { return it.tipo === 'mao'; });

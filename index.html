@@ -333,9 +333,11 @@
                     <h2>Valores — Peças e Mão de Obra</h2>
                     <div class="row">
                         <div class="col" style="flex:2"><label>Descrição peça / item</label><input id="itemDesc" placeholder="Ex: Para-lama dianteiro"></div>
-                        <div class="col"><label>Valor (R$)</label><input id="itemValor" inputmode="decimal" placeholder="0,00"></div>
+                        <div class="col"><label>Valor cobrado (R$)</label><input id="itemValor" inputmode="decimal" placeholder="0,00"></div>
+                        <div class="col"><label>Custo (R$)</label><input id="itemCusto" inputmode="decimal" placeholder="0,00" title="O que você pagou na peça — não usa estoque"></div>
                         <div class="col" style="flex:0.7;align-self:end"><button type="button" class="btn btn-secondary" id="btnAddItem" style="width:100%">+ Peça</button></div>
                     </div>
+                    <p class="hint" style="margin:6px 0 0">Peça fora do estoque: informe o <strong>valor cobrado</strong> e o <strong>custo</strong> (o que pagou) para ver o lucro na OS.</p>
                     <div class="row" style="margin-top:10px">
                         <div class="col" style="flex:2"><label>Descrição mão de obra</label><input id="maoDesc" placeholder="Ex: Funilaria lateral, pintura, alinhamento..."></div>
                         <div class="col"><label>Valor (R$)</label><input id="maoValor" inputmode="decimal" placeholder="0,00"></div>
@@ -343,8 +345,16 @@
                     </div>
                     <div id="listaItens" style="margin-top:12px"></div>
                     <div class="total-line" style="border-top:none;padding-top:4px;margin-top:4px">
-                        <span class="muted">Peças</span>
+                        <span class="muted">Peças (cobrado)</span>
                         <strong id="atSubPecas" style="font-size:1.1rem;color:var(--chrome)">R$ 0,00</strong>
+                    </div>
+                    <div class="total-line" id="linhaCustoPecasOs" style="display:none;border-top:none;padding-top:0;margin-top:0">
+                        <span class="muted">Custo das peças</span>
+                        <strong id="atSubCustoPecas" style="font-size:1.1rem;color:#e67e22">R$ 0,00</strong>
+                    </div>
+                    <div class="total-line" id="linhaLucroPecasOs" style="display:none;border-top:none;padding-top:0;margin-top:0">
+                        <span class="muted">Lucro nas peças</span>
+                        <strong id="atSubLucroPecas" style="font-size:1.1rem;color:#2f9e6b">R$ 0,00</strong>
                     </div>
                     <div class="total-line" style="border-top:none;padding-top:0;margin-top:0">
                         <span class="muted">Mão de obra</span>

@@ -20,11 +20,26 @@
             }, 0);
         }
 
+        function totalCustoPecasOs(atendimento) {
+            if (!atendimento) return 0;
+            if (atendimento.totalCustoPecas != null && atendimento.totalCustoPecas !== '') {
+                return Number(atendimento.totalCustoPecas) || 0;
+            }
+            return (atendimento.itens || []).reduce(function (s, it) {
+                if ((it.tipo || 'peca') !== 'peca') return s;
+                return s + (Number(it.custo) || 0);
+            }, 0);
+        }
+
         function resumoLucroOs(atendimento) {
             var bruto = Number(atendimento && atendimento.total) || 0;
-            var despesas = totalDespesasInternasPorOs(atendimento && atendimento.id);
+            var custoPecas = totalCustoPecasOs(atendimento);
+            var despesasLancadas = totalDespesasInternasPorOs(atendimento && atendimento.id);
+            var despesas = despesasLancadas + custoPecas;
             return {
                 bruto: bruto,
+                custoPecas: custoPecas,
+                despesasLancadas: despesasLancadas,
                 despesas: despesas,
                 lucro: bruto - despesas
             };
@@ -68,6 +83,14 @@
                 '</div></div>' +
                 '<div class="nota-bloco compacto"><div class="tit verde">Valores do serviço (bruto)</div>' +
                 '<div class="nota-valores-pad compacto">' + htmlItensNota(a.itens) + '</div></div>' +
+                (resumo.custoPecas > 0
+                    ? '<div class="nota-bloco compacto"><div class="tit escuro">Custo das peças (lançado na OS · sem estoque)</div>' +
+                      '<div class="nota-valores-pad compacto">' +
+                      '<div>Custo total das peças: <strong style="color:#c0392b">' + moeda(resumo.custoPecas) + '</strong></div>' +
+                      '<div>Lucro nas peças (cobrado − custo): <strong style="color:#1e8449">' +
+                      moeda((Number(a.totalPecas) || 0) - resumo.custoPecas) + '</strong></div>' +
+                      '</div></div>'
+                    : '') +
                 '<div class="nota-bloco compacto"><div class="tit vermelho">Despesas internas (modo interno)</div>' +
                 '<div class="nota-tabela-wrap"><table class="nota-tabela-desp">' +
                 '<thead><tr>' +
@@ -78,7 +101,11 @@
                 '<div class="nota-valores-pad compacto">' +
                 '<div class="nota-resumo-lucro">' +
                 '<div>Bruto OS: <strong>' + moeda(resumo.bruto) + '</strong></div>' +
-                '<div>Despesas: <strong style="color:#c0392b">' + moeda(resumo.despesas) + '</strong></div>' +
+                (resumo.custoPecas > 0
+                    ? '<div>Custo peças: <strong style="color:#c0392b">' + moeda(resumo.custoPecas) + '</strong></div>'
+                    : '') +
+                '<div>Despesas lançadas: <strong style="color:#c0392b">' + moeda(resumo.despesasLancadas) + '</strong></div>' +
+                '<div>Total custos: <strong style="color:#c0392b">' + moeda(resumo.despesas) + '</strong></div>' +
                 '<div>Lucro limpo: <strong style="color:#1e8449">' + moeda(resumo.lucro) + '</strong></div>' +
                 '</div>' +
                 '<p style="margin:10px 0 0;font-size:0.85rem;color:#555">Folha exclusiva do modo interno — para apresentar ao funcionário / controle da oficina.</p>' +
@@ -456,7 +483,11 @@
             document.getElementById('hintLancarDespesaOs').innerHTML =
                 'Responsável: <strong>' + esc(nomeResponsavelOs(a)) +
                 '</strong> · Bruto OS: <strong>' + moeda(resumo.bruto) +
-                '</strong> · Despesas: <strong>' + moeda(resumo.despesas) +
+                '</strong>' +
+                (resumo.custoPecas > 0
+                    ? ' · Custo peças: <strong>' + moeda(resumo.custoPecas) + '</strong>'
+                    : '') +
+                ' · Despesas: <strong>' + moeda(resumo.despesas) +
                 '</strong> · Lucro: <strong>' + moeda(resumo.lucro) +
                 '</strong><br>Pode digitar a despesa livre <strong>ou</strong> escolher um produto do estoque cadastrado.';
             document.getElementById('boxLancarDespesaOs').style.display = '';
@@ -617,7 +648,11 @@
                         document.getElementById('hintLancarDespesaOs').innerHTML =
                             'Responsável: <strong>' + esc(nomeResponsavelOs(aSel)) +
                             '</strong> · Bruto OS: <strong>' + moeda(resumo.bruto) +
-                            '</strong> · Despesas: <strong>' + moeda(resumo.despesas) +
+                            '</strong>' +
+                            (resumo.custoPecas > 0
+                                ? ' · Custo peças: <strong>' + moeda(resumo.custoPecas) + '</strong>'
+                                : '') +
+                            ' · Despesas: <strong>' + moeda(resumo.despesas) +
                             '</strong> · Lucro: <strong>' + moeda(resumo.lucro) + '</strong>';
                         renderDespesasOsDetalhe(despesaOsSelecionadaId);
                     }
