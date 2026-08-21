@@ -513,6 +513,8 @@
         function limparVendaForm() {
             carrinhoVenda = [];
             produtoVendaSelecionado = null;
+            var editId = document.getElementById('vdEditId');
+            if (editId) editId.value = '';
             document.getElementById('vdCliente').value = '';
             document.getElementById('vdPlaca').value = '';
             var placaInt = document.getElementById('vdPlacaInterno');
@@ -568,7 +570,53 @@
             var tipo = document.getElementById('vdTipo').value;
             var status = document.getElementById('vdStatus').value;
             var forma = document.getElementById('vdForma').value;
+            var editId = (document.getElementById('vdEditId') || {}).value || '';
             var numero = Number(document.getElementById('vdNumero').value) || proximoNumeroVenda(db);
+
+            /* Edição: atualiza o documento sem rebaixar estoque / relançar caixa */
+            if (editId) {
+                var ixEdit = (db.orcamentos || []).findIndex(function (x) { return x.id === editId; });
+                if (ixEdit < 0) {
+                    toast('Documento para editar não encontrado.');
+                    return;
+                }
+                var ant = db.orcamentos[ixEdit];
+                if (ant.estornado) {
+                    toast('Documento já estornado — não pode editar.');
+                    return;
+                }
+                db.orcamentos[ixEdit] = Object.assign({}, ant, {
+                    numero: numero,
+                    tipo: tipo,
+                    clienteId: !interno && resolvido.ok && !resolvido.clienteAvulso ? resolvido.clienteId : null,
+                    clienteNome: clienteNome,
+                    clienteAvulso: interno ? false : !(resolvido.ok && !resolvido.clienteAvulso),
+                    vendaFuncionario: interno,
+                    funcionarioId: funcionarioId,
+                    funcionarioNome: funcionarioNome,
+                    placa: placa,
+                    statusPagamento: status,
+                    formaPagamento: forma,
+                    dataEmissao: document.getElementById('vdEmissao').value,
+                    dataVencimento: document.getElementById('vdVenc').value,
+                    itens: carrinhoVenda.slice(),
+                    subtotal: totais.subtotal,
+                    descontoReais: totais.descontoReais,
+                    descontoPerc: totais.descontoPerc,
+                    valor: totais.total,
+                    valorRecebido: totais.valorRecebido,
+                    troco: totais.troco,
+                    observacao: document.getElementById('vdObs').value.trim(),
+                    descricao: carrinhoVenda.map(function (x) { return x.desc; }).join(', '),
+                    atualizadoEm: new Date().toISOString()
+                });
+                salvar(db);
+                toast('Documento Nº ' + numero + ' atualizado.');
+                limparVendaForm();
+                renderOrcamentos();
+                atualizarKPIs(db);
+                return;
+            }
 
             /* Baixa de estoque — só em VENDA (orçamento não mexe). Igual FH Control. */
             if (tipo === 'VENDA') {
@@ -694,10 +742,25 @@
             return o.funcionarioNome || o.clienteNome || nomeCliente(db, o.clienteId) || '—';
         }
 
-        function htmlNotaVenda(db, o) {
+        function saldoDocVenda(o) {
+            var total = Number(o.valor) || 0;
+            var recebido = Number(o.valorRecebido);
+            if (isNaN(recebido) || recebido <= 0) {
+                if ((o.statusPagamento || '') === 'PAGO') recebido = total;
+                else recebido = 0;
+            }
+            var saldo = Math.max(0, total - recebido);
+            if ((o.statusPagamento || '') === 'PENDENTE' && recebido <= 0) saldo = total;
+            return { total: total, recebido: recebido, saldo: saldo };
+        }
+
+        function htmlNotaVenda(db, o, opts) {
+            opts = opts || {};
             var emp = getEmpresa(db);
             var nome = nomeDocVenda(db, o);
-            var tipoLabel = (o.tipo === 'ORCAMENTO') ? 'ORÇAMENTO' : 'VENDA / CUPOM';
+            var tipoLabel = opts.cupom
+                ? 'CUPOM'
+                : ((o.tipo === 'ORCAMENTO') ? 'ORÇAMENTO' : (opts.cliente ? 'VENDA' : 'VENDA / CUPOM'));
             var itens = o.itens || [];
             var rows = itens.length
                 ? itens.map(function (it, i) {
@@ -707,7 +770,7 @@
                     return '<tr>' +
                         '<td>' + (i + 1) + '</td>' +
                         '<td>' + esc(it.desc || '—') +
-                        (it.codigo ? '<div style="font-size:0.75rem;color:#666">' + esc(it.codigo) + '</div>' : '') +
+                        (it.codigo && !opts.cupom ? '<div style="font-size:0.75rem;color:#666">' + esc(it.codigo) + '</div>' : '') +
                         '</td>' +
                         '<td style="text-align:center">' + esc(fmtQtdEstoque(qtd, it.unidade || 'un')) + '</td>' +
                         '<td style="text-align:right">' + moeda(venda) + '</td>' +
@@ -716,14 +779,20 @@
                 }).join('')
                 : '<tr><td colspan="5" style="padding:10px;color:#666">Sem itens.</td></tr>';
 
-            return '<div class="nota-espelho" id="notaVendaHtml">' +
+            var wrapStyle = opts.cupom
+                ? 'max-width:320px;margin:0 auto;font-size:12px;'
+                : '';
+
+            return '<div class="nota-espelho" id="notaVendaHtml" style="' + wrapStyle + '">' +
                 htmlCabecalhoNotaEmpresa(emp,
                     '<div class="nota-sub nota-titulo-espelho">' + esc(tipoLabel) + '</div>' +
                     '<div class="nota-sub nota-registro">Nº ' + esc(String(o.numero || '—')) +
                     ' · ' + esc(fmtData(o.dataEmissao || o.criadoEm)) +
-                    (o.id ? ' · ID ' + esc(String(o.id).slice(-6)) : '') + '</div>'
+                    (o.estornado ? ' · ESTORNADO' : '') +
+                    (o.id && !opts.cupom ? ' · ID ' + esc(String(o.id).slice(-6)) : '') + '</div>'
                 ) +
-                '<div class="nota-bloco compacto"><div class="tit azul">Cliente / Destino</div><div class="nota-grid nota-grid-compacta">' +
+                '<div class="nota-bloco compacto"><div class="tit azul">' +
+                (opts.cupom ? 'Cliente' : 'Cliente / Destino') + '</div><div class="nota-grid nota-grid-compacta">' +
                 '<div class="nota-campo full"><span class="nota-label">' +
                 (o.vendaFuncionario || o.funcionarioId ? 'Funcionário' : 'Cliente') +
                 '</span><span class="nota-valor">' + esc(nome) +
@@ -731,7 +800,7 @@
                 (o.placa ? '<div class="nota-campo"><span class="nota-label">Placa</span><span class="nota-valor">' + esc((o.placa || '').toUpperCase()) + '</span></div>' : '') +
                 '<div class="nota-campo"><span class="nota-label">Pagamento</span><span class="nota-valor">' +
                 esc((o.statusPagamento || '—') + (o.formaPagamento ? ' / ' + o.formaPagamento : '')) + '</span></div>' +
-                (o.dataVencimento ? '<div class="nota-campo"><span class="nota-label">Vencimento</span><span class="nota-valor">' + esc(fmtData(o.dataVencimento)) + '</span></div>' : '') +
+                (!opts.cupom && o.dataVencimento ? '<div class="nota-campo"><span class="nota-label">Vencimento</span><span class="nota-valor">' + esc(fmtData(o.dataVencimento)) + '</span></div>' : '') +
                 '</div></div>' +
                 '<div class="nota-bloco compacto"><div class="tit verde">Itens</div>' +
                 '<div class="nota-tabela-wrap"><table class="nota-itens compacta">' +
@@ -739,7 +808,7 @@
                 '<tbody>' + rows + '</tbody></table></div></div>' +
                 '<div class="nota-bloco compacto"><div class="tit escuro">Totais</div>' +
                 '<div class="nota-valores-pad compacto">' +
-                '<div>Subtotal: <strong>' + moeda(o.subtotal != null ? o.subtotal : o.valor) + '</strong></div>' +
+                (!opts.cupom ? '<div>Subtotal: <strong>' + moeda(o.subtotal != null ? o.subtotal : o.valor) + '</strong></div>' : '') +
                 ((Number(o.descontoReais) > 0 || Number(o.descontoPerc) > 0)
                     ? '<div>Desconto: <strong>' + moeda(o.descontoReais || 0) +
                       (Number(o.descontoPerc) > 0 ? ' (' + o.descontoPerc + '%)' : '') + '</strong></div>'
@@ -748,32 +817,240 @@
                 (Number(o.valorRecebido) > 0
                     ? '<div>Recebido: <strong>' + moeda(o.valorRecebido) + '</strong> · Troco: <strong>' + moeda(o.troco || 0) + '</strong></div>'
                     : '') +
-                (o.observacao ? '<div style="margin-top:8px"><span class="nota-label">Obs.</span> ' + esc(o.observacao) + '</div>' : '') +
+                (o.observacao && !opts.cupom ? '<div style="margin-top:8px"><span class="nota-label">Obs.</span> ' + esc(o.observacao) + '</div>' : '') +
                 '</div></div>' +
-                '<div class="nota-sigs compacto" style="margin-top:18px">' +
-                '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Assinatura do cliente</div></div>' +
-                '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Visto do responsável</div></div>' +
-                '</div></div>';
+                (!opts.cupom
+                    ? '<div class="nota-sigs compacto" style="margin-top:18px">' +
+                      '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Assinatura do cliente</div></div>' +
+                      '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Visto do responsável</div></div>' +
+                      '</div>'
+                    : '<p style="text-align:center;margin-top:12px;font-size:11px">Obrigado pela preferência!</p>') +
+                '</div>';
         }
 
-        function abrirNotaVenda(id, modoPdf) {
+        function abrirNotaVenda(id, modo) {
             var db = carregar();
             var o = (db.orcamentos || []).find(function (x) { return x.id === id; });
             if (!o) {
                 toast('Documento não encontrado.');
                 return;
             }
-            var html = htmlNotaVenda(db, o);
-            var titulo = (o.tipo === 'ORCAMENTO' ? 'Orçamento' : 'Venda') + ' Nº ' + (o.numero || '');
+            modo = modo || 'ver';
+            var opts = {};
+            if (modo === 'cliente') opts.cliente = true;
+            if (modo === 'cupom') opts.cupom = true;
+            var html = htmlNotaVenda(db, o, opts);
+            var titulo = (modo === 'cupom' ? 'Cupom' : (o.tipo === 'ORCAMENTO' ? 'Orçamento' : 'Venda')) +
+                ' Nº ' + (o.numero || '');
             _htmlNotaImpressaoAtual = html;
             _tituloNotaImpressao = titulo;
-            if (modoPdf || ehCelular()) {
+            if (modo === 'ver' && !ehCelular()) {
                 abrirViewerPdf(html, titulo);
-                toast(modoPdf ? 'PDF aberto — use Imprimir ou Encaminhar.' : 'Nota aberta. Use Fechar para sair.');
+                toast('Documento aberto.');
                 return;
             }
-            executarImpressaoHtml(html);
-            toast('Documento pronto para imprimir.');
+            abrirViewerPdf(html, titulo);
+            toast(modo === 'cupom' ? 'Cupom aberto.' : 'PDF aberto — use Imprimir ou Encaminhar.');
+        }
+
+        var vendaAcoesAtualId = null;
+
+        function fecharAcoesVenda() {
+            var m = document.getElementById('modalAcoesVenda');
+            if (m) m.classList.remove('aberto');
+            vendaAcoesAtualId = null;
+        }
+
+        function abrirAcoesVenda(id) {
+            var db = carregar();
+            var o = (db.orcamentos || []).find(function (x) { return x.id === id; });
+            if (!o) {
+                toast('Documento não encontrado.');
+                return;
+            }
+            vendaAcoesAtualId = id;
+            var s = saldoDocVenda(o);
+            var nome = nomeDocVenda(db, o);
+            document.getElementById('acoesVendaMeta').innerHTML =
+                '<div><strong>Nº Doc:</strong> ' + esc(String(o.numero || '—')) +
+                ' · <strong>Tipo:</strong> ' + esc(o.tipo || '—') +
+                (o.estornado ? ' <span class="tag-estornado">ESTORNADO</span>' : '') + '</div>' +
+                '<div><strong>Cliente:</strong> ' + esc(nome) + '</div>' +
+                '<div><strong>Total:</strong> <span class="val-ok">' + moeda(s.total) + '</span></div>' +
+                '<div><strong>Recebido:</strong> <span class="val-ok">' + moeda(s.recebido) +
+                '</span> · <strong>Saldo:</strong> <span class="val-saldo">' + moeda(s.saldo) + '</span></div>';
+            document.getElementById('modalAcoesVenda').classList.add('aberto');
+        }
+
+        function textoResumoVenda(db, o) {
+            var emp = getEmpresa(db);
+            var s = saldoDocVenda(o);
+            var linhas = [
+                (emp.nome || 'HM Centro Automotivo'),
+                (o.tipo === 'ORCAMENTO' ? 'Orçamento' : 'Venda') + ' Nº ' + (o.numero || '—'),
+                'Cliente: ' + nomeDocVenda(db, o),
+                'Data: ' + fmtData(o.dataEmissao || o.criadoEm),
+                'Total: ' + moeda(s.total),
+                'Pagamento: ' + ((o.statusPagamento || '—') + (o.formaPagamento ? ' / ' + o.formaPagamento : ''))
+            ];
+            if (o.placa) linhas.push('Placa: ' + String(o.placa).toUpperCase());
+            if ((o.itens || []).length) {
+                linhas.push('Itens:');
+                (o.itens || []).forEach(function (it) {
+                    linhas.push('- ' + (it.desc || '') + ' · ' + fmtQtdEstoque(it.qtd, it.unidade || 'un') + ' · ' + moeda(it.total != null ? it.total : (Number(it.qtd) || 0) * (Number(it.venda) || 0)));
+                });
+            }
+            return linhas.join('\n');
+        }
+
+        function telefoneClienteVenda(db, o) {
+            if (o.clienteId) {
+                var c = (db.clientes || []).find(function (x) { return x.id === o.clienteId; });
+                if (c && c.telefone) return String(c.telefone).replace(/\D/g, '');
+            }
+            return '';
+        }
+
+        function editarDocumentoVenda(id) {
+            var db = carregar();
+            var o = (db.orcamentos || []).find(function (x) { return x.id === id; });
+            if (!o) return;
+            if (o.estornado) {
+                toast('Documento estornado — não pode editar.');
+                return;
+            }
+            fecharAcoesVenda();
+            abrirPainel('painelOrcamento');
+            limparVendaForm();
+            document.getElementById('vdEditId').value = o.id;
+            document.getElementById('vdNumero').value = o.numero || '';
+            document.getElementById('vdTipo').value = o.tipo === 'ORCAMENTO' ? 'ORCAMENTO' : 'VENDA';
+            document.getElementById('vdStatus').value = o.statusPagamento || 'PAGO';
+            document.getElementById('vdForma').value = o.formaPagamento || 'Dinheiro';
+            document.getElementById('vdEmissao').value = (o.dataEmissao || hojeISO()).slice(0, 10);
+            document.getElementById('vdVenc').value = (o.dataVencimento || hojeISO()).slice(0, 10);
+            document.getElementById('vdObs').value = o.observacao || '';
+            document.getElementById('vdDescReais').value = o.descontoReais || 0;
+            document.getElementById('vdDescPerc').value = o.descontoPerc || 0;
+            document.getElementById('vdRecebido').value = o.valorRecebido || '';
+            if (canalVendas === 'interno' || o.vendaFuncionario || o.funcionarioId) {
+                canalVendas = 'interno';
+                atualizarBadgeCanal();
+                atualizarUIVendaPorCanal();
+                preencherSelectFuncionariosVenda();
+                document.getElementById('vdFuncionarioId').value = o.funcionarioId || '';
+                document.getElementById('vdPlacaInterno').value = o.placa || '';
+            } else {
+                document.getElementById('vdCliente').value = o.clienteNome || '';
+                document.getElementById('vdPlaca').value = o.placa || '';
+            }
+            carrinhoVenda = (o.itens || []).map(function (it) {
+                return Object.assign({}, it);
+            });
+            renderCarrinhoVenda();
+            toast('Editando Nº ' + (o.numero || '') + ' — ao salvar, atualiza o documento (sem rebaixar estoque).');
+        }
+
+        function abrirWhatsVenda(id) {
+            var db = carregar();
+            var o = (db.orcamentos || []).find(function (x) { return x.id === id; });
+            if (!o) return;
+            fecharAcoesVenda();
+            var texto = 'Olá! Segue o resumo da ' +
+                (o.tipo === 'ORCAMENTO' ? 'proposta' : 'venda') +
+                ' da ' + (getEmpresa(db).nome || 'HM Centro Automotivo') + ':\n\n' +
+                textoResumoVenda(db, o);
+            var tel = telefoneClienteVenda(db, o);
+            var url = tel
+                ? ('https://wa.me/55' + tel + '?text=' + encodeURIComponent(texto))
+                : ('https://wa.me/?text=' + encodeURIComponent(texto));
+            window.open(url, '_blank');
+        }
+
+        function abrirLinkVenda(id) {
+            var db = carregar();
+            var o = (db.orcamentos || []).find(function (x) { return x.id === id; });
+            if (!o) return;
+            fecharAcoesVenda();
+            document.getElementById('inputLinkVenda').value = textoResumoVenda(db, o);
+            document.getElementById('modalLinkVenda').classList.add('aberto');
+        }
+
+        function excluirDocumentoVenda(id, perguntar) {
+            if (perguntar !== false && !confirm('Excluir documento? (não estorna estoque — use Estornar para devolver estoque/caixa)')) return;
+            var db2 = carregar();
+            marcarExcluido(db2, 'orcamentos', id);
+            db2.orcamentos = (db2.orcamentos || []).filter(function (x) { return x.id !== id; });
+            salvar(db2);
+            fecharAcoesVenda();
+            renderOrcamentos();
+            atualizarKPIs(db2);
+            toast('Documento excluído.');
+        }
+
+        function estornarDocumentoVenda(id) {
+            var db = carregar();
+            var ix = (db.orcamentos || []).findIndex(function (x) { return x.id === id; });
+            if (ix < 0) return;
+            var o = db.orcamentos[ix];
+            if (o.estornado) {
+                toast('Documento já está estornado.');
+                return;
+            }
+            if (!confirm('Estornar Nº ' + (o.numero || '') + '?\n\n• Devolve itens ao estoque (se houver produto)\n• Remove lançamento no caixa / pendente vinculado\n• Marca o documento como ESTORNADO')) return;
+
+            if (o.tipo === 'VENDA') {
+                (o.itens || []).forEach(function (it) {
+                    if (!it.produtoId) return;
+                    var pi = (db.produtos || []).findIndex(function (p) { return p.id === it.produtoId; });
+                    if (pi < 0) return;
+                    var q = Number(db.produtos[pi].qtd) || 0;
+                    db.produtos[pi].qtd = Math.round((q + (Number(it.qtd) || 0)) * 1000) / 1000;
+                    db.produtos[pi].atualizadoEm = new Date().toISOString();
+                });
+            }
+
+            (db.caixa || []).forEach(function (x) {
+                if (x && x.vendaId === id) marcarExcluido(db, 'caixa', x.id);
+            });
+            db.caixa = (db.caixa || []).filter(function (x) { return !(x && x.vendaId === id); });
+            (db.caixaBanco || []).forEach(function (x) {
+                if (x && x.vendaId === id) marcarExcluido(db, 'caixaBanco', x.id);
+            });
+            db.caixaBanco = (db.caixaBanco || []).filter(function (x) { return !(x && x.vendaId === id); });
+            (db.pendentes || []).forEach(function (x) {
+                if (x && x.vendaId === id) marcarExcluido(db, 'pendentes', x.id);
+            });
+            db.pendentes = (db.pendentes || []).filter(function (x) { return !(x && x.vendaId === id); });
+
+            db.orcamentos[ix] = Object.assign({}, o, {
+                estornado: true,
+                statusPagamento: 'ESTORNADO',
+                estornadoEm: new Date().toISOString()
+            });
+            salvar(db);
+            fecharAcoesVenda();
+            renderOrcamentos();
+            renderProdutos();
+            renderCaixa();
+            renderCaixaBanco();
+            renderPendentes();
+            atualizarKPIs(db);
+            toast('Documento Nº ' + (o.numero || '') + ' estornado.');
+        }
+
+        function executarAcaoVenda(acao) {
+            var id = vendaAcoesAtualId;
+            if (!id) return;
+            if (acao === 'ed') editarDocumentoVenda(id);
+            else if (acao === 'whats') abrirWhatsVenda(id);
+            else if (acao === 'link') abrirLinkVenda(id);
+            else if (acao === 'ver') { fecharAcoesVenda(); abrirNotaVenda(id, 'ver'); }
+            else if (acao === 'pdf') { fecharAcoesVenda(); abrirNotaVenda(id, 'pdf'); }
+            else if (acao === 'pdf-cliente') { fecharAcoesVenda(); abrirNotaVenda(id, 'cliente'); }
+            else if (acao === 'cupom') { fecharAcoesVenda(); abrirNotaVenda(id, 'cupom'); }
+            else if (acao === 'estornar') estornarDocumentoVenda(id);
+            else if (acao === 'excluir') excluirDocumentoVenda(id, true);
         }
 
         function filtrarOrcamentosLista(lista, termo) {
@@ -783,7 +1060,7 @@
                 var nome = (o.funcionarioNome || o.clienteNome || '').toLowerCase();
                 var blob = [
                     o.numero, o.tipo, nome, o.statusPagamento, o.formaPagamento,
-                    o.placa, o.descricao, o.observacao
+                    o.placa, o.descricao, o.observacao, o.estornado ? 'estornado' : ''
                 ].join(' ').toLowerCase();
                 return blob.indexOf(t) >= 0;
             });
@@ -808,42 +1085,24 @@
                 var tagFunc = o.vendaFuncionario || o.funcionarioId
                     ? ' <span style="font-size:0.68rem;font-weight:700;color:#f1c40f">FUNCIONÁRIO</span>'
                     : '';
+                var tagEst = o.estornado ? ' <span class="tag-estornado">ESTORNADO</span>' : '';
                 var pgto = (o.statusPagamento || '—') + (o.formaPagamento ? ' / ' + o.formaPagamento : '');
                 var tr = document.createElement('tr');
                 tr.innerHTML =
-                    '<td>' + esc(o.numero || '—') + '</td>' +
+                    '<td>' + esc(o.numero || '—') + tagEst + '</td>' +
                     '<td>' + esc(fmtData(o.dataEmissao || o.criadoEm)) + '</td>' +
                     '<td>' + esc(o.tipo || '—') + '</td>' +
                     '<td>' + esc(nome) + tagFunc + tagAvulso + '</td>' +
                     '<td>' + esc(pgto) + '</td>' +
                     '<td>' + moeda(o.valor) + '</td>' +
                     '<td class="actions">' +
-                    '<button type="button" class="btn btn-ver" data-ver-venda="' + o.id + '">Ver</button> ' +
-                    '<button type="button" class="btn btn-pdf" data-pdf-venda="' + o.id + '">PDF</button> ' +
-                    '<button type="button" class="btn btn-danger" data-ex-venda="' + o.id + '">Excluir</button>' +
+                    '<button type="button" class="btn-acoes-doc" data-acoes-venda="' + o.id + '" title="Ações do documento">⚙</button>' +
                     '</td>';
                 tb.appendChild(tr);
             });
-            tb.querySelectorAll('[data-ver-venda]').forEach(function (b) {
+            tb.querySelectorAll('[data-acoes-venda]').forEach(function (b) {
                 b.addEventListener('click', function () {
-                    abrirNotaVenda(b.getAttribute('data-ver-venda'), false);
-                });
-            });
-            tb.querySelectorAll('[data-pdf-venda]').forEach(function (b) {
-                b.addEventListener('click', function () {
-                    abrirNotaVenda(b.getAttribute('data-pdf-venda'), true);
-                });
-            });
-            tb.querySelectorAll('[data-ex-venda]').forEach(function (b) {
-                b.addEventListener('click', function () {
-                    if (!confirm('Excluir documento? (não estorna estoque automaticamente)')) return;
-                    var db2 = carregar();
-                    var idEx = b.getAttribute('data-ex-venda');
-                    marcarExcluido(db2, 'orcamentos', idEx);
-                    db2.orcamentos = db2.orcamentos.filter(function (x) { return x.id !== idEx; });
-                    salvar(db2);
-                    renderOrcamentos();
-                    atualizarKPIs(db2);
+                    abrirAcoesVenda(b.getAttribute('data-acoes-venda'));
                 });
             });
         }
@@ -852,4 +1111,53 @@
         if (buscaVr) {
             buscaVr.addEventListener('input', function () { renderOrcamentos(); });
         }
+
+        (function ligarModalAcoesVenda() {
+            var btnFechar = document.getElementById('btnFecharAcoesVenda');
+            var modal = document.getElementById('modalAcoesVenda');
+            if (btnFechar) btnFechar.addEventListener('click', fecharAcoesVenda);
+            if (modal) {
+                modal.addEventListener('click', function (e) {
+                    if (e.target.id === 'modalAcoesVenda') fecharAcoesVenda();
+                });
+            }
+            document.querySelectorAll('[data-acao-venda]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    executarAcaoVenda(b.getAttribute('data-acao-venda'));
+                });
+            });
+            var btnCopiar = document.getElementById('btnCopiarLinkVenda');
+            var btnWhatsL = document.getElementById('btnWhatsLinkVenda');
+            var btnFecharL = document.getElementById('btnFecharLinkVenda');
+            var modalL = document.getElementById('modalLinkVenda');
+            if (btnCopiar) {
+                btnCopiar.addEventListener('click', function () {
+                    var v = document.getElementById('inputLinkVenda');
+                    v.select();
+                    try {
+                        navigator.clipboard.writeText(v.value);
+                        toast('Texto copiado.');
+                    } catch (err) {
+                        document.execCommand('copy');
+                        toast('Texto copiado.');
+                    }
+                });
+            }
+            if (btnWhatsL) {
+                btnWhatsL.addEventListener('click', function () {
+                    var texto = document.getElementById('inputLinkVenda').value;
+                    window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+                });
+            }
+            if (btnFecharL) {
+                btnFecharL.addEventListener('click', function () {
+                    document.getElementById('modalLinkVenda').classList.remove('aberto');
+                });
+            }
+            if (modalL) {
+                modalL.addEventListener('click', function (e) {
+                    if (e.target.id === 'modalLinkVenda') modalL.classList.remove('aberto');
+                });
+            }
+        })();
 

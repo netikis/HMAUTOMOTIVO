@@ -474,6 +474,7 @@
                         <p class="hint">Venda baixa estoque; <strong>Dinheiro</strong> → Caixa Balcão; <strong>PIX/Cartão/Boleto</strong> → Caixa do Banco; <strong>Pendente</strong> → Contas a Receber.</p>
 
                         <div class="row" style="background:#1a252f;padding:12px;border-radius:8px;border:1px solid var(--line)">
+                            <input type="hidden" id="vdEditId" value="">
                             <div class="col">
                                 <label>Tipo de documento</label>
                                 <select id="vdTipo">
@@ -616,7 +617,7 @@
         <section id="painelVendasRealizadas" class="panel">
             <div class="box">
                 <h2>📋 Vendas realizadas</h2>
-                <p class="hint" style="margin-top:0">Documentos salvos do balcão (vendas e orçamentos). Use <strong>Ver</strong> para visualizar e <strong>PDF</strong> para imprimir / encaminhar — no estilo do FH Control.</p>
+                <p class="hint" style="margin-top:0">Clique na <strong>⚙ engrenagem</strong> para abrir as ações no estilo FH Control: Ed, Whats, Link, Ver, PDF, PDF Cliente, Cupom, Estornar e Excluir (sem Sebrae/NFE).</p>
                 <div class="toolbar">
                     <input type="search" id="buscaVendasRealizadas" class="search" placeholder="Buscar nº, cliente, funcionário, tipo, pagamento...">
                 </div>
@@ -1293,6 +1294,40 @@
 
             <div class="modal-acoes">
                 <button type="button" class="btn btn-danger" id="btnReceberOsFechar" style="width:100%">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalAcoesVenda">
+        <div class="modal-acoes-doc" role="dialog" aria-labelledby="acoesVendaTitulo">
+            <div class="acoes-doc-topo">
+                <h3 id="acoesVendaTitulo"><span class="acoes-doc-gear">⚙</span> Ações do documento</h3>
+                <button type="button" class="acoes-doc-fechar" id="btnFecharAcoesVenda" aria-label="Fechar">✕</button>
+            </div>
+            <div class="acoes-doc-meta" id="acoesVendaMeta"></div>
+            <div class="acoes-doc-lista">
+                <button type="button" class="acoes-doc-btn" data-acao-venda="ed"><span class="ico">✏️</span> Ed</button>
+                <button type="button" class="acoes-doc-btn" data-acao-venda="whats"><span class="ico">📱</span> Whats</button>
+                <button type="button" class="acoes-doc-btn" data-acao-venda="link"><span class="ico">🔗</span> Link</button>
+                <button type="button" class="acoes-doc-btn" data-acao-venda="ver"><span class="ico">👁</span> Ver</button>
+                <button type="button" class="acoes-doc-btn" data-acao-venda="pdf"><span class="ico">📄</span> PDF</button>
+                <button type="button" class="acoes-doc-btn" data-acao-venda="pdf-cliente"><span class="ico">🖨</span> PDF Cliente</button>
+                <button type="button" class="acoes-doc-btn" data-acao-venda="cupom"><span class="ico">🧾</span> Cupom</button>
+                <button type="button" class="acoes-doc-btn acoes-doc-estornar" data-acao-venda="estornar"><span class="ico">↺</span> Estornar</button>
+                <button type="button" class="acoes-doc-btn acoes-doc-excluir" data-acao-venda="excluir"><span class="ico">🗑</span> Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalLinkVenda">
+        <div class="modal-box" style="width:min(480px,100%)">
+            <h3>Link / texto do documento</h3>
+            <p class="hint">Copie e envie ao cliente (WhatsApp, SMS, etc.).</p>
+            <textarea id="inputLinkVenda" rows="6" readonly style="width:100%;margin-top:8px;font-size:0.9rem"></textarea>
+            <div class="modal-acoes" style="margin-top:14px">
+                <button type="button" class="btn btn-primary" id="btnCopiarLinkVenda" style="flex:1">Copiar</button>
+                <button type="button" class="btn btn-ok" id="btnWhatsLinkVenda" style="flex:1">WhatsApp</button>
+                <button type="button" class="btn btn-secondary" id="btnFecharLinkVenda" style="flex:1">Fechar</button>
             </div>
         </div>
     </div>

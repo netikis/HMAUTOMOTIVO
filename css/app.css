@@ -969,6 +969,122 @@
             margin: auto;
             overflow: visible;
         }
+
+        /* Painel Ações do documento (padrão FH Control) */
+        #modalAcoesVenda.modal-overlay {
+            align-items: stretch;
+            justify-content: flex-end;
+            padding: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 150;
+        }
+        .modal-acoes-doc {
+            width: min(340px, 100%);
+            height: 100%;
+            max-height: 100dvh;
+            background: #1a222c;
+            border-left: 1px solid rgba(126, 200, 255, 0.25);
+            display: flex;
+            flex-direction: column;
+            padding: 14px 12px calc(14px + env(safe-area-inset-bottom, 0px));
+            box-shadow: -12px 0 40px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+        .acoes-doc-topo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .acoes-doc-topo h3 {
+            margin: 0;
+            font-size: 1.05rem;
+            color: #7ec8ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .acoes-doc-gear { color: #fff; font-size: 1.1rem; }
+        .acoes-doc-fechar {
+            appearance: none;
+            width: 36px;
+            height: 36px;
+            border: 0;
+            border-radius: 8px;
+            background: #c0392b;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .acoes-doc-meta {
+            font-size: 0.88rem;
+            line-height: 1.45;
+            color: #ecf0f1;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .acoes-doc-meta .val-ok { color: #2ecc71; font-weight: 700; }
+        .acoes-doc-meta .val-saldo { color: #f1c40f; font-weight: 700; }
+        .acoes-doc-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 2px;
+        }
+        .acoes-doc-btn {
+            appearance: none;
+            width: 100%;
+            border: 0;
+            border-radius: 8px;
+            background: #fff;
+            color: #111;
+            font-weight: 800;
+            font-size: 1rem;
+            padding: 12px 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 46px;
+        }
+        .acoes-doc-btn .ico { font-size: 1.05rem; line-height: 1; }
+        .acoes-doc-btn:hover { filter: brightness(0.96); }
+        .acoes-doc-btn.acoes-doc-estornar { color: #c0392b; }
+        .acoes-doc-btn.acoes-doc-excluir { color: #922b21; }
+        .btn-acoes-doc {
+            appearance: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            border: 1px solid rgba(126, 200, 255, 0.35);
+            background: rgba(61, 160, 232, 0.18);
+            color: #9fd3ff;
+            font-size: 1.15rem;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .btn-acoes-doc:hover {
+            background: rgba(61, 160, 232, 0.35);
+            color: #fff;
+        }
+        .tag-estornado {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 1px 7px;
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            background: rgba(192, 57, 43, 0.25);
+            color: #ff8a80;
+            border: 1px solid rgba(192, 57, 43, 0.5);
+        }
         #modalNota .modal-box {
             overflow-x: visible;
             width: min(960px, 100%);
