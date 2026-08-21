@@ -838,7 +838,10 @@
                 renderCarrinhoVenda();
             }
             if (id === 'painelVendasRealizadas') {
-                renderOrcamentos();
+                renderOrcamentos('VENDA');
+            }
+            if (id === 'painelOrcamentosRealizados') {
+                renderOrcamentos('ORCAMENTO');
             }
             if (id === 'painelVeiculo') {
                 preencherSelectResponsavelOs(
@@ -897,6 +900,7 @@
             painelProdutos: true,
             painelOrcamento: true,
             painelVendasRealizadas: true,
+            painelOrcamentosRealizados: true,
             painelCaixa: true,
             painelCaixaBanco: true,
             painelPendentes: true,

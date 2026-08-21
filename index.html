@@ -72,6 +72,7 @@
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelProdutos" data-canal="normal">🏷️ Cadastro de Produtos</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamento" data-canal="normal">🧾 Venda / Orçamento</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelVendasRealizadas" data-canal="normal">📋 Vendas realizadas</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamentosRealizados" data-canal="normal">📄 Orçamentos realizados</button>
             </div>
         </div>
 
@@ -102,6 +103,7 @@
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelProdutos" data-canal="interno">🏷️ Cadastro de Produtos</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamento" data-canal="interno">🧾 Venda p/ Funcionário</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelVendasRealizadas" data-canal="interno">📋 Vendas realizadas</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamentosRealizados" data-canal="interno">📄 Orçamentos realizados</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixa" data-canal="interno">💰 Caixa / Balcão</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixaBanco" data-canal="interno">🏦 Caixa do Banco (PIX / Cartões)</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelPendentes" data-canal="interno">⏳ Contas a Receber</button>
@@ -617,17 +619,34 @@
         <section id="painelVendasRealizadas" class="panel">
             <div class="box">
                 <h2>📋 Vendas realizadas</h2>
-                <p class="hint" style="margin-top:0">Clique na <strong>⚙ engrenagem</strong> para abrir as ações no estilo FH Control: Ed, Whats, Link, Ver, PDF, PDF Cliente, Cupom, Estornar e Excluir (sem Sebrae/NFE).</p>
+                <p class="hint" style="margin-top:0">Somente documentos do tipo <strong>VENDA</strong>. Clique na <strong>⚙</strong> para Ed, Whats, Link, Ver, PDF, Cupom, Estornar e Excluir.</p>
                 <div class="toolbar">
-                    <input type="search" id="buscaVendasRealizadas" class="search" placeholder="Buscar nº, cliente, funcionário, tipo, pagamento...">
+                    <input type="search" id="buscaVendasRealizadas" class="search" placeholder="Buscar nº, cliente, funcionário, pagamento...">
                 </div>
                 <table>
                     <thead>
-                        <tr><th>Nº</th><th>Data</th><th>Tipo</th><th>Cliente</th><th>Pgto</th><th>Total</th><th>Ações</th></tr>
+                        <tr><th>Nº</th><th>Data</th><th>Cliente</th><th>Pgto</th><th>Total</th><th>Ações</th></tr>
                     </thead>
                     <tbody id="tabelaVendasRealizadas"></tbody>
                 </table>
-                <div id="listaVendasRealizadasVazia" class="empty" style="display:none;margin-top:12px">Nenhuma venda ou orçamento salvo.</div>
+                <div id="listaVendasRealizadasVazia" class="empty" style="display:none;margin-top:12px">Nenhuma venda salva.</div>
+            </div>
+        </section>
+
+        <section id="painelOrcamentosRealizados" class="panel">
+            <div class="box">
+                <h2>📄 Orçamentos realizados</h2>
+                <p class="hint" style="margin-top:0">Somente documentos do tipo <strong>ORÇAMENTO</strong> (sem baixa de estoque). Clique na <strong>⚙</strong> para as mesmas ações do FH Control.</p>
+                <div class="toolbar">
+                    <input type="search" id="buscaOrcamentosRealizados" class="search" placeholder="Buscar nº, cliente, funcionário...">
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Nº</th><th>Data</th><th>Cliente</th><th>Pgto</th><th>Total</th><th>Ações</th></tr>
+                    </thead>
+                    <tbody id="tabelaOrcamentosRealizados"></tbody>
+                </table>
+                <div id="listaOrcamentosRealizadosVazia" class="empty" style="display:none;margin-top:12px">Nenhum orçamento salvo.</div>
             </div>
         </section>
 

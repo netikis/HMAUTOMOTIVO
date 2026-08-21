@@ -1093,13 +1093,25 @@
             });
         }
 
-        function renderOrcamentos() {
+        function renderOrcamentos(filtroTipo) {
+            if (!filtroTipo) {
+                renderOrcamentos('VENDA');
+                renderOrcamentos('ORCAMENTO');
+                return;
+            }
             var db = carregar();
-            var tb = document.getElementById('tabelaVendasRealizadas');
-            var vazio = document.getElementById('listaVendasRealizadasVazia');
+            var isOrc = filtroTipo === 'ORCAMENTO';
+            var tb = document.getElementById(isOrc ? 'tabelaOrcamentosRealizados' : 'tabelaVendasRealizadas');
+            var vazio = document.getElementById(isOrc ? 'listaOrcamentosRealizadosVazia' : 'listaVendasRealizadasVazia');
+            var buscaEl = document.getElementById(isOrc ? 'buscaOrcamentosRealizados' : 'buscaVendasRealizadas');
             if (!tb) return;
-            var termo = (document.getElementById('buscaVendasRealizadas') || {}).value || '';
-            var lista = filtrarOrcamentosLista((db.orcamentos || []).slice().reverse(), termo);
+            var termo = (buscaEl || {}).value || '';
+            var base = (db.orcamentos || []).filter(function (o) {
+                var t = String(o.tipo || 'VENDA').toUpperCase();
+                if (isOrc) return t === 'ORCAMENTO' || t === 'ORÇAMENTO';
+                return t === 'VENDA';
+            }).slice().reverse();
+            var lista = filtrarOrcamentosLista(base, termo);
             tb.innerHTML = '';
             if (!lista.length) {
                 if (vazio) vazio.style.display = '';
@@ -1118,7 +1130,6 @@
                 tr.innerHTML =
                     '<td>' + esc(o.numero || '—') + tagEst + '</td>' +
                     '<td>' + esc(fmtData(o.dataEmissao || o.criadoEm)) + '</td>' +
-                    '<td>' + esc(o.tipo || '—') + '</td>' +
                     '<td>' + esc(nome) + tagFunc + tagAvulso + '</td>' +
                     '<td>' + esc(pgto) + '</td>' +
                     '<td>' + moeda(o.valor) + '</td>' +
@@ -1136,7 +1147,11 @@
 
         var buscaVr = document.getElementById('buscaVendasRealizadas');
         if (buscaVr) {
-            buscaVr.addEventListener('input', function () { renderOrcamentos(); });
+            buscaVr.addEventListener('input', function () { renderOrcamentos('VENDA'); });
+        }
+        var buscaOr = document.getElementById('buscaOrcamentosRealizados');
+        if (buscaOr) {
+            buscaOr.addEventListener('input', function () { renderOrcamentos('ORCAMENTO'); });
         }
 
         (function ligarModalAcoesVenda() {
