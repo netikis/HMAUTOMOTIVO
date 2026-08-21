@@ -758,73 +758,100 @@
             opts = opts || {};
             var emp = getEmpresa(db);
             var nome = nomeDocVenda(db, o);
-            var tipoLabel = opts.cupom
-                ? 'CUPOM'
-                : ((o.tipo === 'ORCAMENTO') ? 'ORÇAMENTO' : (opts.cliente ? 'VENDA' : 'VENDA / CUPOM'));
+            var s = saldoDocVenda(o);
+            var cupom = !!opts.cupom;
+            var tipoDoc = o.tipo === 'ORCAMENTO' ? 'ORÇAMENTO' : 'VENDA';
+            var tituloDoc = cupom
+                ? 'CUPOM NÃO FISCAL'
+                : (tipoDoc === 'ORÇAMENTO' ? 'ORÇAMENTO / PROPOSTA' : 'VENDA / BALCÃO');
             var itens = o.itens || [];
+
+            function tipoItem(it) {
+                if (it.origem === 'mao' || it.tipo === 'mao' || it.unidade === 'serv') return 'Serviço';
+                if (it.origem === 'avulso') return 'Avulso';
+                if (it.origem === 'estoque' || it.produtoId) return 'Produto';
+                return 'Item';
+            }
+
             var rows = itens.length
-                ? itens.map(function (it, i) {
+                ? itens.map(function (it) {
                     var qtd = Number(it.qtd) || 0;
                     var venda = Number(it.venda) || 0;
                     var totalLinha = it.total != null ? Number(it.total) : (qtd * venda);
+                    var descHtml = esc(it.desc || '—');
+                    if (qtd) descHtml += ' · ' + esc(fmtQtdEstoque(qtd, it.unidade || 'un'));
+                    if (it.codigo && !cupom) {
+                        descHtml += '<div style="font-size:0.75rem;color:#555;font-weight:500">' + esc(it.codigo) + '</div>';
+                    }
                     return '<tr>' +
-                        '<td>' + (i + 1) + '</td>' +
-                        '<td>' + esc(it.desc || '—') +
-                        (it.codigo && !opts.cupom ? '<div style="font-size:0.75rem;color:#666">' + esc(it.codigo) + '</div>' : '') +
-                        '</td>' +
-                        '<td style="text-align:center">' + esc(fmtQtdEstoque(qtd, it.unidade || 'un')) + '</td>' +
-                        '<td style="text-align:right">' + moeda(venda) + '</td>' +
-                        '<td style="text-align:right">' + moeda(totalLinha) + '</td>' +
+                        '<td>' + esc(tipoItem(it)) + '</td>' +
+                        '<td>' + descHtml + '</td>' +
+                        '<td>' + moeda(totalLinha) + '</td>' +
                         '</tr>';
                 }).join('')
-                : '<tr><td colspan="5" style="padding:10px;color:#666">Sem itens.</td></tr>';
+                : '<tr><td colspan="3" style="padding:8px;color:#666">Sem itens lançados.</td></tr>';
 
-            var wrapStyle = opts.cupom
-                ? 'max-width:320px;margin:0 auto;font-size:12px;'
-                : '';
+            var htmlItens =
+                '<table class="nota-itens compacta"><thead><tr>' +
+                '<th>Tipo</th><th>Descrição</th><th>Valor</th>' +
+                '</tr></thead><tbody>' + rows + '</tbody></table>' +
+                '<div class="nota-subtotais compacto">' +
+                'Subtotal: <strong>' + moeda(o.subtotal != null ? o.subtotal : s.total) + '</strong>' +
+                ((Number(o.descontoReais) > 0 || Number(o.descontoPerc) > 0)
+                    ? ' · Desconto: <strong>' + moeda(o.descontoReais || 0) +
+                      (Number(o.descontoPerc) > 0 ? ' (' + o.descontoPerc + '%)' : '') + '</strong>'
+                    : '') +
+                (Number(o.valorRecebido) > 0
+                    ? ' · Recebido: <strong>' + moeda(s.recebido) + '</strong> · Troco: <strong>' + moeda(o.troco || 0) + '</strong>'
+                    : '') +
+                '</div>' +
+                '<div class="nota-total compacto">Total: ' + moeda(s.total) + '</div>' +
+                ((o.statusPagamento || '') === 'PENDENTE'
+                    ? '<div class="nota-subtotais compacto">Saldo em aberto: <strong>' + moeda(s.saldo) + '</strong></div>'
+                    : '');
 
-            return '<div class="nota-espelho" id="notaVendaHtml" style="' + wrapStyle + '">' +
+            var wrapExtra = cupom ? ' style="max-width:360px;margin:0 auto"' : '';
+
+            return '<div class="nota-espelho" id="notaVendaHtml"' + wrapExtra + '>' +
                 htmlCabecalhoNotaEmpresa(emp,
-                    '<div class="nota-sub nota-titulo-espelho">' + esc(tipoLabel) + '</div>' +
-                    '<div class="nota-sub nota-registro">Nº ' + esc(String(o.numero || '—')) +
-                    ' · ' + esc(fmtData(o.dataEmissao || o.criadoEm)) +
+                    '<div class="nota-sub nota-titulo-espelho">' + esc(tituloDoc) + '</div>' +
+                    '<div class="nota-sub nota-registro">' +
+                    'Nº ' + esc(String(o.numero || '—')) +
+                    ' · Registro ' + esc(fmtData(o.dataEmissao || o.criadoEm)) +
                     (o.estornado ? ' · ESTORNADO' : '') +
-                    (o.id && !opts.cupom ? ' · ID ' + esc(String(o.id).slice(-6)) : '') + '</div>'
+                    (o.id ? ' · ID ' + esc(String(o.id).slice(-6)) : '') +
+                    '</div>'
                 ) +
-                '<div class="nota-bloco compacto"><div class="tit azul">' +
-                (opts.cupom ? 'Cliente' : 'Cliente / Destino') + '</div><div class="nota-grid nota-grid-compacta">' +
+                '<div class="nota-bloco compacto"><div class="tit azul">Cliente</div><div class="nota-grid nota-grid-compacta">' +
                 '<div class="nota-campo full"><span class="nota-label">' +
                 (o.vendaFuncionario || o.funcionarioId ? 'Funcionário' : 'Cliente') +
                 '</span><span class="nota-valor">' + esc(nome) +
                 (o.clienteAvulso ? ' (avulso)' : '') + '</span></div>' +
-                (o.placa ? '<div class="nota-campo"><span class="nota-label">Placa</span><span class="nota-valor">' + esc((o.placa || '').toUpperCase()) + '</span></div>' : '') +
+                (o.placa
+                    ? '<div class="nota-campo"><span class="nota-label">Placa</span><span class="nota-valor" style="letter-spacing:2px;font-weight:700">' +
+                      esc(String(o.placa).toUpperCase()) + '</span></div>'
+                    : '') +
                 '<div class="nota-campo"><span class="nota-label">Pagamento</span><span class="nota-valor">' +
-                esc((o.statusPagamento || '—') + (o.formaPagamento ? ' / ' + o.formaPagamento : '')) + '</span></div>' +
-                (!opts.cupom && o.dataVencimento ? '<div class="nota-campo"><span class="nota-label">Vencimento</span><span class="nota-valor">' + esc(fmtData(o.dataVencimento)) + '</span></div>' : '') +
-                '</div></div>' +
-                '<div class="nota-bloco compacto"><div class="tit verde">Itens</div>' +
-                '<div class="nota-tabela-wrap"><table class="nota-itens compacta">' +
-                '<thead><tr><th>#</th><th>Descrição</th><th>Qtd</th><th>Unit.</th><th>Total</th></tr></thead>' +
-                '<tbody>' + rows + '</tbody></table></div></div>' +
-                '<div class="nota-bloco compacto"><div class="tit escuro">Totais</div>' +
-                '<div class="nota-valores-pad compacto">' +
-                (!opts.cupom ? '<div>Subtotal: <strong>' + moeda(o.subtotal != null ? o.subtotal : o.valor) + '</strong></div>' : '') +
-                ((Number(o.descontoReais) > 0 || Number(o.descontoPerc) > 0)
-                    ? '<div>Desconto: <strong>' + moeda(o.descontoReais || 0) +
-                      (Number(o.descontoPerc) > 0 ? ' (' + o.descontoPerc + '%)' : '') + '</strong></div>'
+                esc((o.statusPagamento || '—') + (o.formaPagamento ? ' / ' + o.formaPagamento : '')) +
+                '</span></div>' +
+                (o.dataVencimento
+                    ? '<div class="nota-campo"><span class="nota-label">Vencimento</span><span class="nota-valor">' +
+                      esc(fmtData(o.dataVencimento)) + '</span></div>'
                     : '') +
-                '<div class="nota-total compacto">TOTAL: ' + moeda(o.valor) + '</div>' +
-                (Number(o.valorRecebido) > 0
-                    ? '<div>Recebido: <strong>' + moeda(o.valorRecebido) + '</strong> · Troco: <strong>' + moeda(o.troco || 0) + '</strong></div>'
-                    : '') +
-                (o.observacao && !opts.cupom ? '<div style="margin-top:8px"><span class="nota-label">Obs.</span> ' + esc(o.observacao) + '</div>' : '') +
                 '</div></div>' +
-                (!opts.cupom
-                    ? '<div class="nota-sigs compacto" style="margin-top:18px">' +
-                      '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Assinatura do cliente</div></div>' +
-                      '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Visto do responsável</div></div>' +
-                      '</div>'
-                    : '<p style="text-align:center;margin-top:12px;font-size:11px">Obrigado pela preferência!</p>') +
+                '<div class="nota-bloco compacto"><div class="tit verde">Valores</div>' +
+                '<div class="nota-valores-pad compacto">' + htmlItens +
+                (o.observacao
+                    ? '<div style="margin-top:8px"><span class="nota-label">Observações</span><div class="nota-valor">' +
+                      esc(o.observacao) + '</div></div>'
+                    : '') +
+                '</div></div>' +
+                (cupom
+                    ? '<p style="text-align:center;margin-top:14px;font-size:10pt;color:#333">Obrigado pela preferência!</p>'
+                    : '<div class="nota-sigs compacto">' +
+                      '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Assinatura do Responsável</div></div>' +
+                      '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Assinatura do Cliente</div></div>' +
+                      '</div>') +
                 '</div>';
         }
 
