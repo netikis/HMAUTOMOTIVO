@@ -25,6 +25,7 @@
             painelRelatorioCaixa: ['Relatório Caixa', 'Pastas mensais · entradas · saídas · relatório geral'],
             painelRelatorioUnificado: ['Relatório unificado', 'Oficial + interno · um caixa no final'],
             painelDespesasOs: ['Despesas por OS', 'Pastas mensais · bruto · despesas · lucro'],
+            painelDespesasEscritorio: ['Despesa escritório', 'Só no sistema · não sai na folha do funcionário'],
             painelServicoFinalizado: ['Serviço finalizado', 'Pastas Ano → Mês → Dia · visualizar e imprimir'],
             painelFuncionarios: ['Cadastro de Funcionários', 'Quem pode comprar no modo interno'],
             painelPagFuncionarios: ['Pagamento funcionários', 'Controle semanal interno · sem impressão'],

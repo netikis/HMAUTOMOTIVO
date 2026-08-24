@@ -99,6 +99,7 @@
             <button type="button" class="menu-grupo-btn" data-toggle-grupo="interno">🔒 Modo interno</button>
             <div class="submenu-lateral">
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelDespesasOs" data-canal="interno">🧾 Despesas por OS</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelDespesasEscritorio" data-canal="interno">🏢 Despesa escritório</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelFuncionarios" data-canal="interno">👷 Cadastro de Funcionários</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelPagFuncionarios" data-canal="interno">💰 Pagamento funcionários</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelProdutos" data-canal="interno">🏷️ Cadastro de Produtos</button>
@@ -1021,14 +1022,6 @@
                             </label>
                         </div>
                     </div>
-                    <div class="row" style="margin-top:10px">
-                        <div class="col">
-                            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;margin:0">
-                                <input type="checkbox" id="dosEscritorio" style="width:auto;margin-top:3px">
-                                <span><strong>Despesa escritório</strong></span>
-                            </label>
-                        </div>
-                    </div>
                     <div class="row" style="margin-top:14px">
                         <button type="submit" class="btn btn-primary">Lançar despesa interna</button>
                         <button type="button" class="btn btn-pdf" id="btnImprimirNotaInternaOs">📄 Imprimir folha interna</button>
@@ -1043,6 +1036,76 @@
                     <tbody id="tabelaDespesasOsDetalhe"></tbody>
                 </table>
                 <div id="listaDespesasOsDetalheVazia" class="empty" style="display:none;margin-top:10px">Nenhuma despesa lançada nesta OS.</div>
+            </div>
+        </section>
+
+        <!-- DESPESA ESCRITÓRIO (só Modo Interno — não sai na folha do funcionário) -->
+        <section id="painelDespesasEscritorio" class="panel">
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card"><div class="k">Lançamentos</div><div class="v" id="deQtd">0</div></div>
+                <div class="card" style="background:#e67e22"><div class="k">Neste mês</div><div class="v" id="deMes">R$ 0</div></div>
+                <div class="card" style="background:#e74c3c"><div class="k">Total</div><div class="v" id="deTotal">R$ 0</div></div>
+            </div>
+
+            <div class="grid-2">
+                <div class="box" style="border-color:rgba(241,196,15,0.45)">
+                    <h2>🏢 Lançar despesa de escritório</h2>
+                    <p class="hint">Cadastro separado das despesas de serviço da OS. Não sai na folha interna impressa.</p>
+                    <form id="formDespesaEscritorio">
+                        <div class="row">
+                            <div class="col" style="flex:2">
+                                <label>OS (opcional)</label>
+                                <select id="deAtendimentoId">
+                                    <option value="">Sem vínculo com OS</option>
+                                </select>
+                            </div>
+                            <div class="col"><label>Data</label><input type="date" id="deData" required></div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col" style="flex:2"><label>Descrição</label><input id="deDesc" required placeholder="Ex: material de escritório, taxa, papelaria…"></div>
+                            <div class="col"><label>Valor (R$)</label><input id="deValor" inputmode="decimal" required placeholder="0,00"></div>
+                            <div class="col"><label>Forma</label>
+                                <select id="deForma">
+                                    <option>Dinheiro</option>
+                                    <option>PIX</option>
+                                    <option>Cartão</option>
+                                    <option>Transferência</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:14px">
+                            <button type="submit" class="btn btn-primary">Registrar despesa escritório</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="box">
+                    <h2>Como usar</h2>
+                    <p class="hint" style="margin-top:0"><strong>Despesas por OS</strong> — tinta, lixa e custo do serviço (sai na folha).</p>
+                    <p class="hint"><strong>Despesa escritório</strong> — gastos da gestão/oficina (não sai na folha).</p>
+                    <p class="hint">Vincular a uma OS é opcional: com vínculo, entra no lucro da OS; sem vínculo, só no caixa interno.</p>
+                </div>
+            </div>
+
+            <div class="box">
+                <h2>Histórico — despesas de escritório</h2>
+                <div class="toolbar">
+                    <input type="search" id="buscaDespesaEscritorio" class="search" placeholder="Buscar por descrição, placa, OS…">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarDespesaEscritorio">🔄 Atualizar</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>OS / Placa</th>
+                            <th>Forma</th>
+                            <th>Valor</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaDespesasEscritorio"></tbody>
+                </table>
+                <div id="listaDespesasEscritorioVazia" class="empty" style="display:none;margin-top:12px">Nenhuma despesa de escritório lançada.</div>
             </div>
         </section>
 

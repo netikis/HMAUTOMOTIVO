@@ -863,6 +863,18 @@
                     }).catch(function () { /* offline */ });
                 }
             }
+            if (id === 'painelDespesasEscritorio') {
+                canalVendas = 'interno';
+                atualizarBadgeCanal();
+                var deData = document.getElementById('deData');
+                if (deData && !deData.value) deData.value = hojeISO();
+                renderDespesasEscritorio();
+                if (usuarioNuvemLogado()) {
+                    sincronizarTodosNuvem({ silencioso: true, mostrarToast: true }).then(function () {
+                        renderDespesasEscritorio();
+                    }).catch(function () { /* offline */ });
+                }
+            }
             if (id === 'painelServicoFinalizado') {
                 canalVendas = 'interno';
                 atualizarBadgeCanal();
@@ -895,6 +907,7 @@
 
         var PAINEIS_CANAL = {
             painelDespesasOs: true,
+            painelDespesasEscritorio: true,
             painelServicoFinalizado: true,
             painelFuncionarios: true,
             painelPagFuncionarios: true,

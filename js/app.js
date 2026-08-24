@@ -150,6 +150,10 @@
                 document.getElementById('painelDespesasOs').classList.contains('active')) {
                 renderDespesasOs();
             }
+            if (document.getElementById('painelDespesasEscritorio') &&
+                document.getElementById('painelDespesasEscritorio').classList.contains('active')) {
+                renderDespesasEscritorio();
+            }
             if (document.getElementById('painelServicoFinalizado') &&
                 document.getElementById('painelServicoFinalizado').classList.contains('active')) {
                 renderServicosFinalizados();

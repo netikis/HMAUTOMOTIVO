@@ -730,7 +730,6 @@
             var prod = produtoDespesaOsSelecionado;
             var qtdEstoque = parseMoeda(document.getElementById('dosProdQtd').value) || 0;
             var querBaixa = !!(document.getElementById('dosBaixaEstoque').checked && prod && prod.id);
-            var ehEscritorio = !!(document.getElementById('dosEscritorio') || {}).checked;
             if (!desc) { toast('Informe a descrição da despesa (ou escolha um produto).'); return; }
             if (!(valor > 0)) { toast('Informe um valor válido.'); return; }
             if (prod && querBaixa) {
@@ -760,8 +759,8 @@
                 produtoId: prod ? prod.id : null,
                 qtdEstoque: querBaixa ? qtdEstoque : 0,
                 baixaEstoque: querBaixa,
-                escritorio: ehEscritorio,
-                ocultarFolha: ehEscritorio,
+                escritorio: false,
+                ocultarFolha: false,
                 osResumo: {
                     cliente: nome,
                     placa: placa,
@@ -790,13 +789,10 @@
             atualizarBadgeCanal();
 
             document.getElementById('formDespesaOs').reset();
-            if (document.getElementById('dosEscritorio')) document.getElementById('dosEscritorio').checked = false;
             limparProdutoDespesaOs();
-            toast(ehEscritorio
-                ? ('Despesa de escritório lançada (só no sistema — não sai na folha do funcionário).')
-                : (querBaixa
-                    ? ('Despesa lançada + estoque baixado (' + qtdEstoque + '× ' + prod.nome + '). Enviando à nuvem…')
-                    : ('Despesa interna lançada na OS ' + placa + '. Enviando à nuvem…')));
+            toast(querBaixa
+                ? ('Despesa lançada + estoque baixado (' + qtdEstoque + '× ' + prod.nome + '). Enviando à nuvem…')
+                : ('Despesa interna lançada na OS ' + placa + '. Enviando à nuvem…'));
             renderDespesasOsDetalhe(atendimentoId);
             renderDespesasOs();
             renderCaixa();
@@ -869,6 +865,214 @@
         document.getElementById('btnArquivarMesDosPc').addEventListener('click', function () {
             if (typeof arquivarMesDespesasOsPastaPC === 'function') arquivarMesDespesasOsPastaPC();
         });
+
+        /* ---------- Despesa escritório (tópico próprio · Modo Interno) ---------- */
+
+        function listarDespesasEscritorio() {
+            var intDb = carregarInternoRaw();
+            var ex = garantirExcluidosInterno(intDb).caixa || {};
+            var lista = (intDb.caixa || []).filter(function (x) {
+                return x && x.tipo === 'saida' && despesaOcultaFolha(x);
+            });
+            return aplicarExcluidosNaLista(lista, ex).sort(function (a, b) {
+                return String(b.criadoEm || b.data || '').localeCompare(String(a.criadoEm || a.data || ''));
+            });
+        }
+
+        function preencherSelectOsDespesaEscritorio() {
+            var sel = document.getElementById('deAtendimentoId');
+            if (!sel) return;
+            var atual = sel.value || '';
+            var main = carregarMain();
+            var lista = (main.atendimentos || []).slice().filter(function (a) {
+                return !osFinalizadaInterno(a);
+            }).sort(function (a, b) {
+                return String(b.entrada || b.criadoEm || '').localeCompare(String(a.entrada || a.criadoEm || ''));
+            });
+            sel.innerHTML = '<option value="">Sem vínculo com OS</option>' + lista.map(function (a) {
+                var nome = nomeAtendimento(main, a);
+                var placa = (a.placa || '—').toUpperCase();
+                return '<option value="' + esc(a.id) + '">' + esc(placa + ' · ' + nome) + '</option>';
+            }).join('');
+            if (atual && Array.prototype.some.call(sel.options, function (o) { return o.value === atual; })) {
+                sel.value = atual;
+            }
+        }
+
+        function rotuloOsDespesaEscritorio(d) {
+            if (!d) return '—';
+            if (d.osResumo && (d.osResumo.placa || d.osResumo.cliente)) {
+                return ((d.osResumo.placa || '—') + ' · ' + (d.osResumo.cliente || '—')).trim();
+            }
+            if (!d.atendimentoId) return 'Sem OS';
+            var main = carregarMain();
+            var a = (main.atendimentos || []).find(function (x) { return x.id === d.atendimentoId; });
+            if (!a) return 'OS #' + String(d.atendimentoId).slice(-6);
+            return ((a.placa || '—').toUpperCase() + ' · ' + nomeAtendimento(main, a));
+        }
+
+        function renderDespesasEscritorio() {
+            var panel = document.getElementById('painelDespesasEscritorio');
+            if (!panel) return;
+            preencherSelectOsDespesaEscritorio();
+            var deData = document.getElementById('deData');
+            if (deData && !deData.value) deData.value = hojeISO();
+
+            var q = (document.getElementById('buscaDespesaEscritorio') || {}).value || '';
+            q = String(q).toLowerCase().trim();
+            var lista = listarDespesasEscritorio();
+            if (q) {
+                lista = lista.filter(function (d) {
+                    return [d.descricao, d.forma, rotuloOsDespesaEscritorio(d)].join(' ').toLowerCase().indexOf(q) > -1;
+                });
+            }
+
+            var mesAtual = hojeISO().slice(0, 7);
+            var totMes = 0;
+            var totGeral = 0;
+            listarDespesasEscritorio().forEach(function (d) {
+                var v = Number(d.valor) || 0;
+                totGeral += v;
+                var dia = String(d.data || d.criadoEm || '').slice(0, 10);
+                if (dia.slice(0, 7) === mesAtual) totMes += v;
+            });
+            document.getElementById('deQtd').textContent = String(lista.length);
+            document.getElementById('deMes').textContent = moeda(totMes);
+            document.getElementById('deTotal').textContent = moeda(totGeral);
+
+            var tb = document.getElementById('tabelaDespesasEscritorio');
+            var vazio = document.getElementById('listaDespesasEscritorioVazia');
+            tb.innerHTML = '';
+            if (!lista.length) {
+                vazio.style.display = '';
+                return;
+            }
+            vazio.style.display = 'none';
+            lista.forEach(function (d) {
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + esc(fmtData(d.data || d.criadoEm)) + '</td>' +
+                    '<td>' + esc(d.descricao || '—') + '</td>' +
+                    '<td>' + esc(rotuloOsDespesaEscritorio(d)) + '</td>' +
+                    '<td>' + esc(d.forma || '—') + '</td>' +
+                    '<td>' + moeda(d.valor) + '</td>' +
+                    '<td class="actions"><button type="button" class="btn btn-danger" data-de-ex="' + esc(d.id) + '">Excluir</button></td>';
+                tb.appendChild(tr);
+            });
+            tb.querySelectorAll('[data-de-ex]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    if (!confirm('Excluir esta despesa de escritório?')) return;
+                    var idEx = b.getAttribute('data-de-ex');
+                    var canalAntes = canalVendas;
+                    canalVendas = 'interno';
+                    var db = carregar();
+                    marcarExcluido(db, 'caixa', idEx);
+                    db.caixa = (db.caixa || []).filter(function (x) { return x.id !== idEx; });
+                    salvar(db);
+                    canalVendas = canalAntes;
+                    toast('Despesa de escritório excluída.');
+                    renderDespesasEscritorio();
+                    renderDespesasOs();
+                    renderCaixa();
+                    renderRelatorioCaixa();
+                });
+            });
+        }
+
+        function lancarDespesaEscritorio(e) {
+            e.preventDefault();
+            var desc = (document.getElementById('deDesc').value || '').trim();
+            var valor = parseMoeda(document.getElementById('deValor').value);
+            var forma = document.getElementById('deForma').value;
+            var data = (document.getElementById('deData').value || hojeISO()).slice(0, 10);
+            var atendimentoId = (document.getElementById('deAtendimentoId').value || '').trim() || null;
+            if (!desc) { toast('Informe a descrição.'); return; }
+            if (!(valor > 0)) { toast('Informe um valor válido.'); return; }
+
+            var main = carregarMain();
+            var a = null;
+            var nome = '';
+            var placa = '';
+            if (atendimentoId) {
+                a = (main.atendimentos || []).find(function (x) { return x.id === atendimentoId; });
+                if (!a) {
+                    toast('OS não encontrada.');
+                    return;
+                }
+                nome = nomeAtendimento(main, a);
+                placa = (a.placa || '—').toUpperCase();
+            }
+
+            var canalAntes = canalVendas;
+            canalVendas = 'interno';
+            var db = carregar();
+            if (!db.caixa) db.caixa = [];
+            var lanc = {
+                id: uid(),
+                tipo: 'saida',
+                descricao: desc,
+                valor: valor,
+                forma: forma,
+                conta: 'balcao',
+                data: data,
+                atendimentoId: atendimentoId,
+                produtoId: null,
+                qtdEstoque: 0,
+                baixaEstoque: false,
+                escritorio: true,
+                ocultarFolha: true,
+                osResumo: a ? {
+                    cliente: nome,
+                    placa: placa,
+                    carro: a.carro || '',
+                    totalOs: Number(a.total) || 0,
+                    entrada: a.entrada || a.criadoEm || ''
+                } : null,
+                criadoEm: data + 'T12:00:00.000Z',
+                atualizadoEm: new Date().toISOString()
+            };
+            db.caixa.push(lanc);
+            salvar(db);
+            canalVendas = canalAntes;
+            atualizarBadgeCanal();
+
+            document.getElementById('formDespesaEscritorio').reset();
+            document.getElementById('deData').value = hojeISO();
+            preencherSelectOsDespesaEscritorio();
+            toast('Despesa de escritório registrada. Enviando à nuvem…');
+            renderDespesasEscritorio();
+            if (atendimentoId) {
+                renderDespesasOs();
+                if (despesaOsSelecionadaId === atendimentoId) renderDespesasOsDetalhe(atendimentoId);
+            }
+            renderCaixa();
+            renderRelatorioCaixa();
+
+            enviarDespesaOsNuvem(lanc).then(function () {
+                return sincronizarModoInternoNuvem();
+            }).then(function (r) {
+                toast('Despesa escritório na nuvem OK (' + (r && r.nDesp != null ? r.nDesp : '?') + ' no total).');
+            }).catch(function (err) {
+                toast('Salva aqui, mas falhou na nuvem: ' + (err.message || err.code || 'tente Sincronizar agora'));
+            });
+        }
+
+        var formDe = document.getElementById('formDespesaEscritorio');
+        if (formDe) formDe.addEventListener('submit', lancarDespesaEscritorio);
+        var btnAtDe = document.getElementById('btnAtualizarDespesaEscritorio');
+        if (btnAtDe) {
+            btnAtDe.addEventListener('click', function () {
+                toast('Baixando despesas da nuvem…');
+                sincronizarTodosNuvem({ silencioso: false, mostrarToast: true }).then(function () {
+                    renderDespesasEscritorio();
+                }).catch(function (err) {
+                    renderDespesasEscritorio();
+                    toast('Falha ao sincronizar: ' + (err.message || err.code || 'verifique login'));
+                });
+            });
+        }
+        var buscaDe = document.getElementById('buscaDespesaEscritorio');
+        if (buscaDe) buscaDe.addEventListener('input', renderDespesasEscritorio);
 
         /* ---------- Pagamento funcionários (Modo Interno) ---------- */
         function inicioFimSemana(isoDate) {
