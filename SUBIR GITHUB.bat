@@ -50,7 +50,7 @@ if "%MSG%"=="" set "MSG=Atualizacao HM Automotivo"
 echo.
 echo [2.5/4] Versao do app (PC + celular PWA)...
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$p='sw.js'; if (Test-Path $p) { $t=Get-Content -LiteralPath $p -Raw -Encoding UTF8; $n=[int]([DateTime]::UtcNow.ToString('yyMMddHHmm')); $t2=[regex]::Replace($t, \"var CACHE = 'hm-auto-v[^']*'\", \"var CACHE = 'hm-auto-v$n'\"); $t2=[regex]::Replace($t2, '\?v=\d+', \"?v=$n\"); Set-Content -LiteralPath $p -Value $t2 -Encoding UTF8 -NoNewline; Write-Host ('CACHE hm-auto-v'+$n) }"
+  "$p='sw.js'; if (Test-Path $p) { $t=Get-Content -LiteralPath $p -Raw -Encoding UTF8; $n=[DateTime]::UtcNow.ToString('yyMMddHHmm'); $t2=[regex]::Replace($t, \"var CACHE = 'hm-auto-v[^']*'\", \"var CACHE = 'hm-auto-v$n'\"); $t2=[regex]::Replace($t2, '\?v=\d*', \"?v=$n\"); Set-Content -LiteralPath $p -Value $t2 -Encoding UTF8 -NoNewline; Write-Host ('CACHE hm-auto-v'+$n) }"
 echo.
 
 echo [3/4] Commit...
