@@ -30,12 +30,6 @@
             });
         }
 
-        function totalDespesasEscritorioPorOs(atendimentoId) {
-            return listarDespesasInternasPorOs(atendimentoId).reduce(function (s, d) {
-                return s + (despesaOcultaFolha(d) ? (Number(d.valor) || 0) : 0);
-            }, 0);
-        }
-
         function totalCustoPecasOs(atendimento) {
             if (!atendimento) return 0;
             if (atendimento.totalCustoPecas != null && atendimento.totalCustoPecas !== '') {
@@ -97,7 +91,6 @@
             var despesas = listarDespesasFolhaInterna(a.id).slice().sort(function (x, y) {
                 return String(x.criadoEm || '').localeCompare(String(y.criadoEm || ''));
             });
-            var totEscritorio = totalDespesasEscritorioPorOs(a.id);
             var totFolha = despesas.reduce(function (s, d) { return s + (Number(d.valor) || 0); }, 0);
             var linhasDesp = despesas.length
                 ? despesas.map(function (d, i) {
@@ -147,9 +140,6 @@
                 '<th>#</th><th>Data</th><th>Descrição</th><th>Forma</th><th>Valor</th>' +
                 '</tr></thead><tbody>' + linhasDesp + '</tbody></table></div>' +
                 '<div class="nota-subtotais compacto" style="padding:6pt">Total nesta folha: <strong>' + moeda(totFolha) + '</strong></div>' +
-                (totEscritorio > 0
-                    ? '<p style="margin:8px 6pt 0;font-size:0.8rem;color:#888">Há despesas de escritório só no sistema (não listadas aqui para o funcionário).</p>'
-                    : '') +
                 '</div>' +
                 '<div class="nota-bloco compacto" style="border:2px solid #222">' +
                 '<div class="tit escuro">Resumo do lucro</div>' +
@@ -163,7 +153,6 @@
                 '<div>Despesas do serviço (folha): <strong style="color:#c0392b">' + moeda(totFolha) + '</strong></div>' +
                 '<div>Lucro do funcionário (só mão de obra): <strong style="color:#2980b9">' + moeda(resumo.lucroFuncionario) + '</strong></div>' +
                 '</div>' +
-                '<p style="margin:10px 0 0;font-size:0.85rem;color:#555">Folha para o funcionário — despesas de escritório não aparecem aqui. Lucro completo da oficina fica só no sistema.</p>' +
                 '</div></div>' +
                 '<div class="nota-sigs compacto" style="margin-top:18px">' +
                 '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Responsável / Funcionário</div></div>' +
