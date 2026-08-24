@@ -1,5 +1,7 @@
-/* HM Centro Automotivo — PWA com atualização automática (PC + celular) */
-var CACHE = 'hm-auto-v9';
+﻿/* HM Centro Automotivo — PWA com atualização automática (PC + celular) */
+/* Ao fazer push, o SUBIR GITHUB.bat (ou o commit) sobe a versão do CACHE.
+   PC e app instalado no celular usam o mesmo site Vercel e atualizam juntos. */
+var CACHE = 'hm-auto-v';
 var ASSETS = [
   './',
   './index.html',
@@ -16,11 +18,11 @@ var ASSETS = [
   './js/interno.js',
   './js/caixa.js',
   './js/app.js',
-  './manifest.webmanifest?v=9',
-  './logo-hm.png?v=9',
-  './icon-192.png?v=9',
-  './icon-512.png?v=9',
-  './apple-touch-icon.png?v=9',
+  './manifest.webmanifest?v=',
+  './logo-hm.png?v=',
+  './icon-192.png?v=',
+  './icon-512.png?v=',
+  './apple-touch-icon.png?v=',
   './assinar-hm.html',
   './firebase-config.js'
 ];
@@ -49,6 +51,12 @@ self.addEventListener('activate', function (event) {
   );
 });
 
+self.addEventListener('message', function (event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 function isDocumento(request, url) {
   if (request.mode === 'navigate') return true;
   var path = url.pathname || '';
@@ -68,7 +76,7 @@ self.addEventListener('fetch', function (event) {
   /* HTML / CSS / JS / navegação: rede primeiro → celular e PC pegam a versão nova */
   if (isDocumento(event.request, url)) {
     event.respondWith(
-      fetch(event.request).then(function (res) {
+      fetch(event.request, { cache: 'no-store' }).then(function (res) {
         if (res && res.ok) {
           var copy = res.clone();
           caches.open(CACHE).then(function (cache) {

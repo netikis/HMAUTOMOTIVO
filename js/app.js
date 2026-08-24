@@ -227,7 +227,7 @@
                 window.location.reload();
             });
 
-            navigator.serviceWorker.register('./sw.js').then(function (reg) {
+            navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(function (reg) {
                 function checarAtualizacao() {
                     try { reg.update(); } catch (e) { /* ok */ }
                 }
@@ -237,14 +237,18 @@
                     if (!document.hidden) checarAtualizacao();
                 });
                 window.addEventListener('focus', checarAtualizacao);
-                setInterval(checarAtualizacao, 5 * 60 * 1000);
+                window.addEventListener('online', checarAtualizacao);
+                setInterval(checarAtualizacao, 60 * 1000);
 
                 reg.addEventListener('updatefound', function () {
                     var novo = reg.installing;
                     if (!novo) return;
                     novo.addEventListener('statechange', function () {
                         if (novo.state === 'installed' && navigator.serviceWorker.controller) {
-                            toast('Nova versão disponível — atualizando…');
+                            toast('Nova versão no ar (PC + celular) — atualizando…');
+                            try {
+                                novo.postMessage({ type: 'SKIP_WAITING' });
+                            } catch (e2) { /* ok */ }
                         }
                     });
                 });
