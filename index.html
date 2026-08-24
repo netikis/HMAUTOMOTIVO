@@ -1021,6 +1021,14 @@
                             </label>
                         </div>
                     </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col">
+                            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;margin:0">
+                                <input type="checkbox" id="dosEscritorio" style="width:auto;margin-top:3px">
+                                <span><strong>Despesa escritório</strong> — fica só no sistema (você/pai). <strong>Não aparece</strong> na folha interna impressa para o funcionário.</span>
+                            </label>
+                        </div>
+                    </div>
                     <div class="row" style="margin-top:14px">
                         <button type="submit" class="btn btn-primary">Lançar despesa interna</button>
                         <button type="button" class="btn btn-pdf" id="btnImprimirNotaInternaOs">📄 Imprimir folha interna</button>
@@ -1028,7 +1036,7 @@
                         <button type="button" class="btn btn-secondary" id="btnCancelarDespesaOs">Fechar</button>
                     </div>
                 </form>
-                <p class="hint" style="margin-top:10px">A <strong>nota do cliente</strong> continua na Oficina (sem despesas). A <strong>folha interna</strong> é só para você/funcionário — mostra despesas e lucro limpo.</p>
+                <p class="hint" style="margin-top:10px">A <strong>nota do cliente</strong> continua na Oficina (sem despesas). A <strong>folha interna</strong> do funcionário mostra só despesas de serviço — despesas de escritório ficam ocultas na impressão, mas entram no lucro da oficina no sistema.</p>
                 <h3 style="margin-top:18px">Despesas desta OS</h3>
                 <table>
                     <thead><tr><th>Data</th><th>Descrição</th><th>Forma</th><th>Valor</th><th>Ações</th></tr></thead>

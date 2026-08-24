@@ -20,6 +20,22 @@
             }, 0);
         }
 
+        function despesaOcultaFolha(d) {
+            return !!(d && (d.escritorio === true || d.ocultarFolha === true || d.folhaInterna === false));
+        }
+
+        function listarDespesasFolhaInterna(atendimentoId) {
+            return listarDespesasInternasPorOs(atendimentoId).filter(function (d) {
+                return !despesaOcultaFolha(d);
+            });
+        }
+
+        function totalDespesasEscritorioPorOs(atendimentoId) {
+            return listarDespesasInternasPorOs(atendimentoId).reduce(function (s, d) {
+                return s + (despesaOcultaFolha(d) ? (Number(d.valor) || 0) : 0);
+            }, 0);
+        }
+
         function totalCustoPecasOs(atendimento) {
             if (!atendimento) return 0;
             if (atendimento.totalCustoPecas != null && atendimento.totalCustoPecas !== '') {
@@ -78,9 +94,11 @@
             var emp = getEmpresa(mainDb);
             var nome = nomeAtendimento(mainDb, a);
             var resumo = resumoLucroOs(a);
-            var despesas = listarDespesasInternasPorOs(a.id).slice().sort(function (x, y) {
+            var despesas = listarDespesasFolhaInterna(a.id).slice().sort(function (x, y) {
                 return String(x.criadoEm || '').localeCompare(String(y.criadoEm || ''));
             });
+            var totEscritorio = totalDespesasEscritorioPorOs(a.id);
+            var totFolha = despesas.reduce(function (s, d) { return s + (Number(d.valor) || 0); }, 0);
             var linhasDesp = despesas.length
                 ? despesas.map(function (d, i) {
                     return '<tr>' +
@@ -91,7 +109,7 @@
                         '<td>' + moeda(d.valor) + '</td>' +
                         '</tr>';
                 }).join('')
-                : '<tr><td colspan="5" style="padding:10px;color:#666">Nenhuma despesa interna lançada.</td></tr>';
+                : '<tr><td colspan="5" style="padding:10px;color:#666">Nenhuma despesa de serviço nesta folha.</td></tr>';
 
             return '<div class="nota-espelho" id="notaInternaLucroOs">' +
                 htmlCabecalhoNotaEmpresa(emp,
@@ -123,11 +141,16 @@
                       '<div>Lucro nas peças: <strong style="color:#1e8449">' + moeda(resumo.lucroPecas) + '</strong></div>' +
                       '</div></div>'
                     : '') +
-                '<div class="nota-bloco compacto"><div class="tit vermelho">Despesas internas (modo interno)</div>' +
+                '<div class="nota-bloco compacto"><div class="tit vermelho">Despesas do serviço (folha do funcionário)</div>' +
                 '<div class="nota-tabela-wrap"><table class="nota-tabela-desp">' +
                 '<thead><tr>' +
                 '<th>#</th><th>Data</th><th>Descrição</th><th>Forma</th><th>Valor</th>' +
-                '</tr></thead><tbody>' + linhasDesp + '</tbody></table></div></div>' +
+                '</tr></thead><tbody>' + linhasDesp + '</tbody></table></div>' +
+                '<div class="nota-subtotais compacto" style="padding:6pt">Total nesta folha: <strong>' + moeda(totFolha) + '</strong></div>' +
+                (totEscritorio > 0
+                    ? '<p style="margin:8px 6pt 0;font-size:0.8rem;color:#888">Há despesas de escritório só no sistema (não listadas aqui para o funcionário).</p>'
+                    : '') +
+                '</div>' +
                 '<div class="nota-bloco compacto" style="border:2px solid #222">' +
                 '<div class="tit escuro">Resumo do lucro</div>' +
                 '<div class="nota-valores-pad compacto">' +
@@ -137,11 +160,10 @@
                 (resumo.custoPecas > 0
                     ? '<div>Custo peças: <strong style="color:#c0392b">' + moeda(resumo.custoPecas) + '</strong></div>'
                     : '') +
-                '<div>Despesas lançadas: <strong style="color:#c0392b">' + moeda(resumo.despesasLancadas) + '</strong></div>' +
-                '<div>Lucro oficina (bruto − custos): <strong style="color:#1e8449">' + moeda(resumo.lucro) + '</strong></div>' +
+                '<div>Despesas do serviço (folha): <strong style="color:#c0392b">' + moeda(totFolha) + '</strong></div>' +
                 '<div>Lucro do funcionário (só mão de obra): <strong style="color:#2980b9">' + moeda(resumo.lucroFuncionario) + '</strong></div>' +
                 '</div>' +
-                '<p style="margin:10px 0 0;font-size:0.85rem;color:#555">Peças e lucro de peça ficam da oficina — não entram no lucro do responsável. Franquia não soma no total do serviço.</p>' +
+                '<p style="margin:10px 0 0;font-size:0.85rem;color:#555">Folha para o funcionário — despesas de escritório não aparecem aqui. Lucro completo da oficina fica só no sistema.</p>' +
                 '</div></div>' +
                 '<div class="nota-sigs compacto" style="margin-top:18px">' +
                 '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">Responsável / Funcionário</div></div>' +
@@ -539,10 +561,13 @@
             }
             vazio.style.display = 'none';
             lista.slice().reverse().forEach(function (x) {
+                var tagEsc = despesaOcultaFolha(x)
+                    ? ' <span style="font-size:0.68rem;font-weight:700;color:#f1c40f">ESCRITÓRIO</span>'
+                    : '';
                 var tr = document.createElement('tr');
                 tr.innerHTML =
                     '<td>' + esc(fmtData(x.criadoEm)) + '</td>' +
-                    '<td>' + esc(x.descricao || '—') + '</td>' +
+                    '<td>' + esc(x.descricao || '—') + tagEsc + '</td>' +
                     '<td>' + esc(x.forma || '—') + '</td>' +
                     '<td>' + moeda(x.valor) + '</td>' +
                     '<td class="actions"><button type="button" class="btn btn-danger" data-dos-ex="' + esc(x.id) + '">Excluir</button></td>';
@@ -716,6 +741,7 @@
             var prod = produtoDespesaOsSelecionado;
             var qtdEstoque = parseMoeda(document.getElementById('dosProdQtd').value) || 0;
             var querBaixa = !!(document.getElementById('dosBaixaEstoque').checked && prod && prod.id);
+            var ehEscritorio = !!(document.getElementById('dosEscritorio') || {}).checked;
             if (!desc) { toast('Informe a descrição da despesa (ou escolha um produto).'); return; }
             if (!(valor > 0)) { toast('Informe um valor válido.'); return; }
             if (prod && querBaixa) {
@@ -745,6 +771,8 @@
                 produtoId: prod ? prod.id : null,
                 qtdEstoque: querBaixa ? qtdEstoque : 0,
                 baixaEstoque: querBaixa,
+                escritorio: ehEscritorio,
+                ocultarFolha: ehEscritorio,
                 osResumo: {
                     cliente: nome,
                     placa: placa,
@@ -773,10 +801,13 @@
             atualizarBadgeCanal();
 
             document.getElementById('formDespesaOs').reset();
+            if (document.getElementById('dosEscritorio')) document.getElementById('dosEscritorio').checked = false;
             limparProdutoDespesaOs();
-            toast(querBaixa
-                ? ('Despesa lançada + estoque baixado (' + qtdEstoque + '× ' + prod.nome + '). Enviando à nuvem…')
-                : ('Despesa interna lançada na OS ' + placa + '. Enviando à nuvem…'));
+            toast(ehEscritorio
+                ? ('Despesa de escritório lançada (só no sistema — não sai na folha do funcionário).')
+                : (querBaixa
+                    ? ('Despesa lançada + estoque baixado (' + qtdEstoque + '× ' + prod.nome + '). Enviando à nuvem…')
+                    : ('Despesa interna lançada na OS ' + placa + '. Enviando à nuvem…')));
             renderDespesasOsDetalhe(atendimentoId);
             renderDespesasOs();
             renderCaixa();
