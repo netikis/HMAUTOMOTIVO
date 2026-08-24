@@ -1,7 +1,7 @@
 ﻿/* HM Centro Automotivo — PWA com atualização automática (PC + celular) */
 /* Ao fazer push, o SUBIR GITHUB.bat (ou o commit) sobe a versão do CACHE.
    PC e app instalado no celular usam o mesmo site Vercel e atualizam juntos. */
-var CACHE = 'hm-auto-v2608241813';
+var CACHE = 'hm-auto-v2608242036';
 var ASSETS = [
   './',
   './index.html',
@@ -18,11 +18,11 @@ var ASSETS = [
   './js/interno.js',
   './js/caixa.js',
   './js/app.js',
-  './manifest.webmanifest?v=2608241813',
-  './logo-hm.png?v=2608241813',
-  './icon-192.png?v=2608241813',
-  './icon-512.png?v=2608241813',
-  './apple-touch-icon.png?v=2608241813',
+  './manifest.webmanifest?v=2608242036',
+  './logo-hm.png?v=2608242036',
+  './icon-192.png?v=2608242036',
+  './icon-512.png?v=2608242036',
+  './apple-touch-icon.png?v=2608242036',
   './assinar-hm.html',
   './firebase-config.js'
 ];

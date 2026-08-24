@@ -1301,14 +1301,14 @@
             /* Total do serviço = peças + mão. Franquia NUNCA soma. */
             var totalServico = pecas + mao;
             if (soFranquiaCliente) {
-                html += '<div class="nota-total compacto">Franquia (cliente): ' + moeda(franquiaShow) + '</div>';
+                html += '<div class="nota-total compacto">FRANQUIA: ' + moeda(franquiaShow) + '</div>';
             } else if (showPecas || showMao) {
                 html += '<div class="nota-total compacto">Total serviço: ' + moeda(totalServico) + '</div>';
             }
 
             if (franquiaShow > 0 && !soFranquiaCliente) {
                 html += '<div class="nota-subtotais compacto" style="margin-top:6px;padding:6pt;border:1.5pt solid #e67e22;border-radius:4px">' +
-                    'Franquia (não soma no total): <strong style="color:#c0392b">' + moeda(franquiaShow) + '</strong>';
+                    'FRANQUIA: <strong style="color:#c0392b">' + moeda(franquiaShow) + '</strong>';
                 if (totalServico > 0) {
                     var dif = totalServico - franquiaShow;
                     html += '<br><span style="font-size:9pt">Diferença serviço − franquia: <strong>' + moeda(dif) + '</strong></span>';
