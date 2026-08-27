@@ -501,11 +501,11 @@
             /* Preview: interno se seguro. Salvar/Encaminhar pedem escolha do PDF cliente. */
             var html = htmlNotaEspelho(db, a, { incluirFotos: true, modoInternoSeguro: seguro }) +
                 (atendimentoTemFotos(a)
-                    ? '<p class="hint" style="margin-top:10px;color:#0d3d6e">Fotos acima são internas. Em <strong>Enviar nota ao cliente</strong> você escolhe COM FOTOS ou SEM FOTOS.</p>'
+                    ? '<p class="hint" style="margin-top:10px;color:#0d3d6e">Fotos acima são internas. Em <strong>Enviar nota ao cliente</strong> você escolhe o que exportar (franquia / mão de obra / peças) e depois COM FOTOS ou SEM FOTOS.</p>'
                     : '') +
                 (seguro
-                    ? '<p class="hint" style="margin-top:8px;color:#c0392b">Orçamento de seguro: <strong>PDF interno</strong> mostra tudo. <strong>PDF cliente</strong> pergunta Franquia / Mão de obra / Peças. <strong>Salvar ou Encaminhar</strong> também pedem o PDF do cliente (não manda tudo junto).</p>'
-                    : '<p class="hint" style="margin-top:8px">Ao imprimir/salvar/encaminhar, escolha se sai <strong>mão de obra</strong>, <strong>peças</strong> ou os dois — para o cliente não ver o que for só interno.</p>');
+                    ? '<p class="hint" style="margin-top:8px;color:#c0392b">Orçamento de seguro: <strong>PDF interno</strong> mostra tudo. <strong>PDF cliente</strong> e <strong>Enviar nota ao cliente</strong> perguntam Franquia / Mão de obra / Peças. <strong>Salvar ou Encaminhar</strong> também pedem o PDF do cliente (não manda tudo junto).</p>'
+                    : '<p class="hint" style="margin-top:8px">Ao imprimir/salvar/encaminhar/<strong>enviar para assinar</strong>, escolha se sai <strong>mão de obra</strong>, <strong>peças</strong> ou os dois — para o cliente não ver o que for só interno.</p>');
             _htmlNotaImpressaoAtual = htmlNotaEspelho(db, a, { incluirFotos: true, modoInternoSeguro: seguro });
             _tituloNotaImpressao = titulo;
             _notaPdfPrecisaEscolherItens = true;
@@ -548,13 +548,13 @@
                 if (labF) labF.style.display = modoSeguro ? '' : 'none';
                 if (tit) {
                     tit.textContent = modoSeguro
-                        ? 'PDF cliente — o que exportar?'
-                        : 'PDF cliente — mão de obra e/ou peças?';
+                        ? 'Enviar ao cliente — o que exportar?'
+                        : 'Enviar ao cliente — mão de obra e/ou peças?';
                 }
                 if (hint) {
                     hint.innerHTML = modoSeguro
-                        ? 'Marque o que deve aparecer no PDF do cliente. A <strong>franquia nunca soma</strong> no total do serviço (fica à parte). Pode marcar 1, 2 ou os 3.'
-                        : 'Marque o que vai para o cliente. Desmarque <strong>Peças</strong> se quiser sair só a <strong>mão de obra</strong> (sem os valores de peça).';
+                        ? 'Marque o que o cliente verá no PDF ou no link de assinatura. A <strong>franquia nunca soma</strong> no total do serviço (fica à parte).'
+                        : 'Marque o que vai para o cliente (PDF ou assinatura). Desmarque <strong>Peças</strong> se quiser sair só a <strong>mão de obra</strong>.';
                 }
                 if (sug) {
                     sug.textContent = modoSeguro
@@ -715,9 +715,32 @@
             return html;
         }
 
-        function documentoAssinatura(db, a, incluirFotos) {
+        function filtrarItensExportCliente(itens, exportItens) {
+            var lista = itens || [];
+            var exp = exportItens || null;
+            if (!exp) return lista.slice();
+            return lista.filter(function (it) {
+                var tipo = it.tipo || 'peca';
+                if (tipo === 'mao') return !!exp.mao;
+                return !!exp.pecas;
+            });
+        }
+
+        function documentoAssinatura(db, a, incluirFotos, exportItens) {
             var emp = getEmpresa(db);
             var cad = dadosClienteDoAtendimento(db, a);
+            var seguro = ehServicoSeguro(a);
+            var exp = exportItens || null;
+            if (!exp) {
+                exp = seguro
+                    ? { franquia: true, mao: false, pecas: false }
+                    : { franquia: false, mao: true, pecas: true };
+            }
+            var itensFiltrados = filtrarItensExportCliente(a.itens, exp);
+            var totalItens = itensFiltrados.reduce(function (s, it) {
+                return s + (Number(it.valor) || 0);
+            }, 0);
+            var franquiaShow = (seguro && exp.franquia) ? (Number(a.franquia) || 0) : 0;
             var doc = {
                 atendimentoId: a.id,
                 nomeCliente: cad.nome || nomeAtendimento(db, a),
@@ -745,9 +768,14 @@
                 servicos: a.servicos || '',
                 tipoServico: a.tipoServico || 'normal',
                 seguradora: a.seguradora || '',
-                itens: a.itens || [],
-                total: a.total || 0,
-                franquia: 0,
+                itens: itensFiltrados,
+                total: totalItens,
+                franquia: franquiaShow,
+                exportItens: {
+                    franquia: !!exp.franquia,
+                    mao: !!exp.mao,
+                    pecas: !!exp.pecas
+                },
                 empresa: emp.nome || 'HM Centro Automotivo',
                 empresaEndereco: enderecoCompleto(emp),
                 empresaTelefone: emp.telefone || '',
@@ -785,6 +813,11 @@
             var db = carregar();
             var a = db.atendimentos.find(function (x) { return x.id === id; });
             if (!a) { toast('Atendimento não encontrado.'); return; }
+
+            var seguro = ehServicoSeguro(a);
+            var exportItens = await perguntarItensPdfCliente({ seguro: seguro });
+            if (!exportItens) return;
+
             var comFotos = await perguntarEnviarComFotos(a, { forcarPergunta: true });
             if (comFotos === null) return;
             if (comFotos) {
@@ -802,7 +835,7 @@
             var pack = {
                 token: a.tokenAssinatura,
                 atendimentoId: a.id,
-                documento: documentoAssinatura(db, a, !!comFotos),
+                documento: documentoAssinatura(db, a, !!comFotos, exportItens),
                 criadoEm: prev.criadoEm || new Date().toISOString(),
                 atualizadoEm: new Date().toISOString(),
                 assinaturaCliente: prev.assinaturaCliente || a.assinaturaCliente || null,
@@ -821,13 +854,18 @@
                 salvar(db);
             }
 
+            var partes = [];
+            if (seguro && exportItens.franquia) partes.push('franquia');
+            if (exportItens.mao) partes.push('mão de obra');
+            if (exportItens.pecas) partes.push('peças');
             var link = urlLinkAssinatura(a.tokenAssinatura);
             document.getElementById('inputLinkAssinatura').value = link;
             document.getElementById('modalLinkAssinatura').classList.add('aberto');
             atendimentoNotaAtual = db.atendimentos[i] || a;
             toast(
                 (pack.assinaturaCliente ? 'Cliente já assinou — link reenviado.' : 'Link pronto — envie ao cliente.') +
-                (comFotos ? ' (com fotos)' : ' (sem fotos)')
+                ' · ' + partes.join(', ') +
+                (comFotos ? ' · com fotos' : ' · sem fotos')
             );
             renderHistorico();
         }

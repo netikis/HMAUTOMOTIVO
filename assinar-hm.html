@@ -150,6 +150,7 @@
             <div class="card">
                 <h2>Valores</h2>
                 <div id="dItens"></div>
+                <div class="total" id="dFranquia" style="display:none;color:#e67e22;font-size:1.05rem;margin-top:10px"></div>
                 <div class="total" id="dTotal">R$ 0,00</div>
             </div>
 
@@ -257,7 +258,7 @@
             var itens = doc.itens || [];
             var box = document.getElementById('dItens');
             if (!itens.length) {
-                box.innerHTML = '<p style="color:#8fa3b8">Sem itens.</p>';
+                box.innerHTML = '<p style="color:#8fa3b8">Sem itens de serviço neste documento.</p>';
             } else {
                 box.innerHTML = '<table><thead><tr><th>Tipo</th><th>Descrição</th><th style="text-align:right">Valor</th></tr></thead><tbody>' +
                     itens.map(function (it) {
@@ -267,8 +268,26 @@
                     }).join('') + '</tbody></table>';
             }
             var total = itens.reduce(function (s, it) { return s + (Number(it.valor) || 0); }, 0);
-            if (!itens.length && doc.total) total = doc.total;
-            document.getElementById('dTotal').textContent = moeda(total);
+            var franquia = Number(doc.franquia) || 0;
+            var elFranquia = document.getElementById('dFranquia');
+            var elTotal = document.getElementById('dTotal');
+            if (franquia > 0) {
+                elFranquia.style.display = '';
+                elFranquia.textContent = 'Franquia (cliente): ' + moeda(franquia);
+            } else {
+                elFranquia.style.display = 'none';
+                elFranquia.textContent = '';
+            }
+            if (!itens.length && franquia > 0) {
+                elTotal.textContent = 'Total a assinar: ' + moeda(franquia);
+            } else if (itens.length && franquia > 0) {
+                elTotal.textContent = 'Total serviço: ' + moeda(total) +
+                    ' · Franquia: ' + moeda(franquia);
+            } else if (!itens.length && doc.total) {
+                elTotal.textContent = moeda(doc.total);
+            } else {
+                elTotal.textContent = 'Total: ' + moeda(total);
+            }
         }
 
         function setupCanvas() {
