@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Fecha o banco inteiro. Só as rotas abaixo podem abrir.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Base oficial + modo interno (empresa, clientes, estoque, caixa…)
+    match /hm_automotivo_base/{doc} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Ordens de serviço / atendimentos
+    match /hm_automotivo_atendimentos/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Fotos e logo (midia)
+    match /hm_automotivo_midia/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Despesas por OS (modo interno)
+    match /hm_automotivo_despesas_os/{id} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Assinatura digital enviada ao cliente (link público com token).
+    // O cliente lê pelo código do link e só pode gravar a assinatura uma vez.
+    match /hm_automotivo_assinaturas/{token} {
+      allow get: if true;
+      allow list: if request.auth != null;
+      allow create, delete: if request.auth != null;
+      allow update: if request.auth != null || (
+        resource.data.assinaturaCliente == null
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['assinaturaCliente', 'assinadoEm', 'atualizadoEm'])
+        && request.resource.data.assinaturaCliente is string
+        && request.resource.data.assinaturaCliente.size() > 40
+        && request.resource.data.assinaturaCliente.size() < 200000
+      );
+    }
+  }
+}

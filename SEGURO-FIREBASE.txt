@@ -1,0 +1,67 @@
+HM CENTRO AUTOMOTIVO — SEGURANÇA FIREBASE (igual M3)
+====================================================
+
+A chave Web (firebase-config.js) pode ir no GitHub — isso é normal.
+A proteção real é: LOGIN (Authentication) + REGRAS do Firestore/Storage.
+
+PROJETO FIREBASE: hmautomotivo-f29dc
+SITE: https://hmautomotivo.vercel.app
+
+----------------------------------------------------
+1) Authentication (e-mail/senha)
+----------------------------------------------------
+Firebase Console → Authentication → Sign-in method
+→ ativar E-mail/senha
+→ Users → Add user (e-mail e senha da oficina)
+
+----------------------------------------------------
+2) Firestore — colar as regras (OBRIGATÓRIO)
+----------------------------------------------------
+Firebase Console → Firestore Database → Regras
+→ apague o que estiver lá
+→ cole TODO o conteúdo do arquivo: firestore.rules
+→ Publicar
+
+O que as regras fazem (igual M3):
+- Banco fechado por padrão (ninguém lê/grava sem permissão)
+- Dados HM (base, OS, midia, despesas) → só quem está LOGADO
+- Assinaturas (hm_automotivo_assinaturas) → cliente pode LER o link
+  e gravar a assinatura UMA vez (sem login)
+
+----------------------------------------------------
+3) Storage — colar as regras
+----------------------------------------------------
+Firebase Console → Storage → Regras
+→ cole o conteúdo de: storage.rules
+→ Publicar
+
+Só usuário logado lê/grava arquivos.
+
+----------------------------------------------------
+4) Restringir a chave de API (recomendado)
+----------------------------------------------------
+Google Cloud Console → APIs e serviços → Credenciais
+→ chave do app Web do Firebase
+→ Restrições de aplicativo → HTTP referrers
+  Adicione:
+  https://hmautomotivo.vercel.app/*
+  https://*.vercel.app/*
+  http://localhost/*
+
+----------------------------------------------------
+5) Domínios autorizados no Auth
+----------------------------------------------------
+Authentication → Settings → Authorized domains
+→ incluir: hmautomotivo.vercel.app
+
+----------------------------------------------------
+RESUMO
+----------------------------------------------------
+Sem login Firebase → site abre, mas NÃO sincroniza nuvem.
+Com regras publicadas → mesmo com a chave pública, estranho
+não consegue ler/gravar o banco da HM.
+
+Arquivos no projeto:
+  firestore.rules
+  storage.rules
+  firebase.json

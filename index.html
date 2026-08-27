@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0d3d6e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HM Auto">
+    <meta name="application-name" content="HM Auto">
+    <meta name="description" content="HM Centro Automotivo — gestão de clientes, vendas, oficina e caixa">
+    <title>HM Centro Automotivo</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <!-- Config pública do Firebase (GitHub Pages). firebase-env.js é opcional (Vercel/local). -->
+    <script src="firebase-config.js"></script>
+    <script src="firebase-env.js" onerror="/* opcional */"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body class="aguardando-login">
+    <div class="tela-login" id="telaLogin">
+        <div class="tela-login-card">
+            <img src="logo-hm.png" alt="HM Centro Automotivo">
+            <h2 id="loginTitulo">Entrar no sistema</h2>
+            <p class="hint" id="loginHint">Use o e-mail e a senha criados no Firebase Authentication.</p>
+            <div id="loginBoxEntrar">
+                <label>E-mail</label>
+                <input type="email" id="loginEmail" autocomplete="username" placeholder="seu@email.com">
+                <label style="margin-top:10px;display:block">Senha</label>
+                <input type="password" id="loginSenha" autocomplete="current-password" placeholder="Senha do Firebase">
+                <div class="row" style="margin-top:14px">
+                    <button type="button" class="btn btn-primary" id="btnLoginEntrar" style="width:100%">Entrar</button>
+                </div>
+            </div>
+            <p class="erro-login" id="loginErro"></p>
+        </div>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <button type="button" class="sidebar-close-mobile" id="btnFecharMenu">✕ Fechar menu</button>
+        <div class="brand">
+            <img id="logoSidebar" src="logo-hm.png" alt="HM Centro Automotivo — Funilaria e Pintura">
+        </div>
+
+        <!-- Menu no padrão FH Control: grupos recolhíveis + subtópicos -->
+        <div class="menu-grupo inicio-compacto tem-ativo" data-grupo="inicio">
+            <button type="button" class="menu-grupo-btn" data-panel="painelInicio">🏠 Início</button>
+            <div class="submenu-lateral">
+                <button type="button" class="nav-btn submenu-btn active" data-panel="painelInicio">📊 Painel</button>
+            </div>
+        </div>
+
+        <div class="menu-grupo" data-grupo="clientes">
+            <button type="button" class="menu-grupo-btn" data-toggle-grupo="clientes">👥 Clientes</button>
+            <div class="submenu-lateral">
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelClientes">🧾 Cadastrar Cliente</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelListaClientes">👥 Clientes Cadastrados</button>
+            </div>
+        </div>
+
+        <div class="menu-grupo" data-grupo="vendas">
+            <button type="button" class="menu-grupo-btn" data-toggle-grupo="vendas">🛒 Vendas</button>
+            <div class="submenu-lateral">
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelProdutos" data-canal="normal">🏷️ Cadastro de Produtos</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamento" data-canal="normal">🧾 Venda / Orçamento</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelVendasRealizadas" data-canal="normal">📋 Vendas realizadas</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamentosRealizados" data-canal="normal">📄 Orçamentos realizados</button>
+            </div>
+        </div>
+
+        <div class="menu-grupo" data-grupo="oficina">
+            <button type="button" class="menu-grupo-btn" data-toggle-grupo="oficina">🔧 Oficina</button>
+            <div class="submenu-lateral">
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelVeiculo" data-canal="normal">📝 Ordem de Serviço / Veículo</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelHistorico" data-canal="normal">🗂️ Histórico de Atendimentos</button>
+            </div>
+        </div>
+
+        <div class="menu-grupo" data-grupo="caixa">
+            <button type="button" class="menu-grupo-btn" data-toggle-grupo="caixa">💰 Caixa / Relatórios</button>
+            <div class="submenu-lateral">
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixa" data-canal="normal">💰 Caixa / Balcão</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixaBanco" data-canal="normal">🏦 Caixa do Banco (Digital / PIX / Cartões)</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelPendentes" data-canal="normal">⏳ Contas a Receber (Pendentes)</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioCaixa" data-canal="normal">📄 Relatório Caixa</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioUnificado">📊 Relatório unificado</button>
+            </div>
+        </div>
+
+        <div class="menu-grupo" data-grupo="interno">
+            <button type="button" class="menu-grupo-btn" data-toggle-grupo="interno">🔒 Modo interno</button>
+            <div class="submenu-lateral">
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelDespesasOs" data-canal="interno">🧾 Despesas por OS</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelDespesasEscritorio" data-canal="interno">🏢 Despesa escritório</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelFuncionarios" data-canal="interno">👷 Cadastro de Funcionários</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelPagFuncionarios" data-canal="interno">💰 Pagamento funcionários</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelProdutos" data-canal="interno">🏷️ Cadastro de Produtos</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamento" data-canal="interno">🧾 Venda p/ Funcionário</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelVendasRealizadas" data-canal="interno">📋 Vendas realizadas</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamentosRealizados" data-canal="interno">📄 Orçamentos realizados</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixa" data-canal="interno">💰 Caixa / Balcão</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixaBanco" data-canal="interno">🏦 Caixa do Banco (PIX / Cartões)</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelPendentes" data-canal="interno">⏳ Contas a Receber</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioCaixa" data-canal="interno">📄 Relatório Caixa</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioUnificado">📊 Relatório unificado</button>
+            </div>
+        </div>
+
+        <div class="menu-grupo" data-grupo="finalizados">
+            <button type="button" class="menu-grupo-btn" data-toggle-grupo="finalizados">✅ Serviço finalizado</button>
+            <div class="submenu-lateral">
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelServicoFinalizado" data-canal="interno">📁 Pastas (Ano → Mês → Dia)</button>
+            </div>
+        </div>
+
+        <div class="menu-grupo" data-grupo="sistema">
+            <button type="button" class="menu-grupo-btn" data-toggle-grupo="sistema">⚙️ Sistema</button>
+            <div class="submenu-lateral">
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelConfig" data-canal="normal">⚙️ Config / Empresa</button>
+                <button type="button" class="nav-btn submenu-btn btn-sair-menu" id="btnMenuSairSistema">🚪 Sair do sistema</button>
+            </div>
+        </div>
+
+        <div class="sidebar-sair">
+            <button type="button" class="btn-sair-sistema" id="btnMenuSair" title="Encerrar sessão e voltar ao login">🚪 Sair do sistema</button>
+        </div>
+    </aside>
+
+    <main class="main">
+        <div class="topbar">
+            <div class="topbar-left">
+                <button type="button" class="btn-menu" id="btnAbrirMenu" aria-label="Abrir menu">☰</button>
+                <div>
+                    <h1 id="tituloPainel">Painel</h1>
+                    <p id="subtituloPainel">Base unificada HM — sem vínculo com os bancos dos outros sistemas</p>
+                </div>
+            </div>
+            <span class="badge-db" id="badgeDb">DB isolado · hm_automotivo_v1</span>
+        </div>
+        <div class="banner-canal" id="bannerCanal">🔒 MODO INTERNO — vendas e caixa separados do balcão oficial. Estoque de produtos é o mesmo nos dois modos.</div>
+
+        <!-- INÍCIO -->
+        <section id="painelInicio" class="panel active">
+            <div class="hero-slogan">
+                <img id="logoHero" src="logo-hm.png" alt="HM Centro Automotivo">
+            </div>
+            <div class="cards">
+                <div class="card"><div class="k">Clientes</div><div class="v" id="kpiClientes">0</div></div>
+                <div class="card"><div class="k">Atendimentos</div><div class="v" id="kpiAtend">0</div></div>
+                <div class="card"><div class="k">Produtos</div><div class="v" id="kpiProd">0</div></div>
+                <div class="card"><div class="k">Caixa (entradas)</div><div class="v" id="kpiCaixa">R$ 0</div></div>
+            </div>
+            <div class="box">
+                <h2>Como usar esta base</h2>
+                <div class="row">
+                    <button type="button" class="btn btn-primary" data-goto="painelClientes">Cadastrar cliente</button>
+                    <button type="button" class="btn btn-secondary" data-goto="painelVeiculo">Abrir atendimento</button>
+                    <button type="button" class="btn btn-secondary" data-goto="painelOrcamento">Novo orçamento</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- CLIENTES -->
+        <section id="painelClientes" class="panel">
+            <div class="box">
+                <h2 id="tituloFormCliente">Cadastro de Cliente</h2>
+                <p class="hint">Só o <strong>nome</strong> é obrigatório. Telefone, cidade e os demais campos são opcionais — preencha só o que quiser.</p>
+                <form id="formCliente">
+                    <input type="hidden" id="cliId">
+                    <div class="row">
+                        <div class="col" style="flex:2"><label>Nome / Razão Social</label><input id="cliNome" required></div>
+                        <div class="col"><label>CPF</label><input id="cliCpf" maxlength="14" placeholder="000.000.000-00"></div>
+                        <div class="col"><label>CNPJ</label><input id="cliCnpj" maxlength="18" placeholder="00.000.000/0000-00"></div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col"><label>Telefone / WhatsApp <span class="muted">(opcional)</span></label><input id="cliTel" placeholder="(00) 00000-0000"></div>
+                        <div class="col"><label>E-mail <span class="muted">(opcional)</span></label><input id="cliEmail" type="email"></div>
+                        <div class="col"><label>Cidade / UF <span class="muted">(opcional)</span></label><input id="cliCidade" placeholder="Ex: Ibaiti / PR"></div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col"><label>CEP</label><input id="cliCep" maxlength="9"></div>
+                        <div class="col" style="flex:2"><label>Endereço</label><input id="cliEndereco"></div>
+                        <div class="col"><label>Número</label><input id="cliNumero"></div>
+                    </div>
+                    <div class="row" style="margin-top:14px">
+                        <button type="submit" class="btn btn-primary" id="btnSalvarCli">Salvar Cliente</button>
+                        <button type="button" class="btn btn-secondary" id="btnCancelarCli" style="display:none">Cancelar edição</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section id="painelListaClientes" class="panel">
+            <div class="box">
+                <h2>Clientes Cadastrados</h2>
+                <div class="toolbar">
+                    <input type="search" id="buscaCliente" class="search" placeholder="Buscar por nome, telefone ou documento...">
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>Nome</th><th>Documento</th><th>Telefone</th><th>Cidade</th><th>Ações</th></tr>
+                        </thead>
+                        <tbody id="tabelaClientes"></tbody>
+                    </table>
+                </div>
+                <div id="listaClientesVazia" class="empty" style="display:none;margin-top:12px">Nenhum cliente cadastrado ainda.</div>
+            </div>
+        </section>
+
+        <!-- OFICINA -->
+        <section id="painelVeiculo" class="panel">
+            <div class="grid-2">
+                <div class="box">
+                    <h2>Cliente do atendimento</h2>
+                    <div class="row">
+                        <div class="col">
+                            <label for="atClienteBusca">Buscar cadastrado ou digitar nome avulso</label>
+                            <input type="hidden" id="atClienteId" value="">
+                            <input id="atClienteBusca" list="listaClientesAt" autocomplete="off" placeholder="Digite para buscar ou escreva o nome avulso...">
+                            <datalist id="listaClientesAt"></datalist>
+                        </div>
+                    </div>
+                    <p class="hint" style="margin-top:10px" id="atClienteStatus">Digite o nome: se existir no cadastro, aparece na busca; se não, fica como cliente avulso.</p>
+                    <div id="atClienteCard" class="cliente-card-os" style="display:none"></div>
+                </div>
+                <div class="box">
+                    <h2>Responsável</h2>
+                    <label for="atResponsavelId">Responsável pelo serviço (funcionário)</label>
+                    <select id="atResponsavelId">
+                        <option value="">Selecione o funcionário...</option>
+                    </select>
+                    <p class="hint" style="margin-top:8px">Lista do <strong>Cadastro de Funcionários</strong> (modo interno). Assim a OS cai no funcionário para fechar lucro depois.</p>
+                </div>
+            </div>
+
+            <form id="formAtendimento">
+                <input type="hidden" id="atId">
+                <div class="box">
+                    <h2>Tipo de orçamento</h2>
+                    <div class="row">
+                        <div class="col">
+                            <label for="atTipoOrcamento">Selecione</label>
+                            <select id="atTipoOrcamento">
+                                <option value="normal" selected>Orçamento normal (OS)</option>
+                                <option value="seguro">Orçamento de seguro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="hint" style="margin-top:8px" id="hintTipoOrcamento">Orçamento normal: impressão padrão. Seguro: no PDF cliente você escolhe o que exportar (franquia, mão de obra e/ou peças).</p>
+                </div>
+
+                <div class="box" id="boxSeguroOs" style="display:none;border-color:rgba(230,126,34,0.45)">
+                    <h2>Dados do seguro</h2>
+                    <div class="row">
+                        <div class="col"><label>Seguradora</label><input id="atSeguradora" placeholder="Ex: Porto Seguro, Allianz..."></div>
+                        <div class="col"><label>Nº sinistro / apólice</label><input id="atSinistro" placeholder="Opcional"></div>
+                        <div class="col"><label>Franquia (R$)</label>
+                            <input id="atFranquia" inputmode="decimal" placeholder="0,00">
+                        </div>
+                    </div>
+                    <p class="hint" style="margin-top:8px">A <strong>franquia não soma</strong> no total do serviço (peças + mão). No PDF interno ela aparece à parte; no PDF cliente você marca o que sai.</p>
+                </div>
+
+                <div class="box">
+                    <h2>Especificações do Veículo</h2>
+                    <p class="hint" style="margin-top:0">No orçamento/OS, placa, cidade, carro e demais dados são <strong>opcionais</strong> — salve só com o que precisar.</p>
+                    <div class="row">
+                        <div class="col" style="flex:2"><label>Carro (Modelo / Marca) <span class="muted">(opcional)</span></label><input id="atCarro" placeholder="Ex: Chevrolet Onix"></div>
+                        <div class="col"><label>Placa <span class="muted">(opcional)</span></label><input id="atPlaca" maxlength="7" placeholder="ABC1D23" style="text-transform:uppercase"></div>
+                        <div class="col"><label>Cidade / UF (placa) <span class="muted">(opcional)</span></label><input id="atCidadePlaca" placeholder="Ibaiti / PR"></div>
+                    </div>
+                    <div class="plate-preview">
+                        <div class="ph"><span>★★★★★</span><span>BRASIL</span><span style="width:10px;height:7px;background:#009c3b;border:0.5px solid #fff;display:inline-block"></span></div>
+                        <div class="pb">
+                            <div class="loc" id="plateLoc">CIDADE / UF</div>
+                            <div class="num" id="plateNum">PLACA</div>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col"><label>Cor</label><input id="atCor"></div>
+                        <div class="col"><label>Ano de fabricação</label><input id="atAnoFabricacao" inputmode="numeric" maxlength="4" placeholder="Ex: 2018"></div>
+                        <div class="col"><label>Ano do modelo</label><input id="atAnoModelo" inputmode="numeric" maxlength="4" placeholder="Ex: 2019"></div>
+                        <div class="col"><label>Chassi</label><input id="atChassi"></div>
+                        <div class="col"><label>Km</label><input id="atKm" type="number" min="0"></div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col"><label>Data entrada</label><input id="atEntrada" type="date"></div>
+                        <div class="col"><label>Data saída</label><input id="atSaida" type="date"></div>
+                        <div class="col"><label>Status</label>
+                            <select id="atStatus">
+                                <option value="Agendado">📅 Agendado</option>
+                                <option value="Em andamento" selected>Em andamento</option>
+                                <option value="Aguardando peça">Aguardando peça</option>
+                                <option value="Aguardando seguradora">Aguardando seguradora</option>
+                                <option value="Pronto">Pronto</option>
+                                <option value="Entregue">Entregue</option>
+                            </select>
+                        </div>
+                        <div class="col" id="wrapAgendadoPara">
+                            <label>Data agendada</label>
+                            <input id="atAgendadoPara" type="date">
+                        </div>
+                    </div>
+                    <p class="hint" id="hintAgendado" style="margin-top:8px;display:none">Serviço agendado: aparece em destaque no histórico até o dia marcado (ex.: trazer o carro na segunda).</p>
+                </div>
+
+                <div class="grid-2">
+                    <div class="box">
+                        <h2>Chegada do Veículo</h2>
+                        <label>Checklist / estado de chegada</label>
+                        <textarea id="atEstado" placeholder="Arranhões, combustível, pneus, peças soltas..."></textarea>
+                    </div>
+                    <div class="box">
+                        <h2>Serviços</h2>
+                        <label>Serviços realizados ou a realizar</label>
+                        <textarea id="atServicos" placeholder="Funilaria, pintura, peças..."></textarea>
+                    </div>
+                </div>
+
+                <div class="box photo-zone">
+                    <h2>Fotos do veículo (uso interno)</h2>
+                    <p class="hint">As fotos ficam guardadas na ficha/pasta do cliente (só para você). Na hora de <strong>imprimir ou enviar ao cliente</strong>, o sistema pergunta se inclui as fotos ou não.</p>
+                    <div class="photo-buttons">
+                        <button type="button" class="btn btn-primary" id="btnTirarFoto">📷 Tirar foto</button>
+                        <button type="button" class="btn btn-secondary" id="btnGaleriaFoto">🖼️ Galeria / arquivo</button>
+                        <button type="button" class="btn btn-secondary" id="btnExportarFotosForm" style="display:none">📤 Exportar imagens</button>
+                        <button type="button" class="btn btn-danger" id="btnLimparFotos" style="display:none">Limpar todas</button>
+                    </div>
+                    <input type="file" id="inFotoCamera" accept="image/*" capture="environment">
+                    <input type="file" id="inFotoGaleria" accept="image/*" multiple>
+                    <p class="fotos-contador" id="fotosContador">Nenhuma foto</p>
+                    <div id="fotosGaleria" class="fotos-galeria"></div>
+                </div>
+
+                <div class="box">
+                    <h2>Valores — Peças e Mão de Obra</h2>
+                    <div class="row">
+                        <div class="col" style="flex:2"><label>Descrição peça / item</label><input id="itemDesc" placeholder="Ex: Para-lama dianteiro"></div>
+                        <div class="col"><label>Valor cobrado (R$)</label><input id="itemValor" inputmode="decimal" placeholder="0,00"></div>
+                        <div class="col"><label>Custo (R$)</label><input id="itemCusto" inputmode="decimal" placeholder="0,00" title="O que você pagou na peça — não usa estoque"></div>
+                        <div class="col" style="flex:0.7;align-self:end"><button type="button" class="btn btn-secondary" id="btnAddItem" style="width:100%">+ Peça</button></div>
+                    </div>
+                    <p class="hint" style="margin:6px 0 0">Peça fora do estoque: informe o <strong>valor cobrado</strong> e o <strong>custo</strong> (o que pagou) para ver o lucro na OS.</p>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col" style="flex:2"><label>Descrição mão de obra</label><input id="maoDesc" placeholder="Ex: Funilaria lateral, pintura, alinhamento..."></div>
+                        <div class="col"><label>Valor (R$)</label><input id="maoValor" inputmode="decimal" placeholder="0,00"></div>
+                        <div class="col" style="flex:0.7;align-self:end"><button type="button" class="btn btn-ok" id="btnAddMao" style="width:100%">+ Mão de obra</button></div>
+                    </div>
+                    <div id="listaItens" style="margin-top:12px"></div>
+                    <div class="total-line" style="border-top:none;padding-top:4px;margin-top:4px">
+                        <span class="muted">Peças (cobrado)</span>
+                        <strong id="atSubPecas" style="font-size:1.1rem;color:var(--chrome)">R$ 0,00</strong>
+                    </div>
+                    <div class="total-line" id="linhaCustoPecasOs" style="display:none;border-top:none;padding-top:0;margin-top:0">
+                        <span class="muted">Custo das peças</span>
+                        <strong id="atSubCustoPecas" style="font-size:1.1rem;color:#e67e22">R$ 0,00</strong>
+                    </div>
+                    <div class="total-line" id="linhaLucroPecasOs" style="display:none;border-top:none;padding-top:0;margin-top:0">
+                        <span class="muted">Lucro nas peças</span>
+                        <strong id="atSubLucroPecas" style="font-size:1.1rem;color:#2f9e6b">R$ 0,00</strong>
+                    </div>
+                    <div class="total-line" style="border-top:none;padding-top:0;margin-top:0">
+                        <span class="muted">Mão de obra</span>
+                        <strong id="atSubMao" style="font-size:1.1rem;color:var(--chrome)">R$ 0,00</strong>
+                    </div>
+                    <div class="total-line" id="linhaFranquiaOs" style="display:none;border-top:none;padding-top:0;margin-top:0">
+                        <span class="muted">Franquia (interno)</span>
+                        <strong id="atSubFranquia" style="font-size:1.1rem;color:#e67e22">R$ 0,00</strong>
+                    </div>
+                    <div class="total-line">
+                        <span id="labelTotalOs">Valor total</span>
+                        <strong id="atTotal">R$ 0,00</strong>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <button type="submit" class="btn btn-primary" id="btnSalvarAt">Salvar Atendimento</button>
+                    <button type="button" class="btn btn-secondary" id="btnLimparAt">Limpar formulário</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="painelHistorico" class="panel">
+            <div class="box box-agendados-destaque" id="boxAgendadosDestaque" style="display:none">
+                <h2>📅 Serviços agendados</h2>
+                <p class="hint" style="margin:0">Aparecem em destaque — próximos primeiros. Toque para editar.</p>
+                <div class="lista-agendados-chips" id="listaAgendadosChips"></div>
+            </div>
+            <div class="box">
+                <h2>Histórico de Atendimentos</h2>
+                <p class="hint" style="margin-top:0">Já fez o orçamento? Use o seletor <strong>Normal / Seguro</strong> em cada linha para mudar o modo quando quiser (sem refazer a OS).</p>
+                <div class="toolbar">
+                    <input type="search" id="buscaAtend" class="search" placeholder="Buscar placa, cliente, carro, agendado, seguro...">
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Data</th><th>Cliente</th><th>Veículo</th><th>Placa</th><th>Total</th><th>Ações / Status</th></tr>
+                    </thead>
+                    <tbody id="tabelaAtend"></tbody>
+                </table>
+                <div id="listaAtendVazia" class="empty" style="display:none;margin-top:12px">Nenhum atendimento salvo.</div>
+            </div>
+        </section>
+
+        <!-- BALCÃO -->
+        <section id="painelProdutos" class="panel">
+            <div class="box">
+                <h2 id="tituloFormProd">Cadastro de Produto / Serviço</h2>
+                <p class="hint">Estoque <strong>unificado</strong>: o que cadastrar aqui aparece no balcão oficial e no modo interno. Use leitor USB em <strong>Cód. Barras</strong> (bipar + Enter). Se o código já existir, abre para edição.</p>
+                <form id="formProduto">
+                    <input type="hidden" id="prodId">
+                    <div class="row">
+                        <div class="col" style="flex:1.2">
+                            <label for="prodCod">Cód. Barras (leitor)</label>
+                            <input id="prodCod" autocomplete="off" spellcheck="false" placeholder="Bipar código aqui..." inputmode="none">
+                        </div>
+                        <div class="col" style="flex:2"><label>Nome</label><input id="prodNome" required></div>
+                        <div class="col"><label>Categoria</label><input id="prodCat" placeholder="Peças, Funilaria..."></div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col"><label>Custo (R$)</label><input id="prodCusto" type="number" step="0.01" min="0" value="0"></div>
+                        <div class="col"><label>Venda (R$)</label><input id="prodVenda" type="number" step="0.01" min="0" value="0" required></div>
+                        <div class="col"><label>Estoque</label><input id="prodQtd" type="number" step="0.01" min="0" value="0"></div>
+                        <div class="col"><label>Unidade</label>
+                            <select id="prodUn">
+                                <option value="un">Unidade</option>
+                                <option value="m">Metro</option>
+                                <option value="kg">Kg</option>
+                                <option value="serv">Serviço</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:14px">
+                        <button type="submit" class="btn btn-primary">Salvar Produto</button>
+                        <button type="button" class="btn btn-secondary" id="btnFocoLeitor">Focar leitor</button>
+                        <button type="button" class="btn btn-secondary" id="btnCancelarProd" style="display:none">Cancelar edição</button>
+                    </div>
+                </form>
+            </div>
+            <div class="box">
+                <h2>Estoque / Lista</h2>
+                <div class="toolbar">
+                    <input type="search" id="buscaProd" class="search" placeholder="Buscar nome ou bipar código...">
+                    <button type="button" class="btn btn-secondary" id="btnImprimirEtiquetas" style="border:2px solid #fff;font-weight:700;text-transform:uppercase;font-size:0.78rem">🖨️ Imprimir Etiquetas</button>
+                </div>
+                <p class="hint" style="margin-top:8px;color:#ff8a80">Marque as caixinhas na tabela para imprimir. Escolha <strong>A4</strong> (várias por folha) ou <strong>térmica Elgin</strong> (50×30 mm). Estoque abaixo de 2 fica em vermelho.</p>
+                <div id="alertaEstoqueBaixo" class="alerta-estoque-baixo" style="display:none"></div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:36px;text-align:center"><input type="checkbox" id="chkTodasEtiquetas" title="Selecionar todos"></th>
+                            <th>Cód. Barras</th>
+                            <th class="th-ordena" data-ordena-prod="nome" title="Clique para ordenar A→Z / Z→A">Nome <span class="seta-ord" id="setaOrdNome"></span></th>
+                            <th>Categoria</th>
+                            <th class="th-ordena" data-ordena-prod="qtd" title="Clique para ordenar por quantidade">Qtd <span class="seta-ord" id="setaOrdQtd"></span></th>
+                            <th>Venda</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaProd"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="painelOrcamento" class="panel">
+            <div class="venda-layout">
+                <div class="venda-form">
+                    <div class="box">
+                        <h2>🛒 Lançar venda — balcão / serviço imediato</h2>
+                        <p class="hint">Venda baixa estoque; <strong>Dinheiro</strong> → Caixa Balcão; <strong>PIX/Cartão/Boleto</strong> → Caixa do Banco; <strong>Pendente</strong> → Contas a Receber.</p>
+
+                        <div class="row" style="background:#1a252f;padding:12px;border-radius:8px;border:1px solid var(--line)">
+                            <input type="hidden" id="vdEditId" value="">
+                            <div class="col">
+                                <label>Tipo de documento</label>
+                                <select id="vdTipo">
+                                    <option value="VENDA">🛒 Venda Direta (Baixa Estoque)</option>
+                                    <option value="ORCAMENTO">📄 Apenas Orçamento (Simulação)</option>
+                                </select>
+                            </div>
+                            <div class="col"><label>Nº da venda</label><input id="vdNumero" type="number" style="font-weight:700;color:#ff8a80"></div>
+                            <div class="col">
+                                <label>Status pgto</label>
+                                <select id="vdStatus">
+                                    <option value="PAGO" selected>✅ PAGO (Soma no Caixa)</option>
+                                    <option value="PENDENTE">⏳ PENDENTE (Não Soma)</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <label>Forma de pagamento</label>
+                                <select id="vdForma">
+                                    <option value="Dinheiro">💵 Dinheiro</option>
+                                    <option value="Cartão de Débito">💳 Débito</option>
+                                    <option value="Cartão de Crédito">💳 Crédito</option>
+                                    <option value="PIX">🌀 PIX</option>
+                                    <option value="Boleto">📑 Boleto</option>
+                                </select>
+                            </div>
+                            <div class="col"><label>Data emissão</label><input id="vdEmissao" type="date"></div>
+                            <div class="col"><label>Data vencimento</label><input id="vdVenc" type="date"></div>
+                        </div>
+
+                        <div class="row" style="margin-top:12px" id="wrapVdClienteNormal">
+                            <div class="col" style="flex:2">
+                                <label>1. Buscar cliente (ou digite nome avulso)</label>
+                                <input id="vdCliente" list="listaClientesVenda" placeholder="Cliente registrado ou avulso..." autocomplete="off">
+                                <datalist id="listaClientesVenda"></datalist>
+                            </div>
+                            <div class="col"><label>Placa (opcional)</label><input id="vdPlaca" maxlength="7" style="text-transform:uppercase"></div>
+                        </div>
+                        <div class="row" style="margin-top:12px;display:none" id="wrapVdClienteInterno">
+                            <div class="col" style="flex:2">
+                                <label>1. Funcionário (venda interna)</label>
+                                <select id="vdFuncionarioId">
+                                    <option value="">Selecione o funcionário...</option>
+                                </select>
+                                <p class="hint" style="margin-top:6px">Só vende para funcionário cadastrado. <button type="button" class="btn btn-secondary" id="btnVdIrFuncionarios" style="padding:2px 8px;font-size:0.72rem;margin-left:4px">Cadastrar funcionário</button></p>
+                            </div>
+                            <div class="col"><label>Placa (opcional)</label><input id="vdPlacaInterno" maxlength="7" style="text-transform:uppercase"></div>
+                        </div>
+                    </div>
+
+                    <div class="box">
+                        <h3>2. Buscar do estoque (nome ou bipe)</h3>
+                        <div class="row">
+                            <div class="col" style="flex:2">
+                                <label>Produto</label>
+                                <input id="vdProdBusca" list="listaProdutosVenda" placeholder="Bipe o código ou digite o nome..." autocomplete="off">
+                                <datalist id="listaProdutosVenda"></datalist>
+                            </div>
+                        </div>
+                        <div id="vdEstoqueInfo" class="estoque-resumo" aria-live="polite"></div>
+                        <div class="row" style="margin-top:8px;align-items:flex-end">
+                            <div class="col" style="flex:0.7"><label>Unid.</label>
+                                <select id="vdProdUn">
+                                    <option value="">Igual ao cadastro</option>
+                                    <option value="un">Unidade</option>
+                                    <option value="m">Metro</option>
+                                    <option value="kg">Kg</option>
+                                    <option value="serv">Serviço</option>
+                                </select>
+                            </div>
+                            <div class="col" style="flex:0.55"><label>Qtd.</label><input id="vdProdQtd" inputmode="decimal" value="1"></div>
+                            <div class="col"><label>Custo (R$)</label><input id="vdProdCusto" type="number" step="0.01"></div>
+                            <div class="col"><label>Margem (%)</label><input id="vdProdMargem" type="number" step="0.1"></div>
+                            <div class="col"><label style="color:#8fe0b8">Venda (R$)</label><input id="vdProdVenda" type="number" step="0.01"></div>
+                            <div class="col" style="flex:0.8"><label style="color:#f1c40f">Total (R$)</label><input id="vdProdTotal" readonly style="font-weight:700;color:#8fe0b8"></div>
+                            <div class="col" style="flex:0.55"><button type="button" class="btn btn-ok" id="btnVdAddEstoque" style="width:100%">➕ ADD</button></div>
+                        </div>
+                    </div>
+
+                    <div class="box" style="border-color:rgba(192,57,43,0.35);background:rgba(192,57,43,0.06)">
+                        <h3>3. Adicionar item avulso</h3>
+                        <div class="row">
+                            <div class="col" style="flex:2"><label>Descrição</label><input id="vdAvNome" placeholder="Ex: Instalação padrão, taxa de visita..."></div>
+                        </div>
+                        <div class="row" style="margin-top:8px;align-items:flex-end">
+                            <div class="col" style="flex:0.7"><label>Unid.</label>
+                                <select id="vdAvUn">
+                                    <option value="un">Unidade</option>
+                                    <option value="m">Metro</option>
+                                    <option value="kg">Kg</option>
+                                    <option value="serv">Serviço</option>
+                                </select>
+                            </div>
+                            <div class="col" style="flex:0.55"><label>Qtd.</label><input id="vdAvQtd" inputmode="decimal" value="1"></div>
+                            <div class="col"><label>Custo (R$)</label><input id="vdAvCusto" type="number" step="0.01" value="0"></div>
+                            <div class="col"><label>Margem (%)</label><input id="vdAvMargem" type="number" step="0.1" value="0"></div>
+                            <div class="col"><label style="color:#8fe0b8">Venda (R$)</label><input id="vdAvVenda" type="number" step="0.01"></div>
+                            <div class="col" style="flex:0.8"><label style="color:#f1c40f">Total (R$)</label><input id="vdAvTotal" readonly style="font-weight:700;color:#8fe0b8"></div>
+                            <div class="col" style="flex:0.55"><button type="button" class="btn btn-ok" id="btnVdAddAvulso" style="width:100%">➕ ADD</button></div>
+                        </div>
+                    </div>
+
+                    <div class="box">
+                        <h3>4. Mão de obra / serviço</h3>
+                        <div class="row" style="align-items:flex-end">
+                            <div class="col" style="flex:2"><label>Descrição</label><input id="vdMaoDesc" placeholder="Ex: Funilaria, pintura, polimento..."></div>
+                            <div class="col"><label>Valor (R$)</label><input id="vdMaoValor" inputmode="decimal" placeholder="0,00"></div>
+                            <div class="col" style="flex:0.55"><button type="button" class="btn btn-primary" id="btnVdAddMao" style="width:100%">➕ Serv</button></div>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="box venda-carrinho">
+                    <h2>🛒 Carrinho</h2>
+                    <div id="vdCarrinhoLista" class="muted">Nenhum item.</div>
+                    <div class="row" style="margin-top:12px">
+                        <div class="col"><label>Desconto R$</label><input id="vdDescReais" type="number" step="0.01" value="0"></div>
+                        <div class="col"><label>Desconto %</label><input id="vdDescPerc" type="number" step="0.1" value="0"></div>
+                    </div>
+                    <div style="margin-top:10px">
+                        <label style="color:#f1c40f">Valor recebido (R$)</label>
+                        <input id="vdRecebido" type="number" step="0.01" placeholder="Dinheiro do cliente...">
+                    </div>
+                    <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08)">
+                        <div style="font-weight:700;color:#f1c40f;margin-bottom:6px" id="vdTrocoTxt">Troco: R$ 0,00</div>
+                        <div class="muted" style="font-size:0.85rem">Subtotal: <span id="vdSubtotalTxt">R$ 0,00</span></div>
+                        <div style="font-size:1.4rem;font-weight:800;color:#8fe0b8;margin-top:4px" id="vdTotalTxt">TOTAL: R$ 0,00</div>
+                    </div>
+                    <div style="margin-top:12px">
+                        <label>Observações</label>
+                        <textarea id="vdObs" rows="3" placeholder="Prazo, garantia, detalhes..."></textarea>
+                    </div>
+                    <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+                        <button type="button" class="btn btn-ok" id="btnVdFinalizar" style="width:100%;padding:12px;font-size:0.95rem">✅ Finalizar e salvar</button>
+                        <button type="button" class="btn btn-secondary" id="btnVdLimpar" style="width:100%">Limpar venda</button>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section id="painelVendasRealizadas" class="panel">
+            <div class="box">
+                <h2>📋 Vendas realizadas</h2>
+                <p class="hint" style="margin-top:0">Somente documentos do tipo <strong>VENDA</strong>. Clique na <strong>⚙</strong> para Ed, Whats, Link, Ver, PDF, Cupom, Estornar e Excluir.</p>
+                <div class="toolbar">
+                    <input type="search" id="buscaVendasRealizadas" class="search" placeholder="Buscar nº, cliente, funcionário, pagamento...">
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Nº</th><th>Data</th><th>Cliente</th><th>Pgto</th><th>Total</th><th>Ações</th></tr>
+                    </thead>
+                    <tbody id="tabelaVendasRealizadas"></tbody>
+                </table>
+                <div id="listaVendasRealizadasVazia" class="empty" style="display:none;margin-top:12px">Nenhuma venda salva.</div>
+            </div>
+        </section>
+
+        <section id="painelOrcamentosRealizados" class="panel">
+            <div class="box">
+                <h2>📄 Orçamentos realizados</h2>
+                <p class="hint" style="margin-top:0">Somente documentos do tipo <strong>ORÇAMENTO</strong> (sem baixa de estoque). Clique na <strong>⚙</strong> para as mesmas ações do FH Control.</p>
+                <div class="toolbar">
+                    <input type="search" id="buscaOrcamentosRealizados" class="search" placeholder="Buscar nº, cliente, funcionário...">
+                </div>
+                <table>
+                    <thead>
+                        <tr><th>Nº</th><th>Data</th><th>Cliente</th><th>Pgto</th><th>Total</th><th>Ações</th></tr>
+                    </thead>
+                    <tbody id="tabelaOrcamentosRealizados"></tbody>
+                </table>
+                <div id="listaOrcamentosRealizadosVazia" class="empty" style="display:none;margin-top:12px">Nenhum orçamento salvo.</div>
+            </div>
+        </section>
+
+        <section id="painelCaixa" class="panel">
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card" style="background:#34495e"><div class="k">Caixa inicial do dia</div><div class="v" id="cxInicial">R$ 0</div></div>
+                <div class="card" style="background:#27ae60"><div class="k">Entradas (pagas)</div><div class="v" id="cxEntradas">R$ 0</div></div>
+                <div class="card" style="background:#e74c3c"><div class="k">Saídas (despesas)</div><div class="v" id="cxSaidas">R$ 0</div></div>
+                <div class="card" style="background:#2980b9"><div class="k">Balanço do dia</div><div class="v" id="cxSaldo">R$ 0</div></div>
+            </div>
+            <div class="box">
+                <h2>Caixa / Balcão</h2>
+                <p class="hint">Dinheiro e lançamentos do balcão — banco HM isolado (sem Firebase do FH).</p>
+                <div class="row" style="margin-bottom:12px">
+                    <button type="button" class="btn btn-secondary" id="btnCxInicial">💵 Informar caixa inicial</button>
+                    <button type="button" class="btn btn-ok" id="btnCxFocoEntrada">➕ Lançar entrada</button>
+                </div>
+                <form id="formCaixa">
+                    <div class="row">
+                        <div class="col"><label>Tipo</label>
+                            <select id="cxTipo">
+                                <option value="entrada">Entrada</option>
+                                <option value="saida">Saída</option>
+                            </select>
+                        </div>
+                        <div class="col" style="flex:2"><label>Descrição / Cliente</label><input id="cxDesc" required></div>
+                        <div class="col"><label>Valor (R$)</label><input id="cxValor" inputmode="decimal" required placeholder="0,00"></div>
+                        <div class="col"><label>Forma</label>
+                            <select id="cxForma">
+                                <option>Dinheiro</option>
+                                <option>PIX</option>
+                                <option>Cartão</option>
+                                <option>Transferência</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:14px">
+                        <button type="submit" class="btn btn-primary">Lançar no balcão</button>
+                    </div>
+                </form>
+            </div>
+            <div class="box">
+                <h2>📁 Pastas do balcão (Ano → Mês)</h2>
+                <p class="hint">Cada mês com movimento vira pasta com <strong>Entradas</strong>, <strong>Saídas</strong> e relatório. Arquive no PC ao fechar o mês.</p>
+                <div class="row" style="margin-bottom:10px">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarPastasBalcao">🔄 Atualizar pastas</button>
+                    <button type="button" class="btn btn-pdf" id="btnRelMesBalcao">📄 PDF do mês</button>
+                    <button type="button" class="btn btn-primary" id="btnArquivarMesBalcao">📂 Arquivar mês no PC…</button>
+                </div>
+                <div id="arvorePastasBalcao" class="arvore-pastas-caixa">
+                    <div class="muted" style="padding:8px;text-align:center">Carregando pastas…</div>
+                </div>
+            </div>
+            <div class="box">
+                <h2>Movimentações do balcão</h2>
+                <table>
+                    <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Forma</th><th>Valor</th><th>Ações</th></tr></thead>
+                    <tbody id="tabelaCaixa"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="painelCaixaBanco" class="panel">
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card" style="background:#34495e;border:1px solid #3498db"><div class="k">Saldo inicial banco</div><div class="v" id="bkInicial" style="color:#7ec8ff">R$ 0</div></div>
+                <div class="card" style="background:#27ae60"><div class="k">Entradas (recebimentos)</div><div class="v" id="bkEntradas">R$ 0</div></div>
+                <div class="card" style="background:#e74c3c"><div class="k">Saídas (pagamentos)</div><div class="v" id="bkSaidas">R$ 0</div></div>
+                <div class="card" style="background:#2980b9"><div class="k">Saldo atual banco</div><div class="v" id="bkSaldo">R$ 0</div></div>
+            </div>
+            <div class="box" style="border-color:rgba(52,152,219,0.45)">
+                <h2 style="color:#7ec8ff">Caixa do Banco (Digital / PIX / Cartões)</h2>
+                <p class="hint">PIX, cartões e transferências — separado do balcão em dinheiro.</p>
+                <div class="row" style="margin-bottom:12px">
+                    <button type="button" class="btn btn-secondary" id="btnBkInicial">🏦 Inf. saldo inicial</button>
+                </div>
+                <form id="formBanco">
+                    <div class="row">
+                        <div class="col"><label>Tipo</label>
+                            <select id="bkTipo">
+                                <option value="entrada">Entrada</option>
+                                <option value="saida">Saída</option>
+                            </select>
+                        </div>
+                        <div class="col" style="flex:2"><label>Descrição / Cliente</label><input id="bkDesc" required></div>
+                        <div class="col"><label>Valor (R$)</label><input id="bkValor" inputmode="decimal" required placeholder="0,00"></div>
+                        <div class="col"><label>Forma</label>
+                            <select id="bkForma">
+                                <option>PIX</option>
+                                <option>Cartão</option>
+                                <option>Transferência</option>
+                                <option>Boleto</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:14px">
+                        <button type="submit" class="btn btn-primary">Lançar no banco</button>
+                    </div>
+                </form>
+            </div>
+            <div class="box">
+                <h2>📁 Pastas do banco (Ano → Mês)</h2>
+                <p class="hint">PIX, cartões e transferências agrupados por mês: <strong>Entradas</strong>, <strong>Saídas</strong> e relatório.</p>
+                <div class="row" style="margin-bottom:10px">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarPastasBanco">🔄 Atualizar pastas</button>
+                    <button type="button" class="btn btn-pdf" id="btnRelMesBanco">📄 PDF do mês</button>
+                    <button type="button" class="btn btn-primary" id="btnArquivarMesBanco">📂 Arquivar mês no PC…</button>
+                </div>
+                <div id="arvorePastasBanco" class="arvore-pastas-caixa">
+                    <div class="muted" style="padding:8px;text-align:center">Carregando pastas…</div>
+                </div>
+            </div>
+            <div class="box">
+                <h2>Movimentações digitais</h2>
+                <table>
+                    <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Forma</th><th>Valor</th><th>Ações</th></tr></thead>
+                    <tbody id="tabelaBanco"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="painelPendentes" class="panel">
+            <div class="box">
+                <h2>Contas a Receber (Pendentes)</h2>
+                <p class="hint">Registre valores em aberto. Ao receber, escolha Balcão (dinheiro) ou Banco (PIX/cartão).</p>
+                <form id="formPendente">
+                    <div class="row">
+                        <div class="col" style="flex:2"><label>Cliente</label><input id="pdCliente" required placeholder="Nome do cliente"></div>
+                        <div class="col" style="flex:2"><label>Descrição</label><input id="pdDesc" required placeholder="Serviço / OS / nota"></div>
+                        <div class="col"><label>Valor (R$)</label><input id="pdValor" inputmode="decimal" required placeholder="0,00"></div>
+                        <div class="col"><label>Vencimento</label><input id="pdVenc" type="date"></div>
+                    </div>
+                    <div class="row" style="margin-top:14px">
+                        <button type="submit" class="btn btn-primary">Adicionar pendente</button>
+                    </div>
+                </form>
+            </div>
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card"><div class="k">Total pendente</div><div class="v" id="pdTotal">R$ 0</div></div>
+                <div class="card"><div class="k">Qtd. abertas</div><div class="v" id="pdQtd">0</div></div>
+            </div>
+            <div class="box">
+                <h2>📁 Pastas a receber (Ano → Mês)</h2>
+                <p class="hint">Pendentes agrupados por mês. Use o relatório PDF ou arquive a pasta no PC ao fechar o período.</p>
+                <div class="row" style="margin-bottom:10px">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarPastasPend">🔄 Atualizar pastas</button>
+                    <button type="button" class="btn btn-pdf" id="btnRelMesPend">📄 PDF do mês</button>
+                    <button type="button" class="btn btn-primary" id="btnArquivarMesPend">📂 Arquivar mês no PC…</button>
+                </div>
+                <div id="arvorePastasPendentes" class="arvore-pastas-caixa">
+                    <div class="muted" style="padding:8px;text-align:center">Carregando pastas…</div>
+                </div>
+            </div>
+            <div class="box">
+                <h2>Pendências abertas</h2>
+                <table>
+                    <thead><tr><th>Cliente</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Ações</th></tr></thead>
+                    <tbody id="tabelaPendentes"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="painelRelatorioCaixa" class="panel">
+            <div class="box">
+                <h2>Relatório Caixa</h2>
+                <p class="hint">Resumo unificado do balcão + banco + pendentes. Ao fechar o mês, use as pastas abaixo (Entradas / Saídas / Relatório geral) — igual ao FH Control.</p>
+                <div class="row" style="margin-bottom:12px">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarRelCx">🔄 Atualizar resumo</button>
+                    <button type="button" class="btn btn-pdf" id="btnImprimirRelCx">🖨️ Imprimir resumo</button>
+                </div>
+            </div>
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card"><div class="k">Total balcão</div><div class="v" id="relCxBalcao">R$ 0</div></div>
+                <div class="card"><div class="k">Total banco</div><div class="v" id="relCxBanco">R$ 0</div></div>
+                <div class="card"><div class="k">Pendentes</div><div class="v" id="relCxPend">R$ 0</div></div>
+                <div class="card"><div class="k">Saldo geral</div><div class="v" id="relCxGeral">R$ 0</div></div>
+            </div>
+
+            <div class="box">
+                <h2>Relatórios mensais (PDF)</h2>
+                <p class="hint">Informe o mês/ano (Ex: 07/2026). Cada relatório separa entradas, saídas e, no geral, pendentes.</p>
+                <div class="lista-relatorios-mes">
+                    <div class="item-relatorio-mes">
+                        <div>
+                            <span class="titulo-relatorio">💰 Relatório Mensal — Caixa / Balcão</span>
+                            <span class="desc-relatorio">Entradas e saídas do balcão (dinheiro / gaveta)</span>
+                        </div>
+                        <div class="acoes-relatorio-mes">
+                            <button type="button" class="btn btn-pdf" data-rel-mes="balcao">📄 PDF</button>
+                        </div>
+                    </div>
+                    <div class="item-relatorio-mes">
+                        <div>
+                            <span class="titulo-relatorio">🏦 Relatório Mensal — Caixa Banco</span>
+                            <span class="desc-relatorio">PIX, cartões e lançamentos do banco</span>
+                        </div>
+                        <div class="acoes-relatorio-mes">
+                            <button type="button" class="btn btn-pdf" data-rel-mes="banco">📄 PDF</button>
+                        </div>
+                    </div>
+                    <div class="item-relatorio-mes">
+                        <div>
+                            <span class="titulo-relatorio">⏳ Relatório Mensal — Contas a Receber</span>
+                            <span class="desc-relatorio">Somente pendentes do período</span>
+                        </div>
+                        <div class="acoes-relatorio-mes">
+                            <button type="button" class="btn btn-pdf" data-rel-mes="pendentes">📄 PDF</button>
+                        </div>
+                    </div>
+                    <div class="item-relatorio-mes">
+                        <div>
+                            <span class="titulo-relatorio">📊 Relatório Mensal Geral</span>
+                            <span class="desc-relatorio">Tudo: balcão + banco + contas a receber (entradas, saídas e pendentes)</span>
+                        </div>
+                        <div class="acoes-relatorio-mes">
+                            <button type="button" class="btn btn-pdf" data-rel-mes="geral">📄 PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="box">
+                <h2>📁 Pastas do caixa (Ano → Mês)</h2>
+                <p class="hint">Cada mês com movimento vira pasta com <strong>Entradas</strong>, <strong>Saídas</strong> e <strong>Pendentes</strong>. Use <strong>Arquivar mês no PC</strong> para gravar os arquivos na pasta configurada em Config (Chrome/Edge no computador).</p>
+                <div class="row" style="margin-bottom:10px">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarPastasCx">🔄 Atualizar pastas</button>
+                    <button type="button" class="btn btn-primary" id="btnArquivarMesPc">📂 Arquivar mês no PC…</button>
+                </div>
+                <div id="arvorePastasCaixa" class="arvore-pastas-caixa">
+                    <div class="muted" style="padding:8px;text-align:center">Carregando pastas…</div>
+                </div>
+            </div>
+
+            <div class="box" id="relCxConteudo">
+                <h2>Detalhamento por forma de pagamento</h2>
+                <table>
+                    <thead><tr><th>Origem</th><th>Forma</th><th>Tipo</th><th>Qtd</th><th>Total</th></tr></thead>
+                    <tbody id="tabelaRelCx"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="painelRelatorioUnificado" class="panel">
+            <div class="box">
+                <h2>📊 Relatório unificado — Oficial + Interno</h2>
+                <p class="hint" style="margin-top:0">Visão de <strong>um caixa só no final</strong>: soma o balcão/banco <strong>oficial</strong> com o <strong>interno</strong> (venda p/ funcionário, despesas OS) e o lucro das ordens de serviço.</p>
+                <div class="row" style="margin-bottom:12px">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarRelUnif">🔄 Atualizar</button>
+                    <button type="button" class="btn btn-pdf" id="btnImprimirRelUnif">🖨️ Imprimir / PDF</button>
+                </div>
+            </div>
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card" style="background:#2980b9"><div class="k">Caixa oficial</div><div class="v" id="relUnifOficial">R$ 0</div></div>
+                <div class="card" style="background:#8e44ad"><div class="k">Caixa interno</div><div class="v" id="relUnifInterno">R$ 0</div></div>
+                <div class="card" style="background:#e67e22"><div class="k">Pendentes (oficial+int.)</div><div class="v" id="relUnifPend">R$ 0</div></div>
+                <div class="card" style="background:#27ae60"><div class="k">Total unificado</div><div class="v" id="relUnifTotal">R$ 0</div></div>
+            </div>
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card"><div class="k">Bruto OS</div><div class="v" id="relUnifBrutoOs">R$ 0</div></div>
+                <div class="card" style="background:#c0392b"><div class="k">Custos OS (desp.+peças)</div><div class="v" id="relUnifCustoOs">R$ 0</div></div>
+                <div class="card" style="background:#1e8449"><div class="k">Lucro limpo OS</div><div class="v" id="relUnifLucroOs">R$ 0</div></div>
+            </div>
+            <div class="box" id="relUnifConteudo">
+                <h2>Detalhe por canal</h2>
+                <div id="relUnifDetalhe"></div>
+            </div>
+        </section>
+
+        <!-- DESPESAS POR OS (só Modo Interno) -->
+        <section id="painelDespesasOs" class="panel">
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card"><div class="k">OS oficiais</div><div class="v" id="dosQtdOs">0</div></div>
+                <div class="card" style="background:#27ae60"><div class="k">Bruto (OS)</div><div class="v" id="dosBruto">R$ 0</div></div>
+                <div class="card" style="background:#e74c3c"><div class="k">Despesas internas</div><div class="v" id="dosDespesas">R$ 0</div></div>
+                <div class="card" style="background:#2980b9"><div class="k">Lucro estimado</div><div class="v" id="dosLucro">R$ 0</div></div>
+            </div>
+
+            <div class="box">
+                <h2>📁 Pastas de despesas por OS (Ano → Mês)</h2>
+                <p class="hint">Igual ao FH Control: ao completar o mês, a pasta do mês reúne <strong>Bruto (entradas)</strong>, <strong>Despesas (saídas)</strong> e o <strong>relatório geral de lucro</strong>. Arquive no PC para gravar os arquivos.</p>
+                <div class="lista-relatorios-mes" style="margin-bottom:14px">
+                    <div class="item-relatorio-mes">
+                        <div>
+                            <span class="titulo-relatorio">📊 Relatório Mensal — Lucro por OS</span>
+                            <span class="desc-relatorio">Bruto das OS oficiais − despesas internas do período (PDF)</span>
+                        </div>
+                        <div class="acoes-relatorio-mes">
+                            <button type="button" class="btn btn-pdf" id="btnRelMesDespesasOs">📄 PDF do mês</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="margin-bottom:10px">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarPastasDos">🔄 Atualizar pastas</button>
+                    <button type="button" class="btn btn-primary" id="btnArquivarMesDosPc">📂 Arquivar mês no PC…</button>
+                </div>
+                <div id="arvorePastasDespesasOs" class="arvore-pastas-caixa">
+                    <div class="muted" style="padding:8px;text-align:center">Carregando pastas…</div>
+                </div>
+            </div>
+
+            <div class="box">
+                <h2>Despesas por OS (Modo Interno)</h2>
+                <p class="hint">Lista as OS do balcão oficial. Lance despesas internas (bruto − despesas = lucro). Escolha o <strong>funcionário responsável</strong> na OS para filtrar e fechar o lucro por pessoa. <strong>Importante:</strong> no PC que tem as despesas, abra o site atualizado e clique <strong>Sincronizar agora</strong> (Config) ou <strong>Atualizar</strong> aqui — só assim sobem pra nuvem e aparecem neste PC.</p>
+                <div class="toolbar">
+                    <input type="search" id="buscaDespesasOs" class="search" placeholder="Buscar OS por cliente, placa, veículo, responsável...">
+                    <select id="filtroFuncionarioDos" style="min-width:180px;max-width:240px">
+                        <option value="">Todos os funcionários</option>
+                    </select>
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarDespesasOs">🔄 Atualizar</button>
+                </div>
+                <div class="box" id="boxLucroPorFuncionario" style="margin:12px 0;padding:10px 12px;background:rgba(41,128,185,0.08);border:1px solid rgba(41,128,185,0.25)">
+                    <h3 style="margin:0 0 8px;font-size:1rem">👷 Lucro por funcionário (para fechar)</h3>
+                    <p class="hint" style="margin:0 0 8px">Soma das OS em que o funcionário é o <strong>responsável</strong> (bruto − despesas internas).</p>
+                    <p class="hint" style="margin:0 0 8px">O responsável leva só a <strong>mão de obra</strong>. Lucro de peça fica da oficina.</p>
+                    <div id="resumoLucroPorFuncionario" class="muted">Nenhuma OS com responsável vinculado.</div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Cliente</th>
+                            <th>Veículo / Placa</th>
+                            <th>Responsável</th>
+                            <th>Status</th>
+                            <th>Bruto OS</th>
+                            <th>Mão (func.)</th>
+                            <th>Despesas</th>
+                            <th>Lucro oficina</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaDespesasOs"></tbody>
+                    </table>
+                </div>
+                <div id="listaDespesasOsVazia" class="empty" style="display:none;margin-top:12px">Nenhuma OS oficial encontrada.</div>
+            </div>
+
+            <div class="box" id="boxLancarDespesaOs" style="display:none;border-color:rgba(231,76,60,0.45)">
+                <h2 id="tituloLancarDespesaOs">Lançar despesa na OS</h2>
+                <p class="hint" id="hintLancarDespesaOs"></p>
+                <input type="hidden" id="dosAtendimentoId">
+                <input type="hidden" id="dosProdutoId">
+                <form id="formDespesaOs">
+                    <div class="row">
+                        <div class="col" style="flex:2">
+                            <label>Do estoque (produtos cadastrados)</label>
+                            <input id="dosProdBusca" list="listaProdutosDespesaOs" placeholder="Bipar ou digitar nome/código do produto..." autocomplete="off">
+                            <datalist id="listaProdutosDespesaOs"></datalist>
+                            <p class="hint" id="dosEstoqueInfo" style="margin-top:6px;display:none"></p>
+                        </div>
+                        <div class="col" style="flex:0.55"><label>Qtd</label><input id="dosProdQtd" inputmode="decimal" value="1"></div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col" style="flex:2"><label>Descrição da despesa</label><input id="dosDesc" required placeholder="Ex: tinta, lixa, peça… ou escolha do estoque acima"></div>
+                        <div class="col"><label>Valor (R$)</label><input id="dosValor" inputmode="decimal" required placeholder="0,00"></div>
+                        <div class="col"><label>Forma</label>
+                            <select id="dosForma">
+                                <option>Dinheiro</option>
+                                <option>PIX</option>
+                                <option>Cartão</option>
+                                <option>Transferência</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col">
+                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
+                                <input type="checkbox" id="dosBaixaEstoque" checked style="width:auto">
+                                Baixar quantidade do estoque unificado (quando vier de produto)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:14px">
+                        <button type="submit" class="btn btn-primary">Lançar despesa interna</button>
+                        <button type="button" class="btn btn-pdf" id="btnImprimirNotaInternaOs">📄 Imprimir folha interna</button>
+                        <button type="button" class="btn btn-secondary" id="btnLimparProdDespesaOs">Limpar produto</button>
+                        <button type="button" class="btn btn-secondary" id="btnCancelarDespesaOs">Fechar</button>
+                    </div>
+                </form>
+                <p class="hint" style="margin-top:10px">A <strong>nota do cliente</strong> continua na Oficina (sem despesas).</p>
+                <h3 style="margin-top:18px">Despesas desta OS</h3>
+                <table>
+                    <thead><tr><th>Data</th><th>Descrição</th><th>Forma</th><th>Valor</th><th>Ações</th></tr></thead>
+                    <tbody id="tabelaDespesasOsDetalhe"></tbody>
+                </table>
+                <div id="listaDespesasOsDetalheVazia" class="empty" style="display:none;margin-top:10px">Nenhuma despesa lançada nesta OS.</div>
+            </div>
+        </section>
+
+        <!-- DESPESA ESCRITÓRIO (só Modo Interno — não sai na folha do funcionário) -->
+        <section id="painelDespesasEscritorio" class="panel">
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card"><div class="k">Lançamentos</div><div class="v" id="deQtd">0</div></div>
+                <div class="card" style="background:#e67e22"><div class="k">Neste mês</div><div class="v" id="deMes">R$ 0</div></div>
+                <div class="card" style="background:#e74c3c"><div class="k">Total</div><div class="v" id="deTotal">R$ 0</div></div>
+            </div>
+
+            <div class="grid-2">
+                <div class="box" style="border-color:rgba(241,196,15,0.45)">
+                    <h2>🏢 Lançar despesa de escritório</h2>
+                    <p class="hint">Cadastro separado das despesas de serviço da OS. Não sai na folha interna impressa.</p>
+                    <form id="formDespesaEscritorio">
+                        <div class="row">
+                            <div class="col" style="flex:2">
+                                <label>OS (opcional)</label>
+                                <select id="deAtendimentoId">
+                                    <option value="">Sem vínculo com OS</option>
+                                </select>
+                            </div>
+                            <div class="col"><label>Data</label><input type="date" id="deData" required></div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col" style="flex:2"><label>Descrição</label><input id="deDesc" required placeholder="Ex: material de escritório, taxa, papelaria…"></div>
+                            <div class="col"><label>Valor (R$)</label><input id="deValor" inputmode="decimal" required placeholder="0,00"></div>
+                            <div class="col"><label>Forma</label>
+                                <select id="deForma">
+                                    <option>Dinheiro</option>
+                                    <option>PIX</option>
+                                    <option>Cartão</option>
+                                    <option>Transferência</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:14px">
+                            <button type="submit" class="btn btn-primary">Registrar despesa escritório</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="box">
+                    <h2>Como usar</h2>
+                    <p class="hint" style="margin-top:0"><strong>Despesas por OS</strong> — tinta, lixa e custo do serviço (sai na folha).</p>
+                    <p class="hint"><strong>Despesa escritório</strong> — gastos da gestão/oficina (não sai na folha).</p>
+                    <p class="hint">Vincular a uma OS é opcional: com vínculo, entra no lucro da OS; sem vínculo, só no caixa interno.</p>
+                </div>
+            </div>
+
+            <div class="box">
+                <h2>Histórico — despesas de escritório</h2>
+                <div class="toolbar">
+                    <input type="search" id="buscaDespesaEscritorio" class="search" placeholder="Buscar por descrição, placa, OS…">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarDespesaEscritorio">🔄 Atualizar</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>OS / Placa</th>
+                            <th>Forma</th>
+                            <th>Valor</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaDespesasEscritorio"></tbody>
+                </table>
+                <div id="listaDespesasEscritorioVazia" class="empty" style="display:none;margin-top:12px">Nenhuma despesa de escritório lançada.</div>
+            </div>
+        </section>
+
+        <!-- SERVIÇO FINALIZADO (Modo Interno) -->
+        <section id="painelServicoFinalizado" class="panel">
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card" style="background:#27ae60"><div class="k">Serviços finalizados</div><div class="v" id="finQtdOs">0</div></div>
+                <div class="card"><div class="k">Bruto</div><div class="v" id="finBruto">R$ 0</div></div>
+                <div class="card" style="background:#e74c3c"><div class="k">Despesas</div><div class="v" id="finDespesas">R$ 0</div></div>
+                <div class="card" style="background:#2980b9"><div class="k">Lucro</div><div class="v" id="finLucro">R$ 0</div></div>
+            </div>
+            <div class="box">
+                <h2>✅ Serviço finalizado</h2>
+                <p class="hint">Carros marcados como <strong>FINALIZADO</strong> em Despesas por OS. Pastas por <strong>Ano → Mês → Dia</strong> da data em que o serviço foi finalizado. Cada arquivo tem <strong>visualizar</strong> e <strong>imprimir</strong> a folha interna de novo.</p>
+                <div class="toolbar">
+                    <input type="search" id="buscaServicoFinalizado" class="search" placeholder="Buscar cliente, placa, veículo, responsável...">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarServicoFinalizado">🔄 Atualizar</button>
+                </div>
+                <div id="arvorePastasServicoFinalizado" class="arvore-pastas-caixa" style="margin-top:12px">
+                    <div class="muted" style="padding:8px;text-align:center">Carregando pastas…</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CADASTRO DE FUNCIONÁRIOS (Modo Interno — vendas internas) -->
+        <section id="painelFuncionarios" class="panel">
+            <div class="box">
+                <h2>👷 Cadastro de Funcionários (interno)</h2>
+                <p class="hint">Cadastre aqui quem executa serviço e quem pode comprar no <strong>modo interno</strong>. O responsável da OS usa esta lista; a venda interna só libera para funcionário ativo.</p>
+                <form id="formFuncionario">
+                    <input type="hidden" id="pfFuncEditId">
+                    <div class="row">
+                        <div class="col" style="flex:2"><label>Nome</label><input id="pfNomeFunc" required placeholder="Ex: João, Pedro..."></div>
+                        <div class="col"><label>Telefone / WhatsApp</label><input id="pfTelFunc" placeholder="(00) 00000-0000"></div>
+                        <div class="col"><label>Cargo / função</label><input id="pfCargoFunc" placeholder="Funileiro, pintor..."></div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col" style="flex:2"><label>Observação</label><input id="pfObsFunc" placeholder="Opcional"></div>
+                        <div class="col" style="flex:0.9;align-self:end">
+                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0 0 8px">
+                                <input type="checkbox" id="pfAtivoFunc" checked style="width:auto"> Ativo (pode comprar)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:14px">
+                        <button type="submit" class="btn btn-primary" id="btnSalvarFunc">Salvar funcionário</button>
+                        <button type="button" class="btn btn-secondary" id="btnCancelarFunc" style="display:none">Cancelar edição</button>
+                    </div>
+                </form>
+            </div>
+            <div class="box">
+                <h2>Funcionários cadastrados</h2>
+                <div class="toolbar">
+                    <input type="search" id="buscaFuncionario" class="search" placeholder="Buscar nome, telefone ou cargo...">
+                </div>
+                <table style="margin-top:10px">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>Cargo</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaFuncionarios"></tbody>
+                </table>
+                <div id="listaFuncionariosVazia" class="empty" style="display:none;margin-top:12px">Nenhum funcionário cadastrado.</div>
+            </div>
+        </section>
+
+        <!-- PAGAMENTO FUNCIONÁRIOS (só Modo Interno — sem impressão) -->
+        <section id="painelPagFuncionarios" class="panel">
+            <div class="cards" style="margin-bottom:14px">
+                <div class="card"><div class="k">Funcionários</div><div class="v" id="pfQtdFunc">0</div></div>
+                <div class="card" style="background:#e67e22"><div class="k">Pago nesta semana</div><div class="v" id="pfSemana">R$ 0</div></div>
+                <div class="card" style="background:#e74c3c"><div class="k">Pago no mês</div><div class="v" id="pfMes">R$ 0</div></div>
+                <div class="card" style="background:#2980b9"><div class="k">Total lançado</div><div class="v" id="pfTotal">R$ 0</div></div>
+            </div>
+
+            <div class="box">
+                <h2>💰 Pagamento de funcionários (interno)</h2>
+                <p class="hint">Controle semanal — fica só no sistema interno, <strong>sem impressão</strong>. Cada pagamento também registra saída no caixa interno (Dinheiro → Balcão; PIX/Cartão → Banco). Cadastro completo em <strong>Cadastro de Funcionários</strong>.</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="box">
+                    <h2>Funcionários</h2>
+                    <p class="hint" style="margin-top:0">Lista usada nos pagamentos e nas vendas internas.</p>
+                    <div class="row" style="margin-top:8px">
+                        <button type="button" class="btn btn-primary" id="btnPagIrCadFunc">👷 Abrir cadastro de funcionários</button>
+                    </div>
+                    <table style="margin-top:14px">
+                        <thead><tr><th>Nome</th><th>Cargo</th><th>Status</th></tr></thead>
+                        <tbody id="tabelaFuncionariosPag"></tbody>
+                    </table>
+                    <div id="listaFuncionariosPagVazia" class="empty" style="display:none;margin-top:10px">Nenhum funcionário. Cadastre primeiro.</div>
+                </div>
+
+                <div class="box" style="border-color:rgba(230,126,34,0.4)">
+                    <h2>Lançar pagamento da semana</h2>
+                    <form id="formPagFuncionario">
+                        <div class="row">
+                            <div class="col"><label>Funcionário</label>
+                                <select id="pfFuncId" required>
+                                    <option value="">Selecione...</option>
+                                </select>
+                            </div>
+                            <div class="col"><label>Data do pagamento</label><input type="date" id="pfData" required></div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col"><label>Valor (R$)</label><input id="pfValor" inputmode="decimal" required placeholder="0,00"></div>
+                            <div class="col"><label>Forma</label>
+                                <select id="pfForma">
+                                    <option>Dinheiro</option>
+                                    <option>PIX</option>
+                                    <option>Cartão</option>
+                                    <option>Transferência</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:10px">
+                            <div class="col"><label>Observação (opcional)</label><input id="pfObs" placeholder="Ex: semana cheia, adiantamento..."></div>
+                        </div>
+                        <div class="row" style="margin-top:14px">
+                            <button type="submit" class="btn btn-primary">Registrar pagamento</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="box">
+                <h2>Histórico de pagamentos</h2>
+                <div class="toolbar">
+                    <input type="search" id="buscaPagFunc" class="search" placeholder="Buscar por nome ou observação...">
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarPagFunc">🔄 Atualizar</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Semana</th>
+                            <th>Funcionário</th>
+                            <th>Forma</th>
+                            <th>Obs.</th>
+                            <th>Valor</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaPagFuncionarios"></tbody>
+                </table>
+                <div id="listaPagFuncVazia" class="empty" style="display:none;margin-top:12px">Nenhum pagamento registrado.</div>
+            </div>
+        </section>
+
+        <!-- CONFIG -->
+        <section id="painelConfig" class="panel">
+            <div class="box">
+                <h2>Dados da Empresa</h2>
+                <p class="hint">Esses dados saem no cabeçalho das notas, PDF e assinatura. Com login na nuvem, ao salvar sobem automaticamente — no outro PC/celular entram sozinhos ao logar ou ao sincronizar.</p>
+                <form id="formEmpresa">
+                    <div class="row">
+                        <div class="col" style="flex:2"><label>Nome da Empresa (Razão ou Fantasia)</label><input id="empNome" required placeholder="Ex: HM Centro Automotivo"></div>
+                        <div class="col"><label>CNPJ</label><input id="empCnpj" maxlength="18" placeholder="00.000.000/0000-00"></div>
+                        <div class="col"><label>Inscrição Estadual</label><input id="empIe" placeholder="Obrigatório no espelho/PDF se preenchida"></div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col"><label>Telefone / WhatsApp</label><input id="empTelefone" placeholder="(00) 00000-0000"></div>
+                        <div class="col"><label>E-mail</label><input id="empEmail" type="email" placeholder="contato@empresa.com"></div>
+                    </div>
+                    <h3 style="margin-top:16px">Endereço completo</h3>
+                    <div class="row">
+                        <div class="col"><label>CEP</label><input id="empCep" maxlength="9" placeholder="00000-000"></div>
+                        <div class="col" style="flex:2"><label>Rua / Logradouro</label><input id="empRua" placeholder="Rua, avenida..."></div>
+                        <div class="col" style="flex:0.6"><label>Número</label><input id="empNumero" placeholder="Nº"></div>
+                    </div>
+                    <div class="row" style="margin-top:10px">
+                        <div class="col"><label>Bairro</label><input id="empBairro"></div>
+                        <div class="col"><label>Cidade</label><input id="empCidade"></div>
+                        <div class="col" style="flex:0.5"><label>UF</label><input id="empEstado" maxlength="2" placeholder="PR" style="text-transform:uppercase"></div>
+                        <div class="col"><label>Complemento</label><input id="empComplemento" placeholder="Sala, galpão..."></div>
+                    </div>
+                    <div class="row" style="margin-top:14px">
+                        <button type="submit" class="btn btn-primary">Salvar dados da empresa</button>
+                        <button type="button" class="btn btn-secondary" id="btnEmpPadrao">Restaurar nome padrão HM</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="box">
+                <h2>☁ Sincronizar — PC ↔ Celular</h2>
+                <p class="config-status aviso" id="nuvemStatusTexto"><strong>Nuvem:</strong> verificando…</p>
+                <p class="hint" style="margin-top:8px">Com login, a sincronização é <strong>automática</strong> (ao salvar, ao abrir o app e a cada minuto): balcão oficial <strong>e modo interno</strong> (despesas por OS, funcionários, caixa interno). O botão abaixo força na hora.</p>
+                <div class="row" style="margin-top:12px">
+                    <button type="button" class="btn btn-primary" id="btnSyncNuvem">☁ Sincronizar agora</button>
+                    <button type="button" class="btn btn-danger" id="btnAppSair">🚪 Sair do sistema</button>
+                </div>
+                <p class="hint" style="margin-top:8px">Sair encerra o login Firebase e volta para a tela de entrada. Os dados locais no aparelho continuam salvos.</p>
+            </div>
+
+            <div class="box">
+                <h2>Logo da empresa</h2>
+                <div class="row">
+                    <div class="col">
+                        <label>Enviar arquivo (PNG/JPG/WebP)</label>
+                        <input type="file" id="empLogoUpload" accept="image/*">
+                    </div>
+                    <div class="col" style="flex:2">
+                        <label>Ou link da imagem (HTTPS)</label>
+                        <input type="url" id="empLogoUrl" placeholder="https://.../sua-logo.png">
+                    </div>
+                </div>
+                <div class="row" style="margin-top:12px;align-items:center">
+                    <div class="col" style="flex:0.8">
+                        <div style="background:#fff;border-radius:10px;padding:10px;text-align:center;border:1px solid var(--line)">
+                            <img id="previewLogoEmpresa" src="logo-hm.png" alt="Preview logo" style="max-height:90px;max-width:100%;object-fit:contain">
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="row">
+                            <button type="button" class="btn btn-primary" id="btnSalvarLogoUrl">Salvar logo (link)</button>
+                            <button type="button" class="btn btn-secondary" id="btnLogoPadrao">Usar logo padrão</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="box">
+                <h2>Pasta no PC (fotos e atendimento)</h2>
+                <p class="hint">No Chrome ou Edge do computador: escolha uma pasta. Ao salvar a OS, cria a pasta do cliente e grava as fotos (.jpg) + JSON do atendimento.</p>
+                <p class="config-status aviso" id="pastaStatusTexto"><strong>Pasta PC:</strong> ainda não configurada.</p>
+                <div class="row">
+                    <button type="button" class="btn btn-primary" id="btnConfigPasta">📁 Escolher pasta no PC</button>
+                    <button type="button" class="btn btn-secondary" id="btnAtualizarPasta">Atualizar status</button>
+                </div>
+            </div>
+
+            <div class="box">
+                <h2>Backup e limpeza</h2>
+                <p class="hint">Armazenamento exclusivo: <strong>localStorage → hm_automotivo_v1</strong> (não mexe nos outros sistemas).</p>
+                <div class="row">
+                    <button type="button" class="btn btn-secondary" id="btnExportar">Exportar backup JSON</button>
+                    <button type="button" class="btn btn-secondary" id="btnImportar">Importar backup JSON</button>
+                    <input type="file" id="fileImport" accept="application/json,.json" style="display:none">
+                    <button type="button" class="btn btn-danger" id="btnZerar">Apagar dados deste index</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="install-banner" id="installBanner" role="dialog" aria-label="Instalar aplicativo">
+        <img src="icon-192.png" alt="">
+        <div class="txt">
+            <strong>Instalar HM Auto</strong>
+            <span>Adicione à tela inicial e use como aplicativo, com a logo.</span>
+        </div>
+        <button type="button" class="btn btn-ok" id="btnInstalarApp" style="white-space:nowrap">Instalar</button>
+        <button type="button" class="btn btn-secondary" id="btnFecharInstall" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-overlay" id="modalFotoZoom">
+        <div class="modal-box" style="width:min(920px,100%);text-align:center">
+            <h3>Foto do veículo</h3>
+            <img id="fotoZoomImg" alt="Foto" style="max-width:100%;max-height:70vh;border-radius:8px;background:#111">
+            <div class="modal-acoes">
+                <button type="button" class="btn btn-secondary" id="btnFecharFotoZoom">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="modal-overlay" id="modalPergunta">
+        <div class="modal-box">
+            <h3 id="modalPerguntaTitulo"></h3>
+            <p id="modalPerguntaTexto"></p>
+            <div class="modal-acoes" id="modalPerguntaAcoes"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalReceberOs">
+        <div class="modal-box" style="width:min(480px,100%)">
+            <h3>💰 Receber pagamento da OS</h3>
+            <p class="hint" id="receberOsResumo"></p>
+            <p class="hint" id="receberOsValor" style="color:#f1c40f;font-weight:700"></p>
+
+            <div id="receberOsPasso1">
+                <h3 style="font-size:0.95rem;margin-top:8px">1. Onde registrar?</h3>
+                <p class="hint">Escolha o banco de destino do recebimento.</p>
+                <div class="receber-passo-btns">
+                    <button type="button" class="btn btn-primary" id="btnRecDestNormal">💰 Caixa / Relatórios (oficial)</button>
+                    <button type="button" class="btn btn-secondary" id="btnRecDestInterno" style="border-color:#f1c40f;color:#f1c40f">🔒 Modo Interno</button>
+                </div>
+            </div>
+
+            <div id="receberOsPasso2" style="display:none">
+                <h3 style="font-size:0.95rem;margin-top:8px">2. Forma de pagamento</h3>
+                <p class="hint" id="receberOsDestinoTxt"></p>
+                <div class="receber-passo-btns">
+                    <button type="button" class="btn btn-ok" data-rec-forma="Dinheiro">💵 Dinheiro → Caixa / Balcão</button>
+                    <button type="button" class="btn btn-primary" data-rec-forma="PIX">📱 PIX → Caixa do Banco</button>
+                    <button type="button" class="btn btn-primary" data-rec-forma="Cartão">💳 Cartão → Caixa do Banco</button>
+                    <button type="button" class="btn btn-secondary" id="btnReceberOsVoltar">← Voltar</button>
+                </div>
+            </div>
+
+            <div class="modal-acoes">
+                <button type="button" class="btn btn-danger" id="btnReceberOsFechar" style="width:100%">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalAcoesVenda">
+        <div class="modal-acoes-doc" role="dialog" aria-labelledby="acoesVendaTitulo">
+            <div class="acoes-doc-topo">
+                <h3 id="acoesVendaTitulo"><span class="acoes-doc-gear">⚙</span> Ações do documento</h3>
+                <button type="button" class="acoes-doc-fechar" id="btnFecharAcoesVenda" aria-label="Fechar">✕</button>
+            </div>
+            <div class="acoes-doc-meta" id="acoesVendaMeta"></div>
+            <div class="acoes-doc-lista">
+                <button type="button" class="acoes-doc-btn" data-acao-venda="ed"><span class="ico">✏️</span> Ed</button>
+                <button type="button" class="acoes-doc-btn" data-acao-venda="whats"><span class="ico">📱</span> Whats</button>
+                <button type="button" class="acoes-doc-btn" data-acao-venda="link"><span class="ico">🔗</span> Link</button>
+                <button type="button" class="acoes-doc-btn" data-acao-venda="ver"><span class="ico">👁</span> Ver</button>
+                <button type="button" class="acoes-doc-btn" data-acao-venda="pdf"><span class="ico">📄</span> PDF</button>
+                <button type="button" class="acoes-doc-btn" data-acao-venda="pdf-cliente"><span class="ico">🖨</span> PDF Cliente</button>
+                <button type="button" class="acoes-doc-btn" data-acao-venda="cupom"><span class="ico">🧾</span> Cupom</button>
+                <button type="button" class="acoes-doc-btn acoes-doc-estornar" data-acao-venda="estornar"><span class="ico">↺</span> Estornar</button>
+                <button type="button" class="acoes-doc-btn acoes-doc-excluir" data-acao-venda="excluir"><span class="ico">🗑</span> Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalLinkVenda">
+        <div class="modal-box" style="width:min(480px,100%)">
+            <h3>Link / texto do documento</h3>
+            <p class="hint">Copie e envie ao cliente (WhatsApp, SMS, etc.).</p>
+            <textarea id="inputLinkVenda" rows="6" readonly style="width:100%;margin-top:8px;font-size:0.9rem"></textarea>
+            <div class="modal-acoes" style="margin-top:14px">
+                <button type="button" class="btn btn-primary" id="btnCopiarLinkVenda" style="flex:1">Copiar</button>
+                <button type="button" class="btn btn-ok" id="btnWhatsLinkVenda" style="flex:1">WhatsApp</button>
+                <button type="button" class="btn btn-secondary" id="btnFecharLinkVenda" style="flex:1">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalNota">
+        <div class="modal-box" style="width:min(960px,100%)">
+            <h3 id="modalNotaTitulo">Nota do atendimento</h3>
+            <div id="modalNotaCorpo"></div>
+            <div class="modal-acoes">
+                <button type="button" class="btn btn-pdf" id="btnNotaPdf">Salvar / Imprimir PDF</button>
+                <button type="button" class="btn btn-pdf" id="btnNotaPdfInterno" style="display:none">📄 PDF interno (com franquia)</button>
+                <button type="button" class="btn btn-ok" id="btnNotaPdfCliente" style="display:none">🖨️ PDF cliente (escolher itens)</button>
+                <button type="button" class="btn btn-ok" id="btnNotaSalvarPdf">💾 Salvar PDF</button>
+                <button type="button" class="btn btn-primary" id="btnNotaEncaminhar">📤 Encaminhar PDF</button>
+                <button type="button" class="btn btn-assinar" id="btnNotaLink">Enviar nota ao cliente</button>
+                <button type="button" class="btn btn-secondary" id="btnNotaExportFotos">Exportar fotos</button>
+                <button type="button" class="btn btn-secondary" id="btnNotaFechar">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Viewer PDF em tela cheia (celular) -->
+    <div id="viewerPdfNota" aria-hidden="true">
+        <div id="viewerPdfBarra">
+            <button type="button" class="btn btn-secondary" id="btnViewerFechar">✕ Fechar</button>
+            <button type="button" class="btn btn-ok" id="btnViewerSalvarPdf">💾 Salvar PDF</button>
+            <button type="button" class="btn btn-primary" id="btnViewerEncaminhar">📤 Encaminhar PDF</button>
+            <button type="button" class="btn btn-pdf" id="btnViewerImprimir">🖨️ Imprimir</button>
+        </div>
+        <div id="viewerPdfScroll">
+            <div id="viewerPdfCorpo"></div>
+        </div>
+    </div>
+    <iframe id="printFrame" title="Impressão"></iframe>
+
+    <div class="modal-overlay" id="modalNomePdf">
+        <div class="modal-box">
+            <h3>Nome do PDF</h3>
+            <p class="hint">Pode alterar antes de salvar ou encaminhar.</p>
+            <label for="inputNomePdf">Nome do arquivo</label>
+            <input id="inputNomePdf" type="text" maxlength="80" placeholder="ORÇAMENTO STRADA ICILEGEL" style="width:100%;margin-top:6px">
+            <div class="modal-acoes" style="margin-top:14px">
+                <button type="button" class="btn btn-primary" id="btnNomePdfOk" style="flex:1">Continuar</button>
+                <button type="button" class="btn btn-secondary" id="btnNomePdfCancelar" style="flex:1">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalFotosCliente">
+        <div class="modal-box" style="width:min(480px,100%)">
+            <h3>Enviar nota ao cliente</h3>
+            <p class="hint" id="modalFotosClienteMsg">As fotos ficam salvas internamente na pasta/ficha do cliente. Escolha como enviar o documento:</p>
+            <div class="modal-acoes" style="flex-direction:column">
+                <button type="button" class="btn btn-ok" id="btnFotosSim" style="width:100%">📷 COM FOTOS — documento + fotos anexadas</button>
+                <button type="button" class="btn btn-secondary" id="btnFotosNao" style="width:100%">📄 SEM FOTOS — apenas o documento</button>
+                <button type="button" class="btn btn-danger" id="btnFotosCancelar" style="width:100%">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalItensPdfCliente">
+        <div class="modal-box" style="width:min(480px,100%)">
+            <h3 id="titItensPdfCliente">PDF cliente — o que exportar?</h3>
+            <p class="hint" id="hintItensPdfCliente">Marque o que deve aparecer no PDF do cliente. A <strong>franquia nunca soma</strong> no total do serviço (fica à parte). Pode marcar 1, 2 ou os 3.</p>
+            <div style="display:flex;flex-direction:column;gap:12px;margin:14px 0">
+                <label id="labChkPdfFranquia" style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:1.05rem">
+                    <input type="checkbox" id="chkPdfFranquia" checked style="width:20px;height:20px">
+                    Franquia
+                </label>
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:1.05rem">
+                    <input type="checkbox" id="chkPdfMao" checked style="width:20px;height:20px">
+                    Mão de obra
+                </label>
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:1.05rem">
+                    <input type="checkbox" id="chkPdfPecas" style="width:20px;height:20px">
+                    Peças
+                </label>
+            </div>
+            <p class="hint" id="sugItensPdfCliente" style="margin:0">Sugestão: franquia marcada (o que o cliente paga). Peças = adicional a cargo do cliente.</p>
+            <div class="modal-acoes" style="margin-top:16px">
+                <button type="button" class="btn btn-primary" id="btnItensPdfOk" style="flex:1">Gerar PDF</button>
+                <button type="button" class="btn btn-secondary" id="btnItensPdfCancelar" style="flex:1">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalExportFotos">
+        <div class="modal-box" style="width:min(480px,100%)">
+            <h3>Exportar imagens internas</h3>
+            <p class="hint">Escolha o formato. Os arquivos baixam no seu computador (pasta de downloads).</p>
+            <div class="modal-acoes" style="flex-direction:column">
+                <button type="button" class="btn btn-primary" id="btnExpJpeg" style="width:100%">🖼️ JPEG (.jpg)</button>
+                <button type="button" class="btn btn-primary" id="btnExpPng" style="width:100%">🖼️ PNG (.png)</button>
+                <button type="button" class="btn btn-pdf" id="btnExpPdf" style="width:100%">📄 PDF (álbum das fotos)</button>
+                <button type="button" class="btn btn-secondary" id="btnExpFechar" style="width:100%">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalLinkAssinatura">
+        <div class="modal-box">
+            <h3>Link para o cliente assinar</h3>
+            <p class="hint">Documento gerado conforme sua escolha (com ou sem fotos). Envie por WhatsApp para o cliente abrir e assinar.</p>
+            <input type="text" id="inputLinkAssinatura" class="modal-link-input" readonly>
+            <div class="modal-acoes">
+                <button type="button" class="btn btn-primary" id="btnCopiarLink">Copiar link</button>
+                <button type="button" class="btn btn-ok" id="btnWhatsappLink">WhatsApp</button>
+                <button type="button" class="btn btn-secondary" id="btnImportarSig">Importar assinatura (.json)</button>
+                <input type="file" id="fileImportSig" accept="application/json,.json,.hm-sig.json" style="display:none">
+                <button type="button" class="btn btn-secondary" id="btnFecharLink">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="mirror-print-section" id="printNota"></div>
+
+    <!-- Logica modular (igual Joninha/M3): altere so o bloco necessario -->
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/nuvem.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/clientes.js"></script>
+    <script src="js/os.js"></script>
+    <script src="js/produtos.js"></script>
+    <script src="js/orcamento.js"></script>
+    <script src="js/interno.js"></script>
+    <script src="js/caixa.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

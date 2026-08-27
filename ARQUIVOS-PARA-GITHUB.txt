@@ -1,0 +1,66 @@
+HM CENTRO AUTOMOTIVO — ARQUIVOS PARA O GITHUB
+==============================================
+
+COMO SUBIR:
+  1. Duplo clique em:  SUBIR GITHUB.bat
+  2. Digite a mensagem do commit (ou Enter)
+  3. Push → github.com/netikis/HMAUTOMOTIVO
+  4. Vercel publica em 1-3 min
+
+Repo:  https://github.com/netikis/HMAUTOMOTIVO
+Site:  https://hmautomotivo.vercel.app
+
+OBRIGATORIOS:
+  index.html
+  css/app.css
+  js/config.js
+  js/storage.js
+  js/ui.js
+  js/nuvem.js
+  js/auth.js
+  js/clientes.js
+  js/os.js
+  js/produtos.js
+  js/orcamento.js
+  js/interno.js
+  js/caixa.js
+  js/app.js
+  assinar-hm.html
+  sw.js
+  manifest.webmanifest
+  firebase-config.js
+  firestore.rules
+  storage.rules
+  firebase.json
+  SEGURO-FIREBASE.txt
+  package.json
+  vercel.json
+  README.md
+  ESTRUTURA-MODULOS.txt
+  .gitignore
+  .env.example
+  firebase-env.example.js
+  scripts/build-firebase-env.js
+  logo-hm.png
+  LOGO.png
+  icon-192.png
+  icon-512.png
+  apple-touch-icon.png
+
+ONDE MEXER (sem abrir o index):
+  caixa / orcamento / OS / produtos / interno → pasta js/
+  visual → css/app.css
+  (veja ESTRUTURA-MODULOS.txt)
+
+SEGURANCA (igual M3):
+  Cole firestore.rules e storage.rules no Firebase Console
+  Passo a passo: SEGURO-FIREBASE.txt
+
+NUNCA ENVIAR:
+  .env
+  firebase-env.js
+  FIREBASE/
+  _origem/
+  _split_hm.js
+  node_modules/
+  .vercel/
