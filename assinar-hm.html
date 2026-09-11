@@ -137,8 +137,10 @@
                     <div class="campo"><span class="lbl">Ano modelo</span><span class="val" id="dAnoModelo">—</span></div>
                     <div class="campo"><span class="lbl">Entrada</span><span class="val" id="dEntrada">—</span></div>
                     <div class="campo"><span class="lbl">Responsável</span><span class="val" id="dResp">—</span></div>
+                    <div class="campo" id="wrapSeguradora" style="display:none"><span class="lbl">Seguradora</span><span class="val" id="dSeguradora">—</span></div>
+                    <div class="campo" id="wrapSinistro" style="display:none"><span class="lbl">Sinistro</span><span class="val" id="dSinistro">—</span></div>
                     <div class="campo full"><span class="lbl">Chegada</span><span class="val" id="dEstado">—</span></div>
-                    <div class="campo full"><span class="lbl">Serviços</span><span class="val" id="dServicos">—</span></div>
+                    <div class="campo full" id="wrapServicos"><span class="lbl">Serviços</span><span class="val" id="dServicos">—</span></div>
                 </div>
             </div>
 
@@ -147,11 +149,21 @@
                 <div class="fotos-grid" id="dFotos"></div>
             </div>
 
-            <div class="card">
+            <div class="card" id="cardValores">
                 <h2>Valores</h2>
                 <div id="dItens"></div>
                 <div class="total" id="dFranquia" style="display:none;color:#e67e22;font-size:1.05rem;margin-top:10px"></div>
                 <div class="total" id="dTotal">R$ 0,00</div>
+            </div>
+
+            <div class="card" id="cardDespOs" style="display:none">
+                <h2>Vendas / Despesas da O.S</h2>
+                <div id="dDespOs"></div>
+            </div>
+
+            <div class="card" id="cardDespEsc" style="display:none">
+                <h2>Despesas escritório</h2>
+                <div id="dDespEsc"></div>
             </div>
 
             <div class="card" id="boxAssinar">
@@ -240,7 +252,16 @@
             document.getElementById('dEntrada').textContent = fmtData(doc.entrada);
             document.getElementById('dResp').textContent = doc.responsavel || '—';
             document.getElementById('dEstado').textContent = doc.estado || '—';
-            document.getElementById('dServicos').textContent = doc.servicos || '—';
+            var exp = doc.exportItens || {};
+            campoOpcional('wrapSeguradora', 'dSeguradora', exp.notaSeguro ? (doc.seguradora || '') : '');
+            campoOpcional('wrapSinistro', 'dSinistro', exp.notaSeguro ? (doc.sinistro || '') : '');
+            var wrapServ = document.getElementById('wrapServicos');
+            if (exp.servicosAparte || exp.notaSeguro || !doc.exportItens) {
+                wrapServ.style.display = '';
+                document.getElementById('dServicos').textContent = doc.servicos || '—';
+            } else {
+                wrapServ.style.display = 'none';
+            }
 
             var cardFotos = document.getElementById('cardFotos');
             var boxFotos = document.getElementById('dFotos');
@@ -255,17 +276,38 @@
                 boxFotos.innerHTML = '';
             }
 
+            function tabelaDesp(lista) {
+                if (!lista || !lista.length) {
+                    return '<p style="color:#8fa3b8">Nenhuma despesa neste documento.</p>';
+                }
+                var tot = lista.reduce(function (s, d) { return s + (Number(d.valor) || 0); }, 0);
+                return '<table><thead><tr><th>Data</th><th>Descrição</th><th>Forma</th><th style="text-align:right">Valor</th></tr></thead><tbody>' +
+                    lista.map(function (d) {
+                        return '<tr><td>' + fmtData(d.criadoEm) + '</td><td>' + (d.descricao || '—') +
+                            '</td><td>' + (d.forma || '—') + '</td><td style="text-align:right">' + moeda(d.valor) + '</td></tr>';
+                    }).join('') + '</tbody></table>' +
+                    '<div class="total">Total: ' + moeda(tot) + '</div>';
+            }
+
             var itens = doc.itens || [];
             var box = document.getElementById('dItens');
-            if (!itens.length) {
+            var cardVal = document.getElementById('cardValores');
+            if (!itens.length && !(Number(doc.franquia) > 0)) {
                 box.innerHTML = '<p style="color:#8fa3b8">Sem itens de serviço neste documento.</p>';
+                if (!exp.franquia && !itens.length) cardVal.style.display = 'none';
+                else cardVal.style.display = '';
             } else {
-                box.innerHTML = '<table><thead><tr><th>Tipo</th><th>Descrição</th><th style="text-align:right">Valor</th></tr></thead><tbody>' +
-                    itens.map(function (it) {
-                        return '<tr><td>' + (it.tipo === 'mao' ? 'Mão de obra' : 'Peça') +
-                            '</td><td>' + (it.desc || '') +
-                            '</td><td style="text-align:right">' + moeda(it.valor) + '</td></tr>';
-                    }).join('') + '</tbody></table>';
+                cardVal.style.display = '';
+                if (!itens.length) {
+                    box.innerHTML = '';
+                } else {
+                    box.innerHTML = '<table><thead><tr><th>Tipo</th><th>Descrição</th><th style="text-align:right">Valor</th></tr></thead><tbody>' +
+                        itens.map(function (it) {
+                            return '<tr><td>' + (it.tipo === 'mao' ? 'Mão de obra' : 'Peça') +
+                                '</td><td>' + (it.desc || '') +
+                                '</td><td style="text-align:right">' + moeda(it.valor) + '</td></tr>';
+                        }).join('') + '</tbody></table>';
+                }
             }
             var total = itens.reduce(function (s, it) { return s + (Number(it.valor) || 0); }, 0);
             var franquia = Number(doc.franquia) || 0;
@@ -274,6 +316,7 @@
             if (franquia > 0) {
                 elFranquia.style.display = '';
                 elFranquia.textContent = 'Franquia (cliente): ' + moeda(franquia);
+                cardVal.style.display = '';
             } else {
                 elFranquia.style.display = 'none';
                 elFranquia.textContent = '';
@@ -283,10 +326,28 @@
             } else if (itens.length && franquia > 0) {
                 elTotal.textContent = 'Total serviço: ' + moeda(total) +
                     ' · Franquia: ' + moeda(franquia);
-            } else if (!itens.length && doc.total) {
-                elTotal.textContent = moeda(doc.total);
+            } else if (!itens.length && !franquia) {
+                elTotal.textContent = '';
             } else {
                 elTotal.textContent = 'Total: ' + moeda(total);
+            }
+
+            var cardOs = document.getElementById('cardDespOs');
+            var cardEsc = document.getElementById('cardDespEsc');
+            if (exp.vendasDespesas && (doc.despesasOs || []).length) {
+                cardOs.style.display = '';
+                document.getElementById('dDespOs').innerHTML = tabelaDesp(doc.despesasOs);
+            } else if (exp.vendasDespesas) {
+                cardOs.style.display = '';
+                document.getElementById('dDespOs').innerHTML = tabelaDesp([]);
+            } else {
+                cardOs.style.display = 'none';
+            }
+            if (exp.despesasEscritorio) {
+                cardEsc.style.display = '';
+                document.getElementById('dDespEsc').innerHTML = tabelaDesp(doc.despesasEscritorio || []);
+            } else {
+                cardEsc.style.display = 'none';
             }
         }
 

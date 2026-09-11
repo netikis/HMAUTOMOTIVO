@@ -218,8 +218,8 @@
             if (box) box.style.display = tipo === 'seguro' ? '' : 'none';
             if (hint) {
                 hint.textContent = tipo === 'seguro'
-                    ? 'Orçamento de seguro: no PDF cliente você escolhe Franquia, Mão de obra e/ou Peças. Peças só saem se marcar.'
-                    : 'Orçamento normal: impressão padrão da OS.';
+                    ? 'Orçamento de seguro: ao imprimir ou enviar, marque Nota seguro, Serviços a parte, Vendas/Despesas, Franquia e/ou Despesas escritório.'
+                    : 'Orçamento normal: ao imprimir ou enviar, escolha com as caixas o que entra no documento.';
             }
             var st = document.getElementById('atStatus');
             if (st && tipo === 'seguro') {

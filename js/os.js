@@ -217,6 +217,75 @@
             return '';
         }
 
+        function despesasFolhaDaOs(atendimentoId) {
+            if (typeof listarDespesasFolhaInterna === 'function') {
+                return listarDespesasFolhaInterna(atendimentoId);
+            }
+            return [];
+        }
+
+        function despesasEscritorioDaOs(atendimentoId) {
+            if (typeof listarDespesasEscritorioPorOs === 'function') {
+                return listarDespesasEscritorioPorOs(atendimentoId);
+            }
+            return [];
+        }
+
+        function normalizarExportItens(exp, a, opts) {
+            opts = opts || {};
+            if (opts.modoInternoSeguro) {
+                return {
+                    notaSeguro: true,
+                    servicosAparte: true,
+                    vendasDespesas: true,
+                    franquia: true,
+                    despesasEscritorio: true,
+                    mao: true,
+                    pecas: true
+                };
+            }
+            if (!exp) {
+                var seguroPrev = ehServicoSeguro(a);
+                return {
+                    notaSeguro: seguroPrev,
+                    servicosAparte: true,
+                    vendasDespesas: true,
+                    franquia: seguroPrev,
+                    despesasEscritorio: false,
+                    mao: true,
+                    pecas: true
+                };
+            }
+            return {
+                notaSeguro: !!exp.notaSeguro,
+                servicosAparte: !!exp.servicosAparte,
+                vendasDespesas: !!exp.vendasDespesas,
+                franquia: !!exp.franquia,
+                despesasEscritorio: !!exp.despesasEscritorio,
+                mao: !!(exp.servicosAparte || exp.mao),
+                pecas: !!(exp.vendasDespesas || exp.pecas)
+            };
+        }
+
+        function htmlTabelaDespesasExport(lista, vazioMsg) {
+            var linhas = (lista || []).length
+                ? lista.map(function (d, i) {
+                    return '<tr>' +
+                        '<td>' + (i + 1) + '</td>' +
+                        '<td>' + esc(fmtData(d.criadoEm || d.data)) + '</td>' +
+                        '<td>' + esc(d.descricao || '—') + '</td>' +
+                        '<td>' + esc(d.forma || '—') + '</td>' +
+                        '<td>' + moeda(d.valor) + '</td>' +
+                        '</tr>';
+                }).join('')
+                : '<tr><td colspan="5" style="padding:10px;color:#666">' + esc(vazioMsg || 'Nenhuma despesa.') + '</td></tr>';
+            var tot = (lista || []).reduce(function (s, d) { return s + (Number(d.valor) || 0); }, 0);
+            return '<div class="nota-tabela-wrap"><table class="nota-itens compacta"><thead><tr>' +
+                '<th>#</th><th>Data</th><th>Descrição</th><th>Forma</th><th>Valor</th>' +
+                '</tr></thead><tbody>' + linhas + '</tbody></table></div>' +
+                '<div class="nota-subtotais compacto" style="padding:6pt">Total: <strong>' + moeda(tot) + '</strong></div>';
+        }
+
         function htmlItensNota(itens, opts) {
             opts = opts || {};
             var lista = itens || [];
@@ -229,7 +298,7 @@
                 return showPecas;
             });
             if (!filtrada.length) {
-                return '<p style="color:#000;font-size:0.85rem;">Nenhum item selecionado para este PDF.</p>';
+                return opts.vazioHtml != null ? opts.vazioHtml : '<p style="color:#000;font-size:0.85rem;">Nenhum item selecionado para este PDF.</p>';
             }
             var rows = filtrada.map(function (it) {
                 var tipo = (it.tipo === 'mao') ? 'Mão de obra' : 'Peça';
@@ -249,6 +318,7 @@
         function htmlNotaEspelho(db, a, opts) {
             opts = opts || {};
             var incluirFotos = !!opts.incluirFotos;
+            var exp = normalizarExportItens(opts.exportItens, a, opts);
             var emp = getEmpresa(db);
             var cad = dadosClienteDoAtendimento(db, a);
             var nome = cad.nome || nomeAtendimento(db, a);
@@ -269,18 +339,59 @@
                     }).join('') +
                     '</div></div>';
             }
+            var tituloNota = exp.notaSeguro
+                ? (opts.modoInternoSeguro ? 'SERVIÇO DE SEGURO — USO INTERNO' : 'NOTA SEGURO')
+                : 'ESPELHO DE ATENDIMENTO';
+            var partesSel = [];
+            if (exp.notaSeguro) partesSel.push('nota seguro');
+            if (exp.servicosAparte) partesSel.push('serviços a parte');
+            if (exp.vendasDespesas) partesSel.push('vendas/despesas');
+            if (exp.franquia) partesSel.push('franquia');
+            if (exp.despesasEscritorio) partesSel.push('despesas escritório');
+            var servicosNoBlocoOficina = !exp.servicosAparte;
+            var blocosExtra = '';
+            if (exp.servicosAparte) {
+                var maoHtml = htmlItensNota(a.itens, { exportItens: { mao: true, pecas: false }, vazioHtml: '' });
+                blocosExtra +=
+                    '<div class="nota-bloco compacto"><div class="tit escuro">Serviços a parte</div>' +
+                    '<div class="nota-campo full" style="margin-bottom:8px"><span class="nota-label">Serviços</span>' +
+                    '<span class="nota-valor" style="color:#000;font-weight:800">' + esc(a.servicos || '—') + '</span></div>' +
+                    '<div class="nota-valores-pad compacto">' + maoHtml + '</div></div>';
+            }
+            if (exp.vendasDespesas) {
+                var pecasHtml = htmlItensNota(a.itens, { exportItens: { mao: false, pecas: true }, vazioHtml: '' });
+                var despOs = despesasFolhaDaOs(a.id);
+                blocosExtra +=
+                    '<div class="nota-bloco compacto"><div class="tit verde">Vendas / Despesas</div>' +
+                    '<div class="nota-valores-pad compacto">' + pecasHtml + '</div>' +
+                    '<div class="tit vermelho" style="margin-top:10px">Despesas da O.S</div>' +
+                    htmlTabelaDespesasExport(despOs, 'Nenhuma despesa de serviço nesta OS.') +
+                    '</div>';
+            }
+            if (exp.franquia) {
+                blocosExtra +=
+                    '<div class="nota-bloco compacto"><div class="tit verde">Franquia</div>' +
+                    '<div class="nota-valores-pad compacto">' +
+                    htmlItensNotaSeguro([], { interno: !!opts.modoInternoSeguro, franquia: a.franquia, exportItens: { franquia: true, mao: false, pecas: false } }) +
+                    '</div></div>';
+            }
+            if (exp.despesasEscritorio) {
+                var despEsc = despesasEscritorioDaOs(a.id);
+                blocosExtra +=
+                    '<div class="nota-bloco compacto"><div class="tit vermelho">Despesas escritório</div>' +
+                    htmlTabelaDespesasExport(despEsc, 'Nenhuma despesa de escritório nesta OS.') +
+                    '</div>';
+            }
+            if (!blocosExtra && !exp.notaSeguro) {
+                blocosExtra = '<div class="nota-bloco compacto"><div class="tit verde">Valores</div>' +
+                    '<p style="color:#000;font-size:0.85rem;">Nenhum bloco de valores selecionado.</p></div>';
+            }
             return '<div class="nota-espelho" id="notaEspelhoHtml">' +
                 htmlCabecalhoNotaEmpresa(emp,
-                    '<div class="nota-sub nota-titulo-espelho"' + (ehServicoSeguro(a) && opts.modoInternoSeguro ? ' style="color:#c0392b"' : '') + '>' +
-                    (ehServicoSeguro(a)
-                        ? (opts.modoInternoSeguro ? 'SERVIÇO DE SEGURO — USO INTERNO' : 'ORÇAMENTO / SERVIÇO DE SEGURO')
-                        : 'ESPELHO DE ATENDIMENTO') + '</div>' +
+                    '<div class="nota-sub nota-titulo-espelho"' + (exp.notaSeguro && opts.modoInternoSeguro ? ' style="color:#c0392b"' : '') + '>' +
+                    tituloNota + '</div>' +
                     '<div class="nota-sub nota-registro">' +
-                    (ehServicoSeguro(a)
-                        ? (opts.modoInternoSeguro
-                            ? 'Interno · mão de obra, peças, franquia e responsável · '
-                            : 'Documento para o cliente · itens conforme seleção · ')
-                        : '') +
+                    (partesSel.length ? ('Itens: ' + partesSel.join(' · ') + ' · ') : '') +
                     'Registro ' + esc(fmtData(a.entrada || a.criadoEm)) +
                     (a.id ? ' · ID ' + esc(String(a.id).slice(-6)) : '') + '</div>'
                 ) +
@@ -302,8 +413,8 @@
                 '<div class="nota-campo"><span class="nota-label">Ano modelo</span><span class="nota-valor">' + esc(a.anoModelo || '—') + '</span></div>' +
                 '<div class="nota-campo full"><span class="nota-label">Chassi</span><span class="nota-valor nota-chassi">' + esc((a.chassi || '—').toUpperCase()) + '</span></div>' +
                 '</div></div>' +
-                '<div class="nota-bloco compacto"><div class="tit escuro">Oficina, Chegada &amp; Serviços</div><div class="nota-grid nota-grid-compacta">' +
-                ((opts.modoInternoSeguro || !ehServicoSeguro(a))
+                '<div class="nota-bloco compacto"><div class="tit escuro">Oficina, Chegada' + (exp.notaSeguro ? ' &amp; Seguro' : '') + '</div><div class="nota-grid nota-grid-compacta">' +
+                ((opts.modoInternoSeguro || !exp.notaSeguro)
                     ? '<div class="nota-campo"><span class="nota-label">Responsável</span><span class="nota-valor">' + esc(nomeResponsavelOs(a)) + '</span></div>'
                     : '') +
                 '<div class="nota-campo"><span class="nota-label">Status</span><span class="nota-valor">' + esc(a.status || '—') +
@@ -311,21 +422,15 @@
                 '<div class="nota-campo"><span class="nota-label">Entrada</span><span class="nota-valor">' + esc(fmtData(a.entrada)) + '</span></div>' +
                 '<div class="nota-campo"><span class="nota-label">Saída</span><span class="nota-valor">' + esc(fmtData(a.saida)) + '</span></div>' +
                 (a.agendadoPara ? '<div class="nota-campo full"><span class="nota-label">Agendado para</span><span class="nota-valor">' + esc(fmtData(a.agendadoPara)) + '</span></div>' : '') +
-                (ehServicoSeguro(a) && a.seguradora ? '<div class="nota-campo"><span class="nota-label">Seguradora</span><span class="nota-valor">' + esc(a.seguradora) + '</span></div>' : '') +
-                (ehServicoSeguro(a) && opts.modoInternoSeguro && a.sinistro ? '<div class="nota-campo"><span class="nota-label">Sinistro</span><span class="nota-valor">' + esc(a.sinistro) + '</span></div>' : '') +
+                (exp.notaSeguro && a.seguradora ? '<div class="nota-campo"><span class="nota-label">Seguradora</span><span class="nota-valor">' + esc(a.seguradora) + '</span></div>' : '') +
+                (exp.notaSeguro && a.sinistro ? '<div class="nota-campo"><span class="nota-label">Sinistro</span><span class="nota-valor">' + esc(a.sinistro) + '</span></div>' : '') +
                 '<div class="nota-campo full"><span class="nota-label">Estado de chegada</span><span class="nota-valor">' + esc(a.estado || 'Sem observações.') + '</span></div>' +
-                '<div class="nota-campo full"><span class="nota-label">Serviços</span><span class="nota-valor" style="color:#000;font-weight:800">' + esc(a.servicos || '—') + '</span></div>' +
+                (servicosNoBlocoOficina
+                    ? '<div class="nota-campo full"><span class="nota-label">Serviços</span><span class="nota-valor" style="color:#000;font-weight:800">' + esc(a.servicos || '—') + '</span></div>'
+                    : '') +
                 '</div></div>' +
                 blocoFotos +
-                '<div class="nota-bloco compacto"><div class="tit verde">Valores</div><div class="nota-valores-pad compacto">' +
-                (ehServicoSeguro(a)
-                    ? htmlItensNotaSeguro(a.itens, {
-                        interno: !!opts.modoInternoSeguro,
-                        franquia: a.franquia,
-                        exportItens: opts.exportItens || null
-                    })
-                    : htmlItensNota(a.itens, { exportItens: opts.exportItens || null })) +
-                '</div></div>' +
+                blocosExtra +
                 '<div class="nota-sigs compacto">' +
                 '<div class="nota-sig"><div class="nota-sig-espaco"></div><div class="nota-sig-base">' +
                 (opts.modoInternoSeguro ? 'Responsável / Funcionário' : 'Assinatura do Responsável') + '</div></div>' +
@@ -501,11 +606,9 @@
             /* Preview: interno se seguro. Salvar/Encaminhar pedem escolha do PDF cliente. */
             var html = htmlNotaEspelho(db, a, { incluirFotos: true, modoInternoSeguro: seguro }) +
                 (atendimentoTemFotos(a)
-                    ? '<p class="hint" style="margin-top:10px;color:#0d3d6e">Fotos acima são internas. Em <strong>Enviar nota ao cliente</strong> você escolhe o que exportar (franquia / mão de obra / peças) e depois COM FOTOS ou SEM FOTOS.</p>'
+                    ? '<p class="hint" style="margin-top:10px;color:#0d3d6e">Fotos acima são internas. Em <strong>imprimir</strong> ou <strong>enviar nota ao cliente</strong> você marca o que sai: Nota seguro, Serviços a parte, Vendas/Despesas, Franquia e Despesas escritório.</p>'
                     : '') +
-                (seguro
-                    ? '<p class="hint" style="margin-top:8px;color:#c0392b">Orçamento de seguro: <strong>PDF interno</strong> mostra tudo. <strong>PDF cliente</strong> e <strong>Enviar nota ao cliente</strong> perguntam Franquia / Mão de obra / Peças. <strong>Salvar ou Encaminhar</strong> também pedem o PDF do cliente (não manda tudo junto).</p>'
-                    : '<p class="hint" style="margin-top:8px">Ao imprimir/salvar/encaminhar/<strong>enviar para assinar</strong>, escolha se sai <strong>mão de obra</strong>, <strong>peças</strong> ou os dois — para o cliente não ver o que for só interno.</p>');
+                '<p class="hint" style="margin-top:8px">Ao imprimir, salvar, encaminhar ou enviar, escolha com as caixas o que entra no documento.</p>';
             _htmlNotaImpressaoAtual = htmlNotaEspelho(db, a, { incluirFotos: true, modoInternoSeguro: seguro });
             _tituloNotaImpressao = titulo;
             _notaPdfPrecisaEscolherItens = true;
@@ -538,37 +641,28 @@
             var modoSeguro = opts.seguro !== false;
             return new Promise(function (resolve) {
                 _itensPdfClienteResolve = resolve;
+                var chkN = document.getElementById('chkPdfNotaSeguro');
+                var chkS = document.getElementById('chkPdfServicosAparte');
+                var chkV = document.getElementById('chkPdfVendasDespesas');
                 var chkF = document.getElementById('chkPdfFranquia');
-                var chkM = document.getElementById('chkPdfMao');
-                var chkP = document.getElementById('chkPdfPecas');
-                var labF = document.getElementById('labChkPdfFranquia');
+                var chkE = document.getElementById('chkPdfDespesasEscritorio');
                 var tit = document.getElementById('titItensPdfCliente');
                 var hint = document.getElementById('hintItensPdfCliente');
                 var sug = document.getElementById('sugItensPdfCliente');
-                if (labF) labF.style.display = modoSeguro ? '' : 'none';
-                if (tit) {
-                    tit.textContent = modoSeguro
-                        ? 'Enviar ao cliente — o que exportar?'
-                        : 'Enviar ao cliente — mão de obra e/ou peças?';
-                }
+                if (tit) tit.textContent = 'Imprimir / enviar — o que incluir?';
                 if (hint) {
-                    hint.innerHTML = modoSeguro
-                        ? 'Marque o que o cliente verá no PDF ou no link de assinatura. A <strong>franquia nunca soma</strong> no total do serviço (fica à parte).'
-                        : 'Marque o que vai para o cliente (PDF ou assinatura). Desmarque <strong>Peças</strong> se quiser sair só a <strong>mão de obra</strong>.';
+                    hint.innerHTML = 'Marque as caixas do que deseja <strong>imprimir</strong> ou <strong>enviar ao cliente</strong>. Pode marcar um ou vários.';
                 }
                 if (sug) {
                     sug.textContent = modoSeguro
-                        ? 'Sugestão: franquia marcada (o que o cliente paga). Peças = adicional a cargo do cliente.'
-                        : 'Sugestão: os dois marcados. Para o cliente ver só a mão de obra, deixe só essa opção.';
+                        ? 'Sugestão no seguro: Nota seguro + Franquia. Marque Vendas/Despesas ou Escritório só se quiser esses valores no papel.'
+                        : 'Sugestão: Serviços a parte e/ou Vendas/Despesas. Franquia e Nota seguro se for o caso.';
                 }
-                if (chkF) {
-                    chkF.checked = modoSeguro;
-                    chkF.disabled = !modoSeguro;
-                }
-                if (chkM) chkM.checked = !modoSeguro;
-                if (chkP) chkP.checked = !modoSeguro;
-                if (modoSeguro && chkM) chkM.checked = false;
-                if (modoSeguro && chkP) chkP.checked = false;
+                if (chkN) chkN.checked = modoSeguro;
+                if (chkS) chkS.checked = !modoSeguro;
+                if (chkV) chkV.checked = !modoSeguro;
+                if (chkF) chkF.checked = modoSeguro;
+                if (chkE) chkE.checked = false;
                 document.getElementById('modalItensPdfCliente').classList.add('aberto');
             });
         }
@@ -581,17 +675,18 @@
                 r(null);
                 return;
             }
-            var labF = document.getElementById('labChkPdfFranquia');
-            var modoSeguro = !(labF && labF.style.display === 'none');
             var exportItens = {
-                franquia: modoSeguro && !!(document.getElementById('chkPdfFranquia') || {}).checked,
-                mao: !!(document.getElementById('chkPdfMao') || {}).checked,
-                pecas: !!(document.getElementById('chkPdfPecas') || {}).checked
+                notaSeguro: !!(document.getElementById('chkPdfNotaSeguro') || {}).checked,
+                servicosAparte: !!(document.getElementById('chkPdfServicosAparte') || {}).checked,
+                vendasDespesas: !!(document.getElementById('chkPdfVendasDespesas') || {}).checked,
+                franquia: !!(document.getElementById('chkPdfFranquia') || {}).checked,
+                despesasEscritorio: !!(document.getElementById('chkPdfDespesasEscritorio') || {}).checked
             };
-            if (!exportItens.franquia && !exportItens.mao && !exportItens.pecas) {
-                toast(modoSeguro
-                    ? 'Marque pelo menos um item: Franquia, Mão de obra ou Peças.'
-                    : 'Marque Mão de obra e/ou Peças.');
+            exportItens.mao = exportItens.servicosAparte;
+            exportItens.pecas = exportItens.vendasDespesas;
+            if (!exportItens.notaSeguro && !exportItens.servicosAparte && !exportItens.vendasDespesas &&
+                !exportItens.franquia && !exportItens.despesasEscritorio) {
+                toast('Marque pelo menos uma opção para imprimir ou enviar.');
                 _itensPdfClienteResolve = r;
                 document.getElementById('modalItensPdfCliente').classList.add('aberto');
                 return;
@@ -619,27 +714,19 @@
             var modoInterno = !!opts.modoInternoSeguro;
             var exportItens = opts.exportItens || null;
 
-            if (seguro && opts.modoInternoSeguro == null) {
-                var escolha = prompt(
-                    'Orçamento de seguro — tipo de impressão:\n\n' +
-                    '1 = Cliente (escolher Franquia / Mão de obra / Peças)\n' +
-                    '2 = Interno (tudo + responsável)\n\n' +
-                    'Digite 1 ou 2:',
-                    '1'
-                );
-                if (escolha == null) return;
-                modoInterno = String(escolha).trim() === '2';
+            if (seguro && modoInterno && !exportItens) {
+                exportItens = {
+                    notaSeguro: true,
+                    servicosAparte: true,
+                    vendasDespesas: true,
+                    franquia: true,
+                    despesasEscritorio: true,
+                    mao: true,
+                    pecas: true
+                };
             }
-
-            if (seguro && !modoInterno && !exportItens) {
-                exportItens = await perguntarItensPdfCliente({ seguro: true });
-                if (!exportItens) return;
-            }
-            if (seguro && modoInterno) {
-                exportItens = { franquia: true, mao: true, pecas: true };
-            }
-            if (!seguro && !exportItens) {
-                exportItens = await perguntarItensPdfCliente({ seguro: false });
+            if (!exportItens) {
+                exportItens = await perguntarItensPdfCliente({ seguro: seguro });
                 if (!exportItens) return;
             }
 
@@ -721,26 +808,22 @@
             if (!exp) return lista.slice();
             return lista.filter(function (it) {
                 var tipo = it.tipo || 'peca';
-                if (tipo === 'mao') return !!exp.mao;
-                return !!exp.pecas;
+                if (tipo === 'mao') return !!(exp.servicosAparte || exp.mao);
+                return !!(exp.vendasDespesas || exp.pecas);
             });
         }
 
         function documentoAssinatura(db, a, incluirFotos, exportItens) {
             var emp = getEmpresa(db);
             var cad = dadosClienteDoAtendimento(db, a);
-            var seguro = ehServicoSeguro(a);
-            var exp = exportItens || null;
-            if (!exp) {
-                exp = seguro
-                    ? { franquia: true, mao: false, pecas: false }
-                    : { franquia: false, mao: true, pecas: true };
-            }
+            var exp = normalizarExportItens(exportItens, a, {});
             var itensFiltrados = filtrarItensExportCliente(a.itens, exp);
             var totalItens = itensFiltrados.reduce(function (s, it) {
                 return s + (Number(it.valor) || 0);
             }, 0);
-            var franquiaShow = (seguro && exp.franquia) ? (Number(a.franquia) || 0) : 0;
+            var franquiaShow = exp.franquia ? (Number(a.franquia) || 0) : 0;
+            var despOs = exp.vendasDespesas ? despesasFolhaDaOs(a.id) : [];
+            var despEsc = exp.despesasEscritorio ? despesasEscritorioDaOs(a.id) : [];
             var doc = {
                 atendimentoId: a.id,
                 nomeCliente: cad.nome || nomeAtendimento(db, a),
@@ -765,14 +848,35 @@
                 status: a.status || '',
                 agendadoPara: a.agendadoPara || '',
                 estado: a.estado || '',
-                servicos: a.servicos || '',
+                servicos: exp.servicosAparte || exp.notaSeguro ? (a.servicos || '') : '',
                 tipoServico: a.tipoServico || 'normal',
-                seguradora: a.seguradora || '',
+                seguradora: exp.notaSeguro ? (a.seguradora || '') : '',
+                sinistro: exp.notaSeguro ? (a.sinistro || '') : '',
                 itens: itensFiltrados,
                 total: totalItens,
                 franquia: franquiaShow,
+                despesasOs: despOs.map(function (d) {
+                    return {
+                        criadoEm: d.criadoEm || d.data || '',
+                        descricao: d.descricao || '',
+                        forma: d.forma || '',
+                        valor: Number(d.valor) || 0
+                    };
+                }),
+                despesasEscritorio: despEsc.map(function (d) {
+                    return {
+                        criadoEm: d.criadoEm || d.data || '',
+                        descricao: d.descricao || '',
+                        forma: d.forma || '',
+                        valor: Number(d.valor) || 0
+                    };
+                }),
                 exportItens: {
+                    notaSeguro: !!exp.notaSeguro,
+                    servicosAparte: !!exp.servicosAparte,
+                    vendasDespesas: !!exp.vendasDespesas,
                     franquia: !!exp.franquia,
+                    despesasEscritorio: !!exp.despesasEscritorio,
                     mao: !!exp.mao,
                     pecas: !!exp.pecas
                 },
@@ -855,9 +959,11 @@
             }
 
             var partes = [];
-            if (seguro && exportItens.franquia) partes.push('franquia');
-            if (exportItens.mao) partes.push('mão de obra');
-            if (exportItens.pecas) partes.push('peças');
+            if (exportItens.notaSeguro) partes.push('nota seguro');
+            if (exportItens.servicosAparte) partes.push('serviços a parte');
+            if (exportItens.vendasDespesas) partes.push('vendas/despesas');
+            if (exportItens.franquia) partes.push('franquia');
+            if (exportItens.despesasEscritorio) partes.push('despesas escritório');
             var link = urlLinkAssinatura(a.tokenAssinatura);
             document.getElementById('inputLinkAssinatura').value = link;
             document.getElementById('modalLinkAssinatura').classList.add('aberto');
@@ -1428,7 +1534,7 @@
             var franquiaShow = showFranquia ? franquia : 0;
             var soFranquiaCliente = !interno && showFranquia && !showPecas && !showMao;
 
-            if (!pecasLista.length && !maoLista.length && !(franquiaShow > 0)) {
+            if (!pecasLista.length && !maoLista.length && !showFranquia) {
                 return '<p style="color:#000;font-size:0.85rem;">Nenhum item selecionado para este PDF.</p>';
             }
 

@@ -30,6 +30,10 @@
             });
         }
 
+        function listarDespesasEscritorioPorOs(atendimentoId) {
+            return listarDespesasInternasPorOs(atendimentoId).filter(despesaOcultaFolha);
+        }
+
         function totalCustoPecasOs(atendimento) {
             if (!atendimento) return 0;
             if (atendimento.totalCustoPecas != null && atendimento.totalCustoPecas !== '') {

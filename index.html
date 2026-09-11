@@ -262,7 +262,7 @@
                             </select>
                         </div>
                     </div>
-                    <p class="hint" style="margin-top:8px" id="hintTipoOrcamento">Orçamento normal: impressão padrão. Seguro: no PDF cliente você escolhe o que exportar (franquia, mão de obra e/ou peças).</p>
+                    <p class="hint" style="margin-top:8px" id="hintTipoOrcamento">Orçamento normal: ao imprimir ou enviar, você marca o que sai. Seguro: mesma escolha (nota, serviços, vendas/despesas, franquia, escritório).</p>
                 </div>
 
                 <div class="box" id="boxSeguroOs" style="display:none;border-color:rgba(230,126,34,0.45)">
@@ -274,7 +274,7 @@
                             <input id="atFranquia" inputmode="decimal" placeholder="0,00">
                         </div>
                     </div>
-                    <p class="hint" style="margin-top:8px">A <strong>franquia não soma</strong> no total do serviço (peças + mão). No PDF interno ela aparece à parte; no PDF cliente você marca o que sai.</p>
+                    <p class="hint" style="margin-top:8px">A <strong>franquia não soma</strong> no total do serviço (peças + mão). No PDF ela só aparece se você marcar <strong>Franquia</strong> na hora de imprimir ou enviar.</p>
                 </div>
 
                 <div class="box">
@@ -1483,25 +1483,33 @@
 
     <div class="modal-overlay" id="modalItensPdfCliente">
         <div class="modal-box" style="width:min(480px,100%)">
-            <h3 id="titItensPdfCliente">PDF / assinatura — o que exportar?</h3>
-            <p class="hint" id="hintItensPdfCliente">Marque o que deve aparecer para o cliente (PDF ou link de assinatura). A <strong>franquia nunca soma</strong> no total do serviço (fica à parte). Pode marcar 1, 2 ou os 3.</p>
-            <div style="display:flex;flex-direction:column;gap:12px;margin:14px 0">
-                <label id="labChkPdfFranquia" style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:1.05rem">
-                    <input type="checkbox" id="chkPdfFranquia" checked style="width:20px;height:20px">
-                    Franquia
+            <h3 id="titItensPdfCliente">Imprimir / enviar — o que incluir?</h3>
+            <p class="hint" id="hintItensPdfCliente">Marque as caixas do que deseja <strong>imprimir</strong> ou <strong>enviar ao cliente</strong>. Pode marcar um ou vários.</p>
+            <div class="lista-export-pdf">
+                <label>
+                    <input type="checkbox" id="chkPdfNotaSeguro">
+                    <span>NOTA SEGURO</span>
                 </label>
-                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:1.05rem">
-                    <input type="checkbox" id="chkPdfMao" checked style="width:20px;height:20px">
-                    Mão de obra
+                <label>
+                    <input type="checkbox" id="chkPdfServicosAparte">
+                    <span>SERVIÇOS A PARTE</span>
                 </label>
-                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:1.05rem">
-                    <input type="checkbox" id="chkPdfPecas" style="width:20px;height:20px">
-                    Peças
+                <label>
+                    <input type="checkbox" id="chkPdfVendasDespesas">
+                    <span>VENDAS / DESPESAS</span>
+                </label>
+                <label>
+                    <input type="checkbox" id="chkPdfFranquia">
+                    <span>FRANQUIA</span>
+                </label>
+                <label>
+                    <input type="checkbox" id="chkPdfDespesasEscritorio">
+                    <span>DESPESAS ESCRITÓRIO</span>
                 </label>
             </div>
-            <p class="hint" id="sugItensPdfCliente" style="margin:0">Sugestão: franquia marcada (o que o cliente paga). Peças = adicional a cargo do cliente.</p>
+            <p class="hint" id="sugItensPdfCliente" style="margin:0">A franquia não soma no total do serviço. Vendas/despesas e despesas de escritório são da OS.</p>
             <div class="modal-acoes" style="margin-top:16px">
-                <button type="button" class="btn btn-primary" id="btnItensPdfOk" style="flex:1">Gerar PDF</button>
+                <button type="button" class="btn btn-primary" id="btnItensPdfOk" style="flex:1">Continuar</button>
                 <button type="button" class="btn btn-secondary" id="btnItensPdfCancelar" style="flex:1">Cancelar</button>
             </div>
         </div>
