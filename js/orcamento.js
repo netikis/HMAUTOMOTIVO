@@ -41,7 +41,7 @@
             }
             if (hint) {
                 hint.innerHTML = interno
-                    ? 'No modo interno a venda é <strong>só para funcionário cadastrado</strong>. Baixa o estoque unificado; dinheiro → caixa interno; PIX/cartão → banco interno.'
+                    ? 'A venda é <strong>só para funcionário cadastrado</strong>. Baixa o estoque unificado; dinheiro → caixa interno; PIX/cartão → banco interno.'
                     : 'Venda baixa estoque; <strong>Dinheiro</strong> → Caixa Balcão; <strong>PIX/Cartão/Boleto</strong> → Caixa do Banco; <strong>Pendente</strong> → Contas a Receber.';
             }
             if (interno) preencherSelectFuncionariosVenda();
@@ -553,7 +553,7 @@
                 funcionarioId = document.getElementById('vdFuncionarioId').value;
                 var func = (db.funcionarios || []).find(function (f) { return f.id === funcionarioId; });
                 if (!func || func.ativo === false) {
-                    toast('Selecione um funcionário ativo. Cadastre em Modo interno → Cadastro de Funcionários.');
+                    toast('Selecione um funcionário ativo. Cadastre em Funcionários → Cadastro de Funcionários.');
                     return;
                 }
                 funcionarioNome = func.nome;

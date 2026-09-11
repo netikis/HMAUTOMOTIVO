@@ -469,11 +469,43 @@
             color: var(--chrome);
         }
 
-        .lista-relatorios-mes {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+        .relatorio-mes-preview {
+            overflow-x: auto;
         }
+        .relatorio-mes-preview .resumo {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.12);
+            padding: 12px;
+            border: 1px solid var(--line);
+            margin: 8px 0 14px;
+            border-radius: var(--radius);
+        }
+        .relatorio-mes-preview .resumo-box {
+            text-align: center;
+            font-size: 12px;
+        }
+        .relatorio-mes-preview .resumo-box b {
+            display: block;
+            font-size: 16px;
+            margin-top: 4px;
+        }
+        .relatorio-mes-preview .section-title {
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 16px;
+            text-transform: uppercase;
+            border-radius: 4px 4px 0 0;
+            display: flex;
+            justify-content: space-between;
+            color: #fff;
+        }
+        .relatorio-mes-preview .section-title.entrada { background: #27ae60; }
+        .relatorio-mes-preview .section-title.saida { background: #e74c3c; }
+        .relatorio-mes-preview .section-title.pendente { background: #f39c12; }
         .item-relatorio-mes {
             display: flex;
             flex-wrap: wrap;

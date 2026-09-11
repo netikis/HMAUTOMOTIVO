@@ -21,7 +21,7 @@
             toast._t = setTimeout(function () { el.classList.remove('show'); }, 2600);
         }
 
-        var MSG_BAIXA_OS = 'VÁ ATÉ DESPESAS DE O.S NO MODO INTERNO E CLIQUE EM "CARRO FINALIZADO" PARA A BAIXA DO SERVIÇO REALIZADO.';
+        var MSG_BAIXA_OS = 'VÁ ATÉ DESPESAS → DESPESAS POR O.S E CLIQUE EM "CARRO FINALIZADO" PARA A BAIXA DO SERVIÇO REALIZADO.';
 
         function abrirModalPergunta(titulo, texto, botoesHtml) {
             var overlay = document.getElementById('modalPergunta');
@@ -781,6 +781,9 @@
 
         function abrirPainel(id, btn) {
             var canalAntes = canalVendas;
+            if (btn && btn.getAttribute('data-rel-tipo')) {
+                relatorioCaixaTipo = btn.getAttribute('data-rel-tipo');
+            }
             if (btn && btn.getAttribute('data-canal')) {
                 canalVendas = btn.getAttribute('data-canal');
             } else if (!btn) {
@@ -789,8 +792,7 @@
             } else {
                 var gBtn = btn.closest('.menu-grupo');
                 var gNome = gBtn ? gBtn.getAttribute('data-grupo') : '';
-                if (gNome === 'interno' || gNome === 'finalizados') canalVendas = 'interno';
-                else if (gNome === 'vendas' || gNome === 'caixa') canalVendas = 'normal';
+                if (gNome === 'funcionarios' || gNome === 'despesas' || gNome === 'finalizados') canalVendas = 'interno';
                 else canalVendas = 'normal';
             }
             if (canalAntes !== canalVendas) {
@@ -809,7 +811,8 @@
                 var gClick = btn.closest('.menu-grupo');
                 if (gClick) abrirGrupoMenu(gClick.getAttribute('data-grupo'), true);
             } else {
-                var match = document.querySelector('.nav-btn[data-panel="' + id + '"][data-canal="' + canalVendas + '"]') ||
+                var match = document.querySelector('.nav-btn[data-panel="' + id + '"][data-canal="' + canalVendas + '"][data-rel-tipo="' + relatorioCaixaTipo + '"]') ||
+                    document.querySelector('.nav-btn[data-panel="' + id + '"][data-canal="' + canalVendas + '"]') ||
                     document.querySelector('.nav-btn[data-panel="' + id + '"]');
                 if (match) {
                     match.classList.add('active');
@@ -819,11 +822,17 @@
             }
             document.querySelectorAll('.nav-btn[data-panel="' + id + '"]').forEach(function (b) {
                 var c = b.getAttribute('data-canal');
-                if (!c || c === canalVendas) b.classList.add('active');
+                var rt = b.getAttribute('data-rel-tipo');
+                var canalOk = !c || c === canalVendas;
+                var tipoOk = !rt || rt === relatorioCaixaTipo;
+                if (canalOk && tipoOk) b.classList.add('active');
                 else b.classList.remove('active');
             });
             atualizarMarcacaoGrupos();
             var t = TITULOS[id] || ['HM', ''];
+            if (id === 'painelRelatorioCaixa' && REL_MES_PAINEL_TITULOS[relatorioCaixaTipo]) {
+                t = REL_MES_PAINEL_TITULOS[relatorioCaixaTipo];
+            }
             var sufixo = canalVendas === 'interno' ? ' · INTERNO' : '';
             document.getElementById('tituloPainel').textContent = t[0] + (PAINEIS_CANAL[id] ? sufixo : '');
             document.getElementById('subtituloPainel').textContent = canalVendas === 'interno' && PAINEIS_CANAL[id]
@@ -911,14 +920,7 @@
             painelServicoFinalizado: true,
             painelFuncionarios: true,
             painelPagFuncionarios: true,
-            painelProdutos: true,
-            painelOrcamento: true,
-            painelVendasRealizadas: true,
-            painelOrcamentosRealizados: true,
-            painelCaixa: true,
-            painelCaixaBanco: true,
-            painelPendentes: true,
-            painelRelatorioCaixa: true
+            painelOrcamento: true
         };
 
         function abrirMenuMobile() {

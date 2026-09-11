@@ -1282,7 +1282,7 @@
                         criadoEm: agora,
                         atualizadoEm: agora
                     });
-                    toast('Funcionário cadastrado — já pode comprar no modo interno.');
+                    toast('Funcionário cadastrado — já pode aparecer na venda para funcionário.');
                 }
                 salvar(db);
                 limparFormFuncionario();
@@ -1846,8 +1846,32 @@
             }
         }
 
+        function mesAnoInputRelCx() {
+            var el = document.getElementById('relCxMesAno');
+            var v = el && el.value ? String(el.value).trim() : '';
+            return /^\d{2}\/\d{4}$/.test(v) ? v : mesAnoAtualPadrao();
+        }
+
         function renderRelatorioCaixa() {
             var db = carregar();
+            var filtro = relatorioCaixaTipo || 'geral';
+            var tit = REL_MES_PAINEL_TITULOS[filtro] || REL_MES_PAINEL_TITULOS.geral;
+            var ehGeral = filtro === 'geral';
+            var inpMes = document.getElementById('relCxMesAno');
+            if (inpMes && !String(inpMes.value || '').trim()) inpMes.value = mesAnoAtualPadrao();
+            var tituloBox = document.getElementById('relMesTituloBox');
+            var hintBox = document.getElementById('relMesHintBox');
+            if (tituloBox) tituloBox.textContent = tit[0];
+            if (hintBox) hintBox.textContent = tit[1] + '. Informe o mês/ano (Ex: 07/2026) e gere o PDF.';
+            var cards = document.getElementById('relCxCards');
+            var pastas = document.getElementById('relCxPastasBox');
+            var detalhe = document.getElementById('relCxConteudo');
+            var btnImp = document.getElementById('btnImprimirRelCx');
+            if (cards) cards.style.display = ehGeral ? '' : 'none';
+            if (pastas) pastas.style.display = ehGeral ? '' : 'none';
+            if (detalhe) detalhe.style.display = ehGeral ? '' : 'none';
+            if (btnImp) btnImp.style.display = ehGeral ? '' : 'none';
+
             var cfg = getCaixaConfig(db);
             var balEnt = somarLista(db.caixa, 'entrada');
             var balSai = somarLista(db.caixa, 'saida');
@@ -1890,58 +1914,37 @@
                 });
             }
 
-            /* No modo interno: resumo de lucro por OS (despesas vinculadas) */
-            var boxRel = document.getElementById('relCxConteudo');
-            var oldLucro = document.getElementById('relLucroOsBox');
-            if (oldLucro) oldLucro.remove();
-            if (canalVendas === 'interno') {
-                var main = carregarMain();
-                var linhasLucro = [];
-                var totBruto = 0, totDesp = 0;
-                (main.atendimentos || []).forEach(function (a) {
-                    var r = resumoLucroOs(a);
-                    if (r.despesas <= 0 && r.bruto <= 0) return;
-                    if (r.despesas <= 0) return; /* só OS com despesa interna */
-                    totBruto += r.bruto;
-                    totDesp += r.despesas;
-                    linhasLucro.push({
-                        data: fmtData(a.entrada || a.criadoEm),
-                        cliente: nomeAtendimento(main, a),
-                        placa: (a.placa || '—').toUpperCase(),
-                        bruto: r.bruto,
-                        despesas: r.despesas,
-                        lucro: r.lucro
-                    });
-                });
-                var wrap = document.createElement('div');
-                wrap.id = 'relLucroOsBox';
-                wrap.style.marginTop = '18px';
-                if (!linhasLucro.length) {
-                    wrap.innerHTML = '<h2>Lucro por OS (despesas internas)</h2><p class="muted">Nenhuma despesa vinculada a OS ainda.</p>';
+            var preview = document.getElementById('relMesPreview');
+            if (preview && typeof coletarItensRelatorioMensal === 'function') {
+                var mesAno = mesAnoInputRelCx();
+                var itens = coletarItensRelatorioMensal(db, filtro, mesAno);
+                if (!itens.length) {
+                    preview.innerHTML = '<p class="muted">Nenhum registro encontrado para ' + esc(mesAno) + '.</p>';
                 } else {
-                    wrap.innerHTML =
-                        '<h2>Lucro por OS (despesas internas)</h2>' +
-                        '<p class="hint">Bruto das OS oficiais − saídas do caixa interno vinculadas. Total despesas: <strong>' +
-                        moeda(totDesp) + '</strong> · Lucro: <strong>' + moeda(totBruto - totDesp) + '</strong></p>' +
-                        '<table><thead><tr><th>Data</th><th>Cliente</th><th>Placa</th><th>Bruto</th><th>Despesas</th><th>Lucro</th></tr></thead>' +
-                        '<tbody>' +
-                        linhasLucro.map(function (r) {
-                            return '<tr><td>' + esc(r.data) + '</td><td>' + esc(r.cliente) + '</td><td>' +
-                                esc(r.placa) + '</td><td>' + moeda(r.bruto) + '</td><td>' +
-                                moeda(r.despesas) + '</td><td><strong>' + moeda(r.lucro) + '</strong></td></tr>';
-                        }).join('') +
-                        '</tbody></table>';
+                    preview.innerHTML = montarHtmlSecoesRelatorioMes(itens, filtro).html;
                 }
-                boxRel.appendChild(wrap);
             }
 
-            gerarArvorePastasCaixa({ elId: 'arvorePastasCaixa', filtro: 'geral', idPrefix: 'pasta_cx' });
+            var oldLucro = document.getElementById('relLucroOsBox');
+            if (oldLucro) oldLucro.remove();
+
+            if (ehGeral) {
+                gerarArvorePastasCaixa({ elId: 'arvorePastasCaixa', filtro: 'geral', idPrefix: 'pasta_cx' });
+            }
         }
 
         document.getElementById('btnAtualizarRelCx').addEventListener('click', function () {
             renderRelatorioCaixa();
             toast('Relatório atualizado.');
         });
+        document.getElementById('btnPdfRelMesAtual').addEventListener('click', function () {
+            gerarRelatorioMensalPDF(relatorioCaixaTipo || 'geral', mesAnoInputRelCx());
+        });
+        var inpRelCxMes = document.getElementById('relCxMesAno');
+        if (inpRelCxMes) {
+            inpRelCxMes.addEventListener('change', renderRelatorioCaixa);
+            inpRelCxMes.addEventListener('blur', renderRelatorioCaixa);
+        }
         document.getElementById('btnImprimirRelCx').addEventListener('click', function () {
             renderRelatorioCaixa();
             var db = carregar();
@@ -2069,7 +2072,7 @@
             }
 
             elDet.innerHTML =
-                '<p class="hint">Oficial = balcão/banco do menu Caixa. Interno = vendas p/ funcionário e despesas lançadas no modo interno.</p>' +
+                '<p class="hint">Oficial = balcão/banco do menu Caixa. Interno = vendas para funcionário e despesas lançadas em Despesas.</p>' +
                 blocoCanal('Caixa oficial', r.oficial) +
                 blocoCanal('Caixa interno', r.interno) +
                 '<div style="padding:12px;border:2px solid #27ae60;border-radius:10px;margin:12px 0">' +

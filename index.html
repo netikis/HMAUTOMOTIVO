@@ -84,33 +84,30 @@
             </div>
         </div>
 
+        <div class="menu-grupo" data-grupo="despesas">
+            <button type="button" class="menu-grupo-btn" data-toggle-grupo="despesas">💸 Despesas</button>
+            <div class="submenu-lateral">
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelDespesasOs" data-canal="interno">🧾 Despesas por O.S</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelDespesasEscritorio" data-canal="interno">🏢 Despesas escritório</button>
+            </div>
+        </div>
+
         <div class="menu-grupo" data-grupo="caixa">
             <button type="button" class="menu-grupo-btn" data-toggle-grupo="caixa">💰 Caixa / Relatórios</button>
             <div class="submenu-lateral">
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixa" data-canal="normal">💰 Caixa / Balcão</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixaBanco" data-canal="normal">🏦 Caixa do Banco (Digital / PIX / Cartões)</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelPendentes" data-canal="normal">⏳ Contas a Receber (Pendentes)</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioCaixa" data-canal="normal">📄 Relatório Caixa</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioUnificado">📊 Relatório unificado</button>
             </div>
         </div>
 
-        <div class="menu-grupo" data-grupo="interno">
-            <button type="button" class="menu-grupo-btn" data-toggle-grupo="interno">🔒 Modo interno</button>
+        <div class="menu-grupo" data-grupo="funcionarios">
+            <button type="button" class="menu-grupo-btn" data-toggle-grupo="funcionarios">👷 Funcionários</button>
             <div class="submenu-lateral">
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelDespesasOs" data-canal="interno">🧾 Despesas por OS</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelDespesasEscritorio" data-canal="interno">🏢 Despesa escritório</button>
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelFuncionarios" data-canal="interno">👷 Cadastro de Funcionários</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelPagFuncionarios" data-canal="interno">💰 Pagamento funcionários</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelProdutos" data-canal="interno">🏷️ Cadastro de Produtos</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamento" data-canal="interno">🧾 Venda p/ Funcionário</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelVendasRealizadas" data-canal="interno">📋 Vendas realizadas</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamentosRealizados" data-canal="interno">📄 Orçamentos realizados</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixa" data-canal="interno">💰 Caixa / Balcão</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelCaixaBanco" data-canal="interno">🏦 Caixa do Banco (PIX / Cartões)</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelPendentes" data-canal="interno">⏳ Contas a Receber</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioCaixa" data-canal="interno">📄 Relatório Caixa</button>
-                <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioUnificado">📊 Relatório unificado</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelPagFuncionarios" data-canal="interno">💰 Pagamentos Funcionários</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelOrcamento" data-canal="interno">🧾 Venda para Funcionário</button>
             </div>
         </div>
 
@@ -118,6 +115,16 @@
             <button type="button" class="menu-grupo-btn" data-toggle-grupo="finalizados">✅ Serviço finalizado</button>
             <div class="submenu-lateral">
                 <button type="button" class="nav-btn submenu-btn" data-panel="painelServicoFinalizado" data-canal="interno">📁 Pastas (Ano → Mês → Dia)</button>
+            </div>
+        </div>
+
+        <div class="menu-grupo" data-grupo="relatorioscaixa">
+            <button type="button" class="menu-grupo-btn" data-toggle-grupo="relatorioscaixa">📄 Relatório Caixa</button>
+            <div class="submenu-lateral">
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioCaixa" data-canal="normal" data-rel-tipo="balcao">💰 Relatório Mensal — Caixa / Balcão</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioCaixa" data-canal="normal" data-rel-tipo="banco">🏦 Relatório Mensal — Caixa Banco</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioCaixa" data-canal="normal" data-rel-tipo="pendentes">⏳ Relatório Mensal — Contas a Receber</button>
+                <button type="button" class="nav-btn submenu-btn" data-panel="painelRelatorioCaixa" data-canal="normal" data-rel-tipo="geral">📊 Relatório Mensal Geral</button>
             </div>
         </div>
 
@@ -145,7 +152,7 @@
             </div>
             <span class="badge-db" id="badgeDb">DB isolado · hm_automotivo_v1</span>
         </div>
-        <div class="banner-canal" id="bannerCanal">🔒 MODO INTERNO — vendas e caixa separados do balcão oficial. Estoque de produtos é o mesmo nos dois modos.</div>
+        <div class="banner-canal" id="bannerCanal">🔒 Uso interno — venda para funcionário, pagamentos e despesas ficam no caixa interno, separados do balcão oficial.</div>
 
         <!-- INÍCIO -->
         <section id="painelInicio" class="panel active">
@@ -238,7 +245,7 @@
                     <select id="atResponsavelId">
                         <option value="">Selecione o funcionário...</option>
                     </select>
-                    <p class="hint" style="margin-top:8px">Lista do <strong>Cadastro de Funcionários</strong> (modo interno). Assim a OS cai no funcionário para fechar lucro depois.</p>
+                    <p class="hint" style="margin-top:8px">Lista do <strong>Cadastro de Funcionários</strong> (menu Funcionários). Assim a OS cai no funcionário para fechar lucro depois.</p>
                 </div>
             </div>
 
@@ -415,7 +422,7 @@
         <section id="painelProdutos" class="panel">
             <div class="box">
                 <h2 id="tituloFormProd">Cadastro de Produto / Serviço</h2>
-                <p class="hint">Estoque <strong>unificado</strong>: o que cadastrar aqui aparece no balcão oficial e no modo interno. Use leitor USB em <strong>Cód. Barras</strong> (bipar + Enter). Se o código já existir, abre para edição.</p>
+                <p class="hint">Estoque <strong>unificado</strong>: o que cadastrar aqui aparece nas vendas do balcão e na venda para funcionário. Use leitor USB em <strong>Cód. Barras</strong> (bipar + Enter). Se o código já existir, abre para edição.</p>
                 <form id="formProduto">
                     <input type="hidden" id="prodId">
                     <div class="row">
@@ -813,64 +820,30 @@
 
         <section id="painelRelatorioCaixa" class="panel">
             <div class="box">
-                <h2>Relatório Caixa</h2>
-                <p class="hint">Resumo unificado do balcão + banco + pendentes. Ao fechar o mês, use as pastas abaixo (Entradas / Saídas / Relatório geral) — igual ao FH Control.</p>
+                <h2 id="relMesTituloBox">Relatório Mensal</h2>
+                <p class="hint" id="relMesHintBox">Informe o mês/ano (Ex: 07/2026) e gere o PDF.</p>
                 <div class="row" style="margin-bottom:12px">
-                    <button type="button" class="btn btn-secondary" id="btnAtualizarRelCx">🔄 Atualizar resumo</button>
-                    <button type="button" class="btn btn-pdf" id="btnImprimirRelCx">🖨️ Imprimir resumo</button>
+                    <div class="col"><label>Mês/ano</label><input id="relCxMesAno" placeholder="MM/AAAA" maxlength="7"></div>
+                    <div class="col" style="align-self:end">
+                        <button type="button" class="btn btn-pdf" id="btnPdfRelMesAtual">📄 Gerar PDF</button>
+                        <button type="button" class="btn btn-secondary" id="btnAtualizarRelCx">🔄 Atualizar</button>
+                        <button type="button" class="btn btn-pdf" id="btnImprimirRelCx">🖨️ Imprimir resumo</button>
+                    </div>
                 </div>
             </div>
-            <div class="cards" style="margin-bottom:14px">
+            <div class="cards" id="relCxCards" style="margin-bottom:14px">
                 <div class="card"><div class="k">Total balcão</div><div class="v" id="relCxBalcao">R$ 0</div></div>
                 <div class="card"><div class="k">Total banco</div><div class="v" id="relCxBanco">R$ 0</div></div>
                 <div class="card"><div class="k">Pendentes</div><div class="v" id="relCxPend">R$ 0</div></div>
                 <div class="card"><div class="k">Saldo geral</div><div class="v" id="relCxGeral">R$ 0</div></div>
             </div>
 
-            <div class="box">
-                <h2>Relatórios mensais (PDF)</h2>
-                <p class="hint">Informe o mês/ano (Ex: 07/2026). Cada relatório separa entradas, saídas e, no geral, pendentes.</p>
-                <div class="lista-relatorios-mes">
-                    <div class="item-relatorio-mes">
-                        <div>
-                            <span class="titulo-relatorio">💰 Relatório Mensal — Caixa / Balcão</span>
-                            <span class="desc-relatorio">Entradas e saídas do balcão (dinheiro / gaveta)</span>
-                        </div>
-                        <div class="acoes-relatorio-mes">
-                            <button type="button" class="btn btn-pdf" data-rel-mes="balcao">📄 PDF</button>
-                        </div>
-                    </div>
-                    <div class="item-relatorio-mes">
-                        <div>
-                            <span class="titulo-relatorio">🏦 Relatório Mensal — Caixa Banco</span>
-                            <span class="desc-relatorio">PIX, cartões e lançamentos do banco</span>
-                        </div>
-                        <div class="acoes-relatorio-mes">
-                            <button type="button" class="btn btn-pdf" data-rel-mes="banco">📄 PDF</button>
-                        </div>
-                    </div>
-                    <div class="item-relatorio-mes">
-                        <div>
-                            <span class="titulo-relatorio">⏳ Relatório Mensal — Contas a Receber</span>
-                            <span class="desc-relatorio">Somente pendentes do período</span>
-                        </div>
-                        <div class="acoes-relatorio-mes">
-                            <button type="button" class="btn btn-pdf" data-rel-mes="pendentes">📄 PDF</button>
-                        </div>
-                    </div>
-                    <div class="item-relatorio-mes">
-                        <div>
-                            <span class="titulo-relatorio">📊 Relatório Mensal Geral</span>
-                            <span class="desc-relatorio">Tudo: balcão + banco + contas a receber (entradas, saídas e pendentes)</span>
-                        </div>
-                        <div class="acoes-relatorio-mes">
-                            <button type="button" class="btn btn-pdf" data-rel-mes="geral">📄 PDF</button>
-                        </div>
-                    </div>
-                </div>
+            <div class="box" id="relMesPreviewBox">
+                <h2>Prévia do mês</h2>
+                <div id="relMesPreview" class="relatorio-mes-preview"></div>
             </div>
 
-            <div class="box">
+            <div class="box" id="relCxPastasBox">
                 <h2>📁 Pastas do caixa (Ano → Mês)</h2>
                 <p class="hint">Cada mês com movimento vira pasta com <strong>Entradas</strong>, <strong>Saídas</strong> e <strong>Pendentes</strong>. Use <strong>Arquivar mês no PC</strong> para gravar os arquivos na pasta configurada em Config (Chrome/Edge no computador).</p>
                 <div class="row" style="margin-bottom:10px">
@@ -917,7 +890,7 @@
             </div>
         </section>
 
-        <!-- DESPESAS POR OS (só Modo Interno) -->
+        <!-- DESPESAS POR OS -->
         <section id="painelDespesasOs" class="panel">
             <div class="cards" style="margin-bottom:14px">
                 <div class="card"><div class="k">OS oficiais</div><div class="v" id="dosQtdOs">0</div></div>
@@ -1039,7 +1012,7 @@
             </div>
         </section>
 
-        <!-- DESPESA ESCRITÓRIO (só Modo Interno — não sai na folha do funcionário) -->
+        <!-- DESPESA ESCRITÓRIO (não sai na folha do funcionário) -->
         <section id="painelDespesasEscritorio" class="panel">
             <div class="cards" style="margin-bottom:14px">
                 <div class="card"><div class="k">Lançamentos</div><div class="v" id="deQtd">0</div></div>
@@ -1109,7 +1082,7 @@
             </div>
         </section>
 
-        <!-- SERVIÇO FINALIZADO (Modo Interno) -->
+        <!-- SERVIÇO FINALIZADO -->
         <section id="painelServicoFinalizado" class="panel">
             <div class="cards" style="margin-bottom:14px">
                 <div class="card" style="background:#27ae60"><div class="k">Serviços finalizados</div><div class="v" id="finQtdOs">0</div></div>
@@ -1130,11 +1103,11 @@
             </div>
         </section>
 
-        <!-- CADASTRO DE FUNCIONÁRIOS (Modo Interno — vendas internas) -->
+        <!-- CADASTRO DE FUNCIONÁRIOS -->
         <section id="painelFuncionarios" class="panel">
             <div class="box">
-                <h2>👷 Cadastro de Funcionários (interno)</h2>
-                <p class="hint">Cadastre aqui quem executa serviço e quem pode comprar no <strong>modo interno</strong>. O responsável da OS usa esta lista; a venda interna só libera para funcionário ativo.</p>
+                <h2>👷 Cadastro de Funcionários</h2>
+                <p class="hint">Cadastre aqui quem executa serviço e quem pode comprar em <strong>Venda para Funcionário</strong>. O responsável da OS usa esta lista; a venda para funcionário só libera para quem estiver ativo.</p>
                 <form id="formFuncionario">
                     <input type="hidden" id="pfFuncEditId">
                     <div class="row">
@@ -1177,7 +1150,7 @@
             </div>
         </section>
 
-        <!-- PAGAMENTO FUNCIONÁRIOS (só Modo Interno — sem impressão) -->
+        <!-- PAGAMENTO FUNCIONÁRIOS -->
         <section id="painelPagFuncionarios" class="panel">
             <div class="cards" style="margin-bottom:14px">
                 <div class="card"><div class="k">Funcionários</div><div class="v" id="pfQtdFunc">0</div></div>
@@ -1187,8 +1160,8 @@
             </div>
 
             <div class="box">
-                <h2>💰 Pagamento de funcionários (interno)</h2>
-                <p class="hint">Controle semanal — fica só no sistema interno, <strong>sem impressão</strong>. Cada pagamento também registra saída no caixa interno (Dinheiro → Balcão; PIX/Cartão → Banco). Cadastro completo em <strong>Cadastro de Funcionários</strong>.</p>
+                <h2>💰 Pagamento de funcionários</h2>
+                <p class="hint">Controle semanal — <strong>sem impressão</strong>. Cada pagamento registra saída no caixa interno (Dinheiro → Balcão; PIX/Cartão → Banco). Cadastro completo em <strong>Cadastro de Funcionários</strong>.</p>
             </div>
 
             <div class="grid-2">
@@ -1298,7 +1271,7 @@
             <div class="box">
                 <h2>☁ Sincronizar — PC ↔ Celular</h2>
                 <p class="config-status aviso" id="nuvemStatusTexto"><strong>Nuvem:</strong> verificando…</p>
-                <p class="hint" style="margin-top:8px">Com login, a sincronização é <strong>automática</strong> (ao salvar, ao abrir o app e a cada minuto): balcão oficial <strong>e modo interno</strong> (despesas por OS, funcionários, caixa interno). O botão abaixo força na hora.</p>
+                <p class="hint" style="margin-top:8px">Com login, a sincronização é <strong>automática</strong> (ao salvar, ao abrir o app e a cada minuto): balcão oficial, despesas, funcionários e caixa interno. O botão abaixo força na hora.</p>
                 <div class="row" style="margin-top:12px">
                     <button type="button" class="btn btn-primary" id="btnSyncNuvem">☁ Sincronizar agora</button>
                     <button type="button" class="btn btn-danger" id="btnAppSair">🚪 Sair do sistema</button>

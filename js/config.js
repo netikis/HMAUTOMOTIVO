@@ -8,6 +8,14 @@
         var ASSIN_KEY = 'hm_automotivo_assinaturas';
         var atendimentoNotaAtual = null;
         var canalVendas = 'normal'; /* normal | interno */
+        var relatorioCaixaTipo = 'geral'; /* balcao | banco | pendentes | geral */
+
+        var REL_MES_PAINEL_TITULOS = {
+            balcao: ['Relatório Mensal — Caixa / Balcão', 'Entradas e saídas do balcão (dinheiro / gaveta)'],
+            banco: ['Relatório Mensal — Caixa Banco', 'PIX, cartões e lançamentos do banco'],
+            pendentes: ['Relatório Mensal — Contas a Receber', 'Somente pendentes do período'],
+            geral: ['Relatório Mensal Geral', 'Balcão + banco + contas a receber']
+        };
 
         var TITULOS = {
             painelInicio: ['Painel', 'Visão geral da oficina HM'],
@@ -27,8 +35,8 @@
             painelDespesasOs: ['Despesas por OS', 'Pastas mensais · bruto · despesas · lucro'],
             painelDespesasEscritorio: ['Despesa escritório', 'Só no sistema · não sai na folha do funcionário'],
             painelServicoFinalizado: ['Serviço finalizado', 'Pastas Ano → Mês → Dia · visualizar e imprimir'],
-            painelFuncionarios: ['Cadastro de Funcionários', 'Quem pode comprar no modo interno'],
-            painelPagFuncionarios: ['Pagamento funcionários', 'Controle semanal interno · sem impressão'],
+            painelFuncionarios: ['Cadastro de Funcionários', 'Quem executa serviço e pode comprar internamente'],
+            painelPagFuncionarios: ['Pagamentos Funcionários', 'Controle semanal · sem impressão'],
             painelConfig: ['Config / Empresa', 'Empresa, logo, endereço e backup']
         };
 
