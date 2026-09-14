@@ -975,24 +975,43 @@
         function atualizarKPIs(db) {
             /* KPIs do painel sempre do balcão oficial (não misturar com interno) */
             db = carregarMain();
+            var setTxt = function (id, val) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = val;
+            };
             var ex = garantirExcluidos(db);
-            document.getElementById('kpiClientes').textContent = String(
+            setTxt('kpiClientes', String(
                 aplicarExcluidosNaLista(db.clientes || [], ex.clientes).length
-            );
-            document.getElementById('kpiAtend').textContent = String(
+            ));
+            setTxt('kpiAtend', String(
                 aplicarExcluidosNaLista(db.atendimentos || [], ex.atendimentos).filter(function (a) {
-                    return !osFinalizadaInterno(a);
+                    return typeof osFinalizadaInterno !== 'function' || !osFinalizadaInterno(a);
                 }).length
-            );
-            document.getElementById('kpiProd').textContent = String(
+            ));
+            setTxt('kpiProd', String(
                 aplicarExcluidosNaLista(db.produtos || [], ex.produtos).length
-            );
+            ));
             var cfg = db.caixaConfig || { inicialBalcao: 0, inicialBanco: 0 };
             var entradas = (db.caixa || []).filter(function (x) { return x.tipo === 'entrada'; })
                 .reduce(function (s, x) { return s + (Number(x.valor) || 0); }, 0);
+            var saidas = (db.caixa || []).filter(function (x) { return x.tipo === 'saida'; })
+                .reduce(function (s, x) { return s + (Number(x.valor) || 0); }, 0);
             var entBanco = (db.caixaBanco || []).filter(function (x) { return x.tipo === 'entrada'; })
                 .reduce(function (s, x) { return s + (Number(x.valor) || 0); }, 0);
-            document.getElementById('kpiCaixa').textContent = moeda((Number(cfg.inicialBalcao) || 0) + entradas + (Number(cfg.inicialBanco) || 0) + entBanco);
+            var saiBanco = (db.caixaBanco || []).filter(function (x) { return x.tipo === 'saida'; })
+                .reduce(function (s, x) { return s + (Number(x.valor) || 0); }, 0);
+            var pendentes = aplicarExcluidosNaLista(db.pendentes || [], ex.pendentes || {})
+                .filter(function (p) { return p.status !== 'pago'; });
+            var totPend = pendentes.reduce(function (s, p) { return s + (Number(p.valor) || 0); }, 0);
+            setTxt('kpiInicioEntradas', moeda(entradas + entBanco));
+            setTxt('kpiInicioSaidas', moeda(saidas + saiBanco));
+            setTxt('kpiInicioPendentes', moeda(totPend));
+            setTxt('kpiCaixa', moeda(
+                (Number(cfg.inicialBalcao) || 0) + entradas +
+                (Number(cfg.inicialBanco) || 0) + entBanco -
+                saidas - saiBanco
+            ));
+            if (typeof renderCarrosEmAberto === 'function') renderCarrosEmAberto(db);
         }
 
         function preencherSelectsCliente(db) {

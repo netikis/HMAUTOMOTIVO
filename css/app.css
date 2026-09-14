@@ -429,6 +429,102 @@
             color: #fff;
         }
 
+        .card-atalho {
+            display: block;
+            width: 100%;
+            text-align: left;
+            font: inherit;
+            color: inherit;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            transition: transform .12s, box-shadow .15s, border-color .15s;
+        }
+        .card-atalho:hover,
+        .card-atalho:focus {
+            transform: translateY(-2px);
+            outline: none;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+            border-color: rgba(255, 255, 255, 0.35);
+        }
+        .card-atalho .k {
+            color: rgba(255, 255, 255, 0.92);
+            font-weight: 800;
+        }
+        .card-atalho .v { color: #fff; }
+        .card-atalho .card-sub {
+            margin-top: 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.72);
+        }
+        .card-atalho.card-ent { background: linear-gradient(135deg, #177f49, #1e9e5a); border-color: transparent; }
+        .card-atalho.card-sai { background: linear-gradient(135deg, #a82f2f, #d23b3b); border-color: transparent; }
+        .card-atalho.card-pen { background: linear-gradient(135deg, #a8791a, #c9911f); border-color: transparent; }
+        .card-atalho.card-saldo { background: linear-gradient(160deg, #1a2a40, #0d1826); }
+
+        .cards-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+        .box-andamento-destaque {
+            background: #fff;
+            border-color: rgba(21, 38, 66, 0.18);
+        }
+        .box-andamento-destaque h2 {
+            color: #152642;
+            margin-bottom: 6px;
+        }
+        .box-andamento-destaque .hint { color: #5a6a7a; }
+        .box-andamento-destaque .muted { color: #5a6a7a; }
+        .lista-agendados-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .chip-agendado {
+            display: inline-flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: rgba(16, 26, 39, 0.9);
+            border: 1px solid rgba(241, 196, 15, 0.4);
+            min-width: 140px;
+        }
+        .chip-agendado .chip-data { font-weight: 800; color: #f1c40f; font-size: 0.85rem; }
+        .chip-agendado .chip-info { font-size: 0.78rem; color: var(--text); }
+        .chip-agendado .chip-cli { font-size: 0.72rem; color: var(--muted); }
+        .chip-andamento {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+            background: #fff;
+            border: 1px solid #d9e1ea;
+            min-width: 210px;
+            max-width: 100%;
+            padding: 12px;
+        }
+        .chip-andamento-main {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            text-align: left;
+            cursor: pointer;
+            font: inherit;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 0;
+        }
+        .chip-andamento .chip-data { color: #152642; }
+        .chip-andamento .chip-info,
+        .chip-andamento .chip-cli { color: #243447; }
+        .btn-mandar-caixa { width: 100%; }
+        .btn-sm { padding: 8px 12px; font-size: 0.8rem; }
+
         .hero-slogan {
             background: #fff;
             border-radius: 14px;
@@ -1994,6 +2090,7 @@
         /* Tablet */
         @media (max-width: 1100px) {
             .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .cards-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .grid-2 { grid-template-columns: 1fr; }
             .venda-layout { grid-template-columns: 1fr; }
             .venda-carrinho {
@@ -2043,6 +2140,7 @@
             .brand img { max-height: 70px; }
 
             .cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .cards-3 { grid-template-columns: 1fr 1fr; }
             .card { padding: 12px; }
             .card .v { font-size: 1.55rem; }
 
@@ -2175,6 +2273,7 @@
 
         @media (max-width: 560px) {
             .cards { grid-template-columns: 1fr; }
+            .cards-3 { grid-template-columns: 1fr; }
             .nota-grid, .nota-sigs { grid-template-columns: 1fr; }
             .badge-db { display: none; }
             .col { min-width: 100%; flex: 1 1 100%; }

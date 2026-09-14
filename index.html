@@ -159,11 +159,37 @@
             <div class="hero-slogan">
                 <img id="logoHero" src="logo-hm.png" alt="HM Centro Automotivo">
             </div>
+            <div class="box box-andamento-destaque" id="boxCarrosAndamentoInicio">
+                <h2>🔧 Carros em andamento</h2>
+                <p class="hint" style="margin:0">Enquanto o serviço roda, o carro fica em aberto. Quando finalizar e receber, o valor entra no caixa.</p>
+                <div class="lista-agendados-chips" id="listaCarrosAndamentoInicio"></div>
+            </div>
             <div class="cards">
+                <button type="button" class="card card-atalho card-ent" data-goto="painelHistorico" title="Ver os serviços">
+                    <div class="k">Entradas</div>
+                    <div class="v" id="kpiInicioEntradas">R$ 0</div>
+                    <div class="card-sub">Clique para ver os serviços</div>
+                </button>
+                <button type="button" class="card card-atalho card-sai" data-goto="painelCaixa" title="Abrir pasta de saídas">
+                    <div class="k">Saídas</div>
+                    <div class="v" id="kpiInicioSaidas">R$ 0</div>
+                    <div class="card-sub">Clique para entrar na pasta</div>
+                </button>
+                <button type="button" class="card card-atalho card-pen" data-goto="painelPendentes" title="Abrir contas a receber">
+                    <div class="k">Contas a receber</div>
+                    <div class="v" id="kpiInicioPendentes">R$ 0</div>
+                    <div class="card-sub">Clique para entrar na pasta</div>
+                </button>
+                <button type="button" class="card card-atalho card-saldo" data-goto="painelCaixa" title="Abrir caixa / balcão">
+                    <div class="k">Saldo em caixa</div>
+                    <div class="v" id="kpiCaixa">R$ 0</div>
+                    <div class="card-sub">Balcão + banco</div>
+                </button>
+            </div>
+            <div class="cards cards-3">
                 <div class="card"><div class="k">Clientes</div><div class="v" id="kpiClientes">0</div></div>
                 <div class="card"><div class="k">Atendimentos</div><div class="v" id="kpiAtend">0</div></div>
                 <div class="card"><div class="k">Produtos</div><div class="v" id="kpiProd">0</div></div>
-                <div class="card"><div class="k">Caixa (entradas)</div><div class="v" id="kpiCaixa">R$ 0</div></div>
             </div>
             <div class="box">
                 <h2>Como usar esta base</h2>

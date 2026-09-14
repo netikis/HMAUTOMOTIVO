@@ -1260,6 +1260,78 @@
             document.getElementById('modalReceberOs').classList.add('aberto');
         }
 
+        function atendimentoEmAberto(a) {
+            if (!a) return false;
+            if (String(a.statusPagamento || '').toUpperCase() === 'PAGO') return false;
+            if (typeof osFinalizadaInterno === 'function' && osFinalizadaInterno(a)) return false;
+            var st = a.status || 'Em andamento';
+            if (st === 'Entregue' || st === 'Agendado') return false;
+            return true;
+        }
+
+        function listarCarrosEmAberto(db) {
+            db = db || carregarMain();
+            var exAt = garantirExcluidos(db).atendimentos || {};
+            return aplicarExcluidosNaLista(db.atendimentos || [], exAt)
+                .filter(atendimentoEmAberto)
+                .sort(function (a, b) {
+                    return String(b.entrada || b.criadoEm || '').localeCompare(String(a.entrada || a.criadoEm || ''));
+                });
+        }
+
+        function renderCarrosEmAberto(db) {
+            db = db || carregarMain();
+            var host = document.getElementById('listaCarrosAndamentoInicio');
+            if (!host) return;
+            var lista = listarCarrosEmAberto(db);
+            if (!lista.length) {
+                host.innerHTML = '<div class="muted" style="padding:6px 0">Nenhum carro em andamento agora.</div>';
+                return;
+            }
+            host.innerHTML = lista.map(function (a) {
+                var nome = nomeAtendimento(db, a);
+                return '<div class="chip-agendado chip-andamento">' +
+                    '<button type="button" class="chip-andamento-main" data-ed-and="' + esc(a.id) + '">' +
+                    '<span class="chip-data">🔧 ' + esc(a.status || 'Em andamento') + '</span>' +
+                    '<span class="chip-info">' + esc((a.placa || '—').toUpperCase()) + ' · ' + esc(a.carro || '—') + '</span>' +
+                    '<span class="chip-cli">' + esc(nome) + ' · ' + moeda(a.total) + '</span>' +
+                    '</button>' +
+                    '<button type="button" class="btn btn-ok btn-sm btn-mandar-caixa" data-fin-cx="' + esc(a.id) + '">Mandar ao caixa</button>' +
+                    '</div>';
+            }).join('');
+            host.querySelectorAll('[data-ed-and]').forEach(function (b) {
+                b.addEventListener('click', function () { editarAtendimento(b.getAttribute('data-ed-and')); });
+            });
+            host.querySelectorAll('[data-fin-cx]').forEach(function (b) {
+                b.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    finalizarEMandarAoCaixa(b.getAttribute('data-fin-cx'));
+                });
+            });
+        }
+
+        function finalizarEMandarAoCaixa(id) {
+            var db = carregarMain();
+            var i = (db.atendimentos || []).findIndex(function (a) { return a && String(a.id) === String(id); });
+            if (i < 0) { toast('OS não encontrada.'); return; }
+            var a = db.atendimentos[i];
+            if (String(a.statusPagamento || '').toUpperCase() === 'PAGO') {
+                toast('Esta OS já foi ao caixa.');
+                editarAtendimento(id);
+                return;
+            }
+            if ((a.status || '') === 'Em andamento' || (a.status || '') === 'Aguardando peça' || !a.status) {
+                a.status = 'Pronto';
+                a.saida = a.saida || hojeISO();
+                a.atualizadoEm = new Date().toISOString();
+                db.atendimentos[i] = a;
+                salvarMain(db);
+            }
+            renderCarrosEmAberto(db);
+            if (typeof renderHistorico === 'function') renderHistorico();
+            abrirModalReceberOs(id);
+        }
+
         function receberOsIrPassoForma(canalDestino) {
             receberOsCanalDestino = canalDestino;
             document.getElementById('receberOsDestinoTxt').innerHTML = canalDestino === 'interno'
@@ -1344,6 +1416,7 @@
             renderCaixaBanco();
             renderRelatorioCaixa();
             atualizarKPIs(carregar());
+            if (typeof renderCarrosEmAberto === 'function') renderCarrosEmAberto(carregarMain());
             toast('Recebido: ' + moeda(valor) + ' · ' + forma);
             alert(
                 '✅ Pagamento registrado!\n\n' +
