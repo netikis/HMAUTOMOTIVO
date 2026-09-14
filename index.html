@@ -159,10 +159,16 @@
             <div class="hero-slogan">
                 <img id="logoHero" src="logo-hm.png" alt="HM Centro Automotivo">
             </div>
-            <div class="box box-andamento-destaque" id="boxCarrosAndamentoInicio">
-                <h2>🔧 Carros em andamento</h2>
-                <p class="hint" style="margin:0">Enquanto o serviço roda, o carro fica em aberto. Quando finalizar e receber, o valor entra no caixa.</p>
-                <div class="lista-agendados-chips" id="listaCarrosAndamentoInicio"></div>
+            <div class="box box-andamento-destaque recolhido" id="boxCarrosAndamentoInicio">
+                <button type="button" class="andamento-toggle" id="btnToggleAndamento" aria-expanded="false" title="Expandir carros em andamento">
+                    <span class="andamento-toggle-titulo">🔧 Carros em andamento</span>
+                    <span class="andamento-toggle-qtd" id="qtdCarrosAndamento">0</span>
+                    <span class="andamento-toggle-seta" aria-hidden="true"></span>
+                </button>
+                <div class="andamento-corpo" id="corpoCarrosAndamento">
+                    <p class="hint" style="margin:0">Enquanto o serviço roda, o carro fica em aberto. Quando finalizar e receber, o valor entra no caixa.</p>
+                    <div class="lista-agendados-chips" id="listaCarrosAndamentoInicio"></div>
+                </div>
             </div>
             <div class="cards">
                 <button type="button" class="card card-atalho card-ent" data-goto="painelHistorico" title="Ver os serviços">

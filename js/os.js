@@ -1279,11 +1279,54 @@
                 });
         }
 
+        var ANDAMENTO_EXPAND_KEY = 'hm_andamento_expandido';
+
+        function atualizarQtdCarrosAndamento(n) {
+            var qtd = document.getElementById('qtdCarrosAndamento');
+            if (qtd) qtd.textContent = String(n || 0);
+        }
+
+        function andamentoEstaExpandido() {
+            try {
+                return localStorage.getItem(ANDAMENTO_EXPAND_KEY) === '1';
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function aplicarEstadoAndamento() {
+            var box = document.getElementById('boxCarrosAndamentoInicio');
+            var btn = document.getElementById('btnToggleAndamento');
+            if (!box || !btn) return;
+            var aberto = andamentoEstaExpandido();
+            box.classList.toggle('recolhido', !aberto);
+            btn.setAttribute('aria-expanded', aberto ? 'true' : 'false');
+            btn.title = aberto ? 'Recolher carros em andamento' : 'Expandir carros em andamento';
+        }
+
+        function alternarAndamento() {
+            var aberto = !andamentoEstaExpandido();
+            try {
+                localStorage.setItem(ANDAMENTO_EXPAND_KEY, aberto ? '1' : '0');
+            } catch (e) { /* ok */ }
+            aplicarEstadoAndamento();
+        }
+
+        function ligarToggleAndamento() {
+            var btn = document.getElementById('btnToggleAndamento');
+            if (!btn || btn.getAttribute('data-ligado') === '1') return;
+            btn.setAttribute('data-ligado', '1');
+            btn.addEventListener('click', alternarAndamento);
+            aplicarEstadoAndamento();
+        }
+
         function renderCarrosEmAberto(db) {
             db = db || carregarMain();
+            ligarToggleAndamento();
             var host = document.getElementById('listaCarrosAndamentoInicio');
             if (!host) return;
             var lista = listarCarrosEmAberto(db);
+            atualizarQtdCarrosAndamento(lista.length);
             if (!lista.length) {
                 host.innerHTML = '<div class="muted" style="padding:6px 0">Nenhum carro em andamento agora.</div>';
                 return;
