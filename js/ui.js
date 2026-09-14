@@ -779,12 +779,21 @@
             });
         }
 
-        function abrirPainel(id, btn) {
+        function abrirPainel(id, btn, opcoes) {
+            opcoes = opcoes || {};
+            var estadoAntes = (!opcoes.skipNav && typeof window._navGetEstado === 'function')
+                ? window._navGetEstado()
+                : null;
             var canalAntes = canalVendas;
-            if (btn && btn.getAttribute('data-rel-tipo')) {
+            if (opcoes.skipNav && opcoes.relTipo) {
+                relatorioCaixaTipo = opcoes.relTipo;
+            } else if (btn && btn.getAttribute('data-rel-tipo')) {
                 relatorioCaixaTipo = btn.getAttribute('data-rel-tipo');
             }
-            if (btn && btn.getAttribute('data-canal')) {
+            if (opcoes.skipNav) {
+                if (opcoes.canal) canalVendas = opcoes.canal;
+                else if (btn && btn.getAttribute('data-canal')) canalVendas = btn.getAttribute('data-canal');
+            } else if (btn && btn.getAttribute('data-canal')) {
                 canalVendas = btn.getAttribute('data-canal');
             } else if (!btn) {
                 /* atalhos do painel / data-goto → canal normal */
@@ -795,7 +804,7 @@
                 if (gNome === 'funcionarios' || gNome === 'despesas' || gNome === 'finalizados') canalVendas = 'interno';
                 else canalVendas = 'normal';
             }
-            if (canalAntes !== canalVendas) {
+            if (!opcoes.skipNav && canalAntes !== canalVendas) {
                 carrinhoVenda = [];
                 produtoVendaSelecionado = null;
             }
@@ -843,7 +852,7 @@
                 setTimeout(focarLeitor, 80);
             }
             if (id === 'painelOrcamento') {
-                prepararVendaForm();
+                if (!opcoes.skipNav) prepararVendaForm();
                 renderCarrinhoVenda();
             }
             if (id === 'painelVendasRealizadas') {
@@ -912,7 +921,11 @@
                 atualizarStatusPastaUI();
             }
             fecharMenuMobile();
+            if (estadoAntes && typeof window._navRegistrarDepoisNavegacao === 'function') {
+                window._navRegistrarDepoisNavegacao(estadoAntes);
+            }
         }
+        window.abrirPainel = abrirPainel;
 
         var PAINEIS_CANAL = {
             painelDespesasOs: true,
@@ -935,7 +948,14 @@
         document.getElementById('btnFecharMenu').addEventListener('click', fecharMenuMobile);
         document.getElementById('sidebarOverlay').addEventListener('click', fecharMenuMobile);
         window.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') fecharMenuMobile();
+            if (e.key !== 'Escape') return;
+            if (document.body.classList.contains('menu-aberto')) {
+                fecharMenuMobile();
+                return;
+            }
+            if (typeof window._navTratarEscape === 'function' && window._navTratarEscape()) {
+                e.preventDefault();
+            }
         });
 
         document.querySelectorAll('[data-toggle-grupo]').forEach(function (btn) {

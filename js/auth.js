@@ -8,6 +8,7 @@
             document.getElementById('loginErro').style.display = 'none';
             atualizarStatusNuvemUI();
             iniciarSyncAutomatico();
+            if (typeof window._navIniciarSessao === 'function') window._navIniciarSessao();
             /* Sync completa ao entrar: traz o que foi feito no celular / outro PC */
             sincronizarTodosNuvem({ silencioso: true, mostrarToast: true }).catch(function () {
                 puxarConfigEmpresaNuvemSilencioso().then(function (ok) {
@@ -20,6 +21,7 @@
             document.body.classList.add('aguardando-login');
             document.getElementById('telaLogin').classList.remove('oculto');
             prepararTelaLogin();
+            if (typeof window._navLimparHistorico === 'function') window._navLimparHistorico();
             pararSyncAutomatico();
             atualizarStatusNuvemUI();
         }

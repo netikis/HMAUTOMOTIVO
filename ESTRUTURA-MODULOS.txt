@@ -16,14 +16,15 @@ ONDE MEXER (sem abrir o index):
   Clientes                                 →  js/clientes.js
   Login Firebase                           →  js/auth.js
   Sync nuvem / pasta PC                    →  js/nuvem.js
-  Toast / menu / navegação / KPIs          →  js/ui.js
+  Toast / menu / KPIs                      →  js/ui.js
+  Histórico de telas (seta do mouse)       →  js/navegacao.js
   carregar/salvar localStorage             →  js/storage.js
   Chaves STORAGE / títulos dos painéis     →  js/config.js
   Empresa / backup / boot do sistema       →  js/app.js
 
 ORDEM DOS SCRIPTS (não mudar a ordem):
 --------------------------------------
-  config → storage → ui → nuvem → auth → clientes →
+  config → storage → ui → navegacao → nuvem → auth → clientes →
   os → produtos → orcamento → interno → caixa → app
 
 BACKUP DO INDEX ANTIGO:

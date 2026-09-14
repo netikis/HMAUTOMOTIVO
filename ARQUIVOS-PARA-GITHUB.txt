@@ -16,6 +16,7 @@ OBRIGATORIOS:
   js/config.js
   js/storage.js
   js/ui.js
+  js/navegacao.js
   js/nuvem.js
   js/auth.js
   js/clientes.js
