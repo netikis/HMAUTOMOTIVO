@@ -1521,6 +1521,7 @@
             var btnRec = document.getElementById('btnOsFormReceber');
             var btnVer = document.getElementById('btnOsFormVer');
             var btnPdf = document.getElementById('btnOsFormPdf');
+            var btnImp = document.getElementById('btnOsFormImprimir');
             var btnEnv = document.getElementById('btnOsFormEnviar');
             var btnEd = document.getElementById('btnOsFormEditar');
             var btnEx = document.getElementById('btnOsFormExcluir');
@@ -1533,6 +1534,10 @@
                 if (id) abrirNota(id);
             });
             if (btnPdf) btnPdf.addEventListener('click', function () {
+                var id = idOsFormAtual();
+                if (id) imprimirNotaPdf(id);
+            });
+            if (btnImp) btnImp.addEventListener('click', function () {
                 var id = idOsFormAtual();
                 if (id) imprimirNotaPdf(id);
             });
