@@ -1577,6 +1577,40 @@
         .chip-agendado .chip-data { font-weight: 800; color: #f1c40f; font-size: 0.85rem; }
         .chip-agendado .chip-info { font-size: 0.78rem; color: var(--text); }
         .chip-agendado .chip-cli { font-size: 0.72rem; color: var(--muted); }
+
+        .box.box-andamento-destaque {
+            background: #fff;
+            border-color: #d5dee8;
+            color: #152642;
+        }
+        .box.box-andamento-destaque h2 {
+            color: #152642;
+            margin-bottom: 6px;
+        }
+        .box.box-andamento-destaque .hint,
+        .box.box-andamento-destaque .muted {
+            color: #5a6a7a;
+        }
+        .box.box-andamento-destaque .chip-agendado,
+        .box.box-andamento-destaque .chip-andamento {
+            background: #fff;
+            border: 1px solid #d5dee8;
+            color: #243447;
+            min-width: 210px;
+            padding: 12px;
+            gap: 8px;
+            cursor: default;
+        }
+        .box.box-andamento-destaque .chip-agendado:hover {
+            border-color: #b8c5d4;
+        }
+        .box.box-andamento-destaque .chip-data {
+            color: #152642;
+        }
+        .box.box-andamento-destaque .chip-info,
+        .box.box-andamento-destaque .chip-cli {
+            color: #243447;
+        }
         .receber-passo-btns {
             display: flex;
             flex-direction: column;
