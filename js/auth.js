@@ -279,6 +279,7 @@
             atualizarStatusClienteAt();
             atualizarCampoAgendamentoUI();
             atualizarUITipoOrcamento();
+            if (typeof atualizarAcoesOsForm === 'function') atualizarAcoesOsForm();
         }
 
         document.getElementById('btnLimparAt').addEventListener('click', limparAtendimento);
@@ -425,7 +426,7 @@
             atualizarKPIs(carregar());
         });
 
-        function editarAtendimento(id) {
+        function editarAtendimento(id, opcoes) {
             var db = carregar();
             var a = db.atendimentos.find(function (x) { return x.id === id; });
             if (!a) return;
@@ -476,6 +477,13 @@
             carregarFotosNoForm(a.fotos);
             atualizarPlaca();
             atualizarUITipoOrcamento();
+            if (typeof atualizarAcoesOsForm === 'function') atualizarAcoesOsForm();
+            if (opcoes && opcoes.irParaAcoes) {
+                setTimeout(function () {
+                    var el = document.getElementById('acoesOsForm');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                }, 80);
+            }
         }
 
         function excluirAtendimento(id) {
@@ -490,6 +498,9 @@
             }
             agendarSyncAutomatico('excluir-atendimento');
             toast('Atendimento excluído.');
+            if ((document.getElementById('atId') || {}).value === id) {
+                limparAtendimento();
+            }
             renderHistorico();
             renderServicosFinalizados();
             atualizarKPIs(main);

@@ -893,6 +893,8 @@
 
         .actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
         .actions .btn { padding: 6px 10px; font-size: 0.75rem; }
+        .acoes-os-form { flex: 1 1 auto; }
+        .acoes-os-form .btn { padding: 8px 12px; font-size: 0.8rem; }
         #tabelaDespesasOs td { vertical-align: middle; }
         #tabelaDespesasOs td.actions {
             display: table-cell;

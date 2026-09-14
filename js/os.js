@@ -1343,7 +1343,9 @@
                     '</div>';
             }).join('');
             host.querySelectorAll('[data-ed-and]').forEach(function (b) {
-                b.addEventListener('click', function () { editarAtendimento(b.getAttribute('data-ed-and')); });
+                b.addEventListener('click', function () {
+                    editarAtendimento(b.getAttribute('data-ed-and'), { irParaAcoes: true });
+                });
             });
             host.querySelectorAll('[data-fin-cx]').forEach(function (b) {
                 b.addEventListener('click', function (e) {
@@ -1460,6 +1462,7 @@
             renderRelatorioCaixa();
             atualizarKPIs(carregar());
             if (typeof renderCarrosEmAberto === 'function') renderCarrosEmAberto(carregarMain());
+            if (typeof atualizarAcoesOsForm === 'function') atualizarAcoesOsForm();
             toast('Recebido: ' + moeda(valor) + ' · ' + forma);
             alert(
                 '✅ Pagamento registrado!\n\n' +
@@ -1493,6 +1496,63 @@
         });
 
         document.getElementById('buscaAtend').addEventListener('input', renderHistorico);
+
+        function idOsFormAtual() {
+            return (document.getElementById('atId') || {}).value || '';
+        }
+
+        function atualizarAcoesOsForm() {
+            var box = document.getElementById('acoesOsForm');
+            if (!box) return;
+            var id = idOsFormAtual();
+            if (!id) {
+                box.style.display = 'none';
+                return;
+            }
+            box.style.display = '';
+            var db = carregarMain();
+            var a = (db.atendimentos || []).find(function (x) { return x && x.id === id; });
+            var jaPago = !!(a && String(a.statusPagamento || '').toUpperCase() === 'PAGO');
+            var btnRec = document.getElementById('btnOsFormReceber');
+            if (btnRec) btnRec.style.display = jaPago ? 'none' : '';
+        }
+
+        function ligarAcoesOsForm() {
+            var btnRec = document.getElementById('btnOsFormReceber');
+            var btnVer = document.getElementById('btnOsFormVer');
+            var btnPdf = document.getElementById('btnOsFormPdf');
+            var btnEnv = document.getElementById('btnOsFormEnviar');
+            var btnEd = document.getElementById('btnOsFormEditar');
+            var btnEx = document.getElementById('btnOsFormExcluir');
+            if (btnRec) btnRec.addEventListener('click', function () {
+                var id = idOsFormAtual();
+                if (id) abrirModalReceberOs(id);
+            });
+            if (btnVer) btnVer.addEventListener('click', function () {
+                var id = idOsFormAtual();
+                if (id) abrirNota(id);
+            });
+            if (btnPdf) btnPdf.addEventListener('click', function () {
+                var id = idOsFormAtual();
+                if (id) imprimirNotaPdf(id);
+            });
+            if (btnEnv) btnEnv.addEventListener('click', function () {
+                var id = idOsFormAtual();
+                if (id) abrirLinkAssinatura(id);
+            });
+            if (btnEd) btnEd.addEventListener('click', function () {
+                var id = idOsFormAtual();
+                if (!id) return;
+                var topo = document.getElementById('formAtendimento') || document.getElementById('painelVeiculo');
+                if (topo) topo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            if (btnEx) btnEx.addEventListener('click', function () {
+                var id = idOsFormAtual();
+                if (id) excluirAtendimento(id);
+            });
+            atualizarAcoesOsForm();
+        }
+        ligarAcoesOsForm();
 
         document.getElementById('btnNotaFechar').addEventListener('click', fecharNota);
         document.getElementById('modalNota').addEventListener('click', function (e) {
