@@ -256,14 +256,15 @@
                     pecas: true
                 };
             }
+            var soNotaSeguro = !!exp.notaSeguro && !exp.servicosAparte && !exp.vendasDespesas;
             return {
                 notaSeguro: !!exp.notaSeguro,
                 servicosAparte: !!exp.servicosAparte,
                 vendasDespesas: !!exp.vendasDespesas,
                 franquia: !!exp.franquia,
                 despesasEscritorio: !!exp.despesasEscritorio,
-                mao: !!(exp.servicosAparte || exp.mao),
-                pecas: !!(exp.vendasDespesas || exp.pecas)
+                mao: !!(exp.servicosAparte || exp.mao || soNotaSeguro),
+                pecas: !!(exp.vendasDespesas || exp.pecas || soNotaSeguro)
             };
         }
 
@@ -309,10 +310,36 @@
             var partesSub = [];
             if (showPecas && pecas > 0) partesSub.push('Peças: <strong>' + moeda(pecas) + '</strong>');
             if (showMao && mao > 0) partesSub.push('Mão de obra: <strong>' + moeda(mao) + '</strong>');
+            var rotulo = opts.rotuloTotal || ((showPecas && showMao) ? 'Total' : 'Subtotal');
             return '<table class="nota-itens compacta"><thead><tr><th>Tipo</th><th>Descrição</th><th>Valor</th></tr></thead><tbody>' +
                 rows + '</tbody></table>' +
                 (partesSub.length ? '<div class="nota-subtotais compacto">' + partesSub.join(' · ') + '</div>' : '') +
-                '<div class="nota-total compacto">Total: ' + moeda(pecas + mao) + '</div>';
+                '<div class="nota-total compacto">' + rotulo + ': ' + moeda(pecas + mao) + '</div>';
+        }
+
+        function itensNotaDoAtendimento(a) {
+            var itens = ((a && a.itens) || []).map(function (it) {
+                return {
+                    tipo: it.tipo || 'peca',
+                    desc: it.desc || '',
+                    valor: Number(it.valor) || 0
+                };
+            });
+            var temMao = itens.some(function (it) { return it.tipo === 'mao'; });
+            if (!temMao && a && Number(a.maoObra) > 0) {
+                itens.push({ tipo: 'mao', desc: 'Mão de obra', valor: Number(a.maoObra) || 0 });
+            }
+            return itens;
+        }
+
+        function somarItensExport(itens, exp) {
+            var showPecas = !exp || !!exp.pecas;
+            var showMao = !exp || !!exp.mao;
+            return (itens || []).reduce(function (s, it) {
+                var tipo = it.tipo || 'peca';
+                if (tipo === 'mao') return showMao ? s + (Number(it.valor) || 0) : s;
+                return showPecas ? s + (Number(it.valor) || 0) : s;
+            }, 0);
         }
 
         function htmlNotaEspelho(db, a, opts) {
@@ -349,9 +376,10 @@
             if (exp.franquia) partesSel.push('franquia');
             if (exp.despesasEscritorio) partesSel.push('despesas escritório');
             var servicosNoBlocoOficina = !exp.servicosAparte;
+            var itensNota = itensNotaDoAtendimento(a);
             var blocosExtra = '';
             if (exp.servicosAparte) {
-                var maoHtml = htmlItensNota(a.itens, { exportItens: { mao: true, pecas: false }, vazioHtml: '' });
+                var maoHtml = htmlItensNota(itensNota, { exportItens: { mao: true, pecas: false }, vazioHtml: '' });
                 blocosExtra +=
                     '<div class="nota-bloco compacto"><div class="tit escuro">Serviços a parte</div>' +
                     '<div class="nota-campo full" style="margin-bottom:8px"><span class="nota-label">Serviços</span>' +
@@ -359,14 +387,23 @@
                     '<div class="nota-valores-pad compacto">' + maoHtml + '</div></div>';
             }
             if (exp.vendasDespesas) {
-                var pecasHtml = htmlItensNota(a.itens, { exportItens: { mao: false, pecas: true }, vazioHtml: '' });
+                var pecasHtml = htmlItensNota(itensNota, { exportItens: { mao: false, pecas: true }, vazioHtml: '' });
                 var despOs = despesasFolhaDaOs(a.id);
                 blocosExtra +=
-                    '<div class="nota-bloco compacto"><div class="tit verde">Vendas / Despesas</div>' +
+                    '<div class="nota-bloco compacto"><div class="tit verde">Peças / Vendas / Despesas</div>' +
                     '<div class="nota-valores-pad compacto">' + pecasHtml + '</div>' +
                     '<div class="tit vermelho" style="margin-top:10px">Despesas da O.S</div>' +
                     htmlTabelaDespesasExport(despOs, 'Nenhuma despesa de serviço nesta OS.') +
                     '</div>';
+            }
+            if (exp.notaSeguro && !exp.vendasDespesas && !exp.servicosAparte) {
+                var itensNotaHtml = htmlItensNota(itensNota, { exportItens: { mao: true, pecas: true }, vazioHtml: '' });
+                if (itensNotaHtml) {
+                    blocosExtra =
+                        '<div class="nota-bloco compacto"><div class="tit verde">Peças e serviços</div>' +
+                        '<div class="nota-valores-pad compacto">' + itensNotaHtml + '</div></div>' +
+                        blocosExtra;
+                }
             }
             if (exp.franquia) {
                 blocosExtra +=
@@ -381,6 +418,17 @@
                     '<div class="nota-bloco compacto"><div class="tit vermelho">Despesas escritório</div>' +
                     htmlTabelaDespesasExport(despEsc, 'Nenhuma despesa de escritório nesta OS.') +
                     '</div>';
+            }
+            var somaTotal = somarItensExport(itensNota, exp);
+            if (!(somaTotal > 0) && exp.pecas && exp.mao && Number(a.total) > 0) {
+                somaTotal = Number(a.total) || 0;
+            }
+            if (somaTotal > 0) {
+                blocosExtra +=
+                    '<div class="nota-bloco compacto"><div class="tit verde">Total</div>' +
+                    '<div class="nota-valores-pad compacto">' +
+                    '<div class="nota-total compacto nota-total-geral">TOTAL: ' + moeda(somaTotal) + '</div>' +
+                    '</div></div>';
             }
             if (!blocosExtra && !exp.notaSeguro) {
                 blocosExtra = '<div class="nota-bloco compacto"><div class="tit verde">Valores</div>' +
@@ -655,12 +703,12 @@
                 }
                 if (sug) {
                     sug.textContent = modoSeguro
-                        ? 'Sugestão no seguro: Nota seguro + Franquia. Marque Vendas/Despesas ou Escritório só se quiser esses valores no papel.'
-                        : 'Sugestão: Serviços a parte e/ou Vendas/Despesas. Franquia e Nota seguro se for o caso.';
+                        ? 'Sugestão no seguro: Nota seguro + Peças + Serviços + Franquia, para sair o valor total. Desmarque só o que não quiser no papel.'
+                        : 'Sugestão: Serviços a parte e Peças/Vendas. Franquia e Nota seguro só se for o caso.';
                 }
                 if (chkN) chkN.checked = modoSeguro;
-                if (chkS) chkS.checked = !modoSeguro;
-                if (chkV) chkV.checked = !modoSeguro;
+                if (chkS) chkS.checked = true;
+                if (chkV) chkV.checked = true;
                 if (chkF) chkF.checked = modoSeguro;
                 if (chkE) chkE.checked = false;
                 document.getElementById('modalItensPdfCliente').classList.add('aberto');
@@ -817,10 +865,13 @@
             var emp = getEmpresa(db);
             var cad = dadosClienteDoAtendimento(db, a);
             var exp = normalizarExportItens(exportItens, a, {});
-            var itensFiltrados = filtrarItensExportCliente(a.itens, exp);
+            var itensFiltrados = filtrarItensExportCliente(itensNotaDoAtendimento(a), exp);
             var totalItens = itensFiltrados.reduce(function (s, it) {
                 return s + (Number(it.valor) || 0);
             }, 0);
+            if (!(totalItens > 0) && exp.pecas && exp.mao && Number(a.total) > 0) {
+                totalItens = Number(a.total) || 0;
+            }
             var franquiaShow = exp.franquia ? (Number(a.franquia) || 0) : 0;
             var despOs = exp.vendasDespesas ? despesasFolhaDaOs(a.id) : [];
             var despEsc = exp.despesasEscritorio ? despesasEscritorioDaOs(a.id) : [];

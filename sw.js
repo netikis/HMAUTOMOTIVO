@@ -1,7 +1,7 @@
 ﻿/* HM Centro Automotivo — PWA com atualização automática (PC + celular) */
 /* Ao fazer push, o SUBIR GITHUB.bat (ou o commit) sobe a versão do CACHE.
    PC e app instalado no celular usam o mesmo site Vercel e atualizam juntos. */
-var CACHE = 'hm-auto-v2609141550';
+var CACHE = 'hm-auto-v2610131338';
 var ASSETS = [
   './',
   './index.html',

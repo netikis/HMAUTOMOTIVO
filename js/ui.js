@@ -137,6 +137,7 @@
                 '.nota-valores-pad{padding:6pt;}' +
                 '.nota-subtotais{margin-top:4pt;font-size:9pt;}' +
                 '.nota-total{text-align:right;font-size:11pt;font-weight:800;margin-top:4pt;}' +
+                '.nota-total-geral{font-size:14pt;letter-spacing:.04em;}' +
                 '.nota-sigs{display:grid;grid-template-columns:1fr 1fr;gap:16pt;margin-top:14pt;}' +
                 '.nota-sig{text-align:center;font-size:9pt;}' +
                 '.nota-sig-espaco{min-height:18mm;border-bottom:1px solid #000;}' +

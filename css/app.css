@@ -1871,6 +1871,7 @@
         .nota-subtotais.compacto { margin-top: 4px; font-size: 0.88rem; }
         .nota-total { text-align: right; font-size: 1.35rem; font-weight: 800; margin-top: 8px; color: #000; }
         .nota-total.compacto { font-size: 1.1rem; margin-top: 4px; }
+        .nota-total-geral { font-size: 1.35rem; letter-spacing: 0.04em; }
         .nota-valores-pad { padding: 10px; }
         .nota-valores-pad.compacto { padding: 6px 8px; }
         .nota-sigs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 22px; }
@@ -2139,6 +2140,9 @@
                 font-size: 11pt !important;
                 font-weight: 800 !important;
                 margin-top: 3pt !important;
+            }
+            .mirror-print-section .nota-total-geral {
+                font-size: 14pt !important;
             }
             .mirror-print-section .nota-sigs.compacto {
                 gap: 12pt !important;
