@@ -220,7 +220,7 @@
             if (box) box.style.display = tipo === 'seguro' ? '' : 'none';
             if (hint) {
                 hint.textContent = tipo === 'seguro'
-                    ? 'Orçamento de seguro: ao imprimir ou enviar, marque Nota seguro, Serviços a parte, Vendas/Despesas, Franquia e/ou Despesas escritório.'
+                    ? 'Orçamento de seguro: ao imprimir ou enviar, marque Nota seguro, Serviços realizados, Peças/Vendas, Despesas da O.S, Franquia e/ou Despesas escritório.'
                     : 'Orçamento normal: ao imprimir ou enviar, escolha com as caixas o que entra no documento.';
             }
             var st = document.getElementById('atStatus');

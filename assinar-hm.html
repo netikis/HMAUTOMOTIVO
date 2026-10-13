@@ -334,10 +334,10 @@
 
             var cardOs = document.getElementById('cardDespOs');
             var cardEsc = document.getElementById('cardDespEsc');
-            if (exp.vendasDespesas && (doc.despesasOs || []).length) {
+            if (exp.despesasOs && (doc.despesasOs || []).length) {
                 cardOs.style.display = '';
                 document.getElementById('dDespOs').innerHTML = tabelaDesp(doc.despesasOs);
-            } else if (exp.vendasDespesas) {
+            } else if (exp.despesasOs) {
                 cardOs.style.display = '';
                 document.getElementById('dDespOs').innerHTML = tabelaDesp([]);
             } else {

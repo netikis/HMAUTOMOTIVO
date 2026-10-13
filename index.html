@@ -294,7 +294,7 @@
                             </select>
                         </div>
                     </div>
-                    <p class="hint" style="margin-top:8px" id="hintTipoOrcamento">Orçamento normal: ao imprimir ou enviar, você marca o que sai. Seguro: mesma escolha (nota, serviços, vendas/despesas, franquia, escritório).</p>
+                    <p class="hint" style="margin-top:8px" id="hintTipoOrcamento">Orçamento normal: ao imprimir ou enviar, você marca o que sai. Seguro: mesma escolha (nota, serviços realizados, peças/vendas, despesas da O.S, franquia, escritório).</p>
                 </div>
 
                 <div class="box" id="boxSeguroOs" style="display:none;border-color:rgba(230,126,34,0.45)">
@@ -1533,11 +1533,15 @@
                 </label>
                 <label>
                     <input type="checkbox" id="chkPdfServicosAparte">
-                    <span>SERVIÇOS A PARTE</span>
+                    <span>SERVIÇOS REALIZADOS</span>
                 </label>
                 <label>
                     <input type="checkbox" id="chkPdfVendasDespesas">
-                    <span>PEÇAS / VENDAS / DESPESAS</span>
+                    <span>PEÇAS / VENDAS</span>
+                </label>
+                <label>
+                    <input type="checkbox" id="chkPdfDespesasOs">
+                    <span>DESPESAS DA O.S</span>
                 </label>
                 <label>
                     <input type="checkbox" id="chkPdfFranquia">
@@ -1548,7 +1552,7 @@
                     <span>DESPESAS ESCRITÓRIO</span>
                 </label>
             </div>
-            <p class="hint" id="sugItensPdfCliente" style="margin:0">A franquia não soma no total do serviço. Peças, vendas e despesas de escritório são da OS.</p>
+            <p class="hint" id="sugItensPdfCliente" style="margin:0">A franquia não soma no total do serviço. Despesas da O.S só saem se marcar a caixa.</p>
             <div class="modal-acoes" style="margin-top:16px">
                 <button type="button" class="btn btn-primary" id="btnItensPdfOk" style="flex:1">Continuar</button>
                 <button type="button" class="btn btn-secondary" id="btnItensPdfCancelar" style="flex:1">Cancelar</button>
