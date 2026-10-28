@@ -91,13 +91,13 @@
 
         function cssDocumentoImpressao() {
             return '*,*:before,*:after{box-sizing:border-box;}' +
-                'html,body{margin:0;padding:0;background:#fff;color:#000;max-width:100%;overflow-x:hidden;}' +
+                'html,body{margin:0;padding:0;background:#fff;color:#000;max-width:100%;overflow:visible;height:auto;}' +
                 'body{padding:10mm;font-family:Arial,Helvetica,sans-serif;font-size:10pt;line-height:1.25;}' +
                 '.barra-sair-print{display:none;position:sticky;top:0;z-index:9999;gap:8px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:#162233;border-bottom:1px solid rgba(255,255,255,.15);}' +
                 '.barra-sair-print button{flex:1 1 40%;min-height:44px;border:0;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;}' +
                 '.barra-sair-print .btn-fechar{background:#e74c3c;color:#fff;}' +
                 '.barra-sair-print .btn-print{background:#1e8449;color:#fff;}' +
-                '.nota-espelho{background:#fff;color:#111;max-width:100%;overflow-x:hidden;}' +
+                '.nota-espelho{background:#fff;color:#111;max-width:100%;overflow:visible;}' +
                 '.nota-topo{text-align:center;border-bottom:2px solid #0d3d6e;padding-bottom:8pt;margin-bottom:10pt;}' +
                 '.nota-topo-linha{width:100%;border-collapse:collapse;table-layout:fixed;}' +
                 '.nota-topo-logo{width:42%;vertical-align:middle;padding:0 8pt 0 0;}' +
@@ -108,7 +108,7 @@
                 '.nota-topo-dados .linha-tel{font-weight:600;}' +
                 '.nota-titulo-espelho{margin-top:8pt;margin-bottom:0;font-size:12pt;font-weight:800;color:#0d3d6e;letter-spacing:.04em;text-align:center;}' +
                 '.nota-registro{margin-top:4pt;text-align:center;font-size:9pt;}' +
-                '.nota-bloco{margin-bottom:8pt;border:1px solid #ccc;border-radius:4px;overflow:hidden;page-break-inside:avoid;max-width:100%;}' +
+                '.nota-bloco{margin-bottom:8pt;border:1px solid #ccc;border-radius:4px;overflow:visible;page-break-inside:auto;break-inside:auto;max-width:100%;}' +
                 '.nota-bloco .tit{padding:4pt 6pt;font-size:9pt;font-weight:800;text-transform:uppercase;color:#000;background:#fff;border-bottom:1.5pt solid #000;}' +
                 '.nota-grid{display:grid;grid-template-columns:1fr 1fr;gap:4pt 8pt;padding:6pt;}' +
                 '.nota-campo.full{grid-column:1/-1;}' +
@@ -131,16 +131,19 @@
                 '.nota-tabela-desp th:nth-child(3),.nota-tabela-desp td:nth-child(3){width:38%;}' +
                 '.nota-tabela-desp th:nth-child(4),.nota-tabela-desp td:nth-child(4){width:18%;}' +
                 '.nota-tabela-desp th:nth-child(5),.nota-tabela-desp td:nth-child(5){width:18%;text-align:right;font-weight:700;white-space:nowrap;}' +
-                '.nota-tabela-wrap{width:100%;max-width:100%;overflow:hidden;}' +
+                '.nota-tabela-wrap{width:100%;max-width:100%;overflow:visible;}' +
+                '.nota-itens tr,.nota-tabela-desp tr{page-break-inside:avoid;break-inside:avoid;}' +
+                'thead{display:table-header-group;}' +
+                'tfoot{display:table-footer-group;}' +
                 '.nota-resumo-lucro{display:flex;flex-wrap:wrap;gap:8pt 12pt;margin-top:6pt;font-size:10pt;}' +
                 '.nota-resumo-lucro>div{flex:1 1 120px;min-width:0;}' +
                 '.nota-valores-pad{padding:6pt;}' +
                 '.nota-subtotais{margin-top:4pt;font-size:9pt;}' +
                 '.nota-total{text-align:right;font-size:11pt;font-weight:800;margin-top:4pt;}' +
                 '.nota-total-geral{font-size:14pt;letter-spacing:.04em;}' +
-                '.nota-sigs{display:grid;grid-template-columns:1fr 1fr;gap:16pt;margin-top:14pt;}' +
+                '.nota-sigs{display:grid;grid-template-columns:1fr 1fr;gap:16pt;margin-top:14pt;page-break-inside:avoid;break-inside:avoid;}' +
                 '.nota-sig{text-align:center;font-size:9pt;}' +
-                '.nota-sig-espaco{min-height:18mm;border-bottom:1px solid #000;}' +
+                '.nota-sig-espaco{min-height:14mm;border-bottom:1px solid #000;}' +
                 '.nota-sig-base{padding-top:4pt;font-weight:700;}' +
                 '.nota-sig img{max-height:18mm;max-width:100%;}' +
                 '.nota-fotos{display:flex;flex-wrap:wrap;gap:6pt;padding:6pt;}' +
@@ -155,7 +158,11 @@
                 '.nota-tabela-desp th:nth-child(4),.nota-tabela-desp td:nth-child(4){display:none;}' +
                 '.nota-sigs{grid-template-columns:1fr;gap:12px;}' +
                 '}' +
-                '@media print{.barra-sair-print{display:none!important;}body{padding:0;}}';
+                '@media print{' +
+                '.barra-sair-print{display:none!important;}' +
+                'html,body{padding:0;margin:0;height:auto;overflow:visible;}' +
+                '.nota-bloco{page-break-inside:auto;break-inside:auto;overflow:visible;}' +
+                '}';
         }
 
         function montarHtmlDocumentoImpressao(htmlCorpo) {
@@ -245,8 +252,8 @@
                 iframe.title = 'Impressão';
                 document.body.appendChild(iframe);
             }
-            /* Precisa ter tamanho real — iframe 0×0 gera PDF em branco no Chrome */
-            iframe.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;border:0;z-index:-1;opacity:0;pointer-events:none;';
+            /* Precisa ter tamanho real — iframe 0×0 gera PDF em branco; 100vh corta o restante */
+            iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:210mm;min-height:297mm;height:auto;border:0;z-index:-1;opacity:0;pointer-events:none;';
 
             var idoc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
             if (!idoc) {
@@ -270,6 +277,12 @@
 
             aguardarImagensDoc(idoc, function () {
                 try {
+                    var h = Math.max(
+                        (idoc.documentElement && idoc.documentElement.scrollHeight) || 0,
+                        (idoc.body && idoc.body.scrollHeight) || 0,
+                        1123
+                    );
+                    iframe.style.height = (h + 48) + 'px';
                     iframe.contentWindow.focus();
                     iframe.contentWindow.print();
                 } catch (e) {

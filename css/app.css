@@ -2063,6 +2063,9 @@
             }
             .mirror-print-section .nota-bloco {
                 margin-bottom: 6pt !important;
+                page-break-inside: auto !important;
+                break-inside: auto !important;
+                overflow: visible !important;
             }
             .mirror-print-section .nota-bloco .tit,
             .mirror-print-section .nota-bloco.compacto .tit {
@@ -2148,9 +2151,10 @@
                 gap: 12pt !important;
                 margin-top: 10pt !important;
                 page-break-inside: avoid;
+                break-inside: avoid;
             }
             .mirror-print-section .nota-sigs.compacto .nota-sig-espaco {
-                min-height: 18mm !important;
+                min-height: 14mm !important;
             }
             .mirror-print-section .nota-sigs.compacto .nota-sig-base {
                 font-size: 8pt !important;
